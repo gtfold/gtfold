@@ -30,6 +30,7 @@
 #include "global.h"
 #include "algorithms.h"
 #include "constraints.h"
+#include "shapereader.h"
 
 #ifdef _OPENMP   
 #include "omp.h"
@@ -56,7 +57,7 @@ int calculate(int len, int nThreads) {
 			j = i + b;
 			int flag = 0, newWM = INFINITY_; 
 
-			if (canPair(RNA[i], RNA[j])) {
+			if (canPair(RNA[i], RNA[j]) && withinCD(i,j)) {
 				flag = 1;
 				int eh = check_hairpin(i,j)?INFINITY_:eH(i, j); //hair pin
 				int es = check_stack(i,j)?INFINITY_:(eS(i, j) + V(i+1,j-1)); // stack

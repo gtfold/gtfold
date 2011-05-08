@@ -116,7 +116,8 @@ static int load_constraints(const char* constr_file, int verbose=0) {
 	if(v_fbp.size()>1){
 		std::sort(v_fbp.begin(), v_fbp.end(), compare_bp);
 		for (size_t ii = 0; ii < v_fbp.size() -1 ; ++ii) {
-			if (v_fbp[ii].second!=0&&v_fbp[ii].second <= v_fbp[ii+1].second) {
+			if (v_fbp[ii].second!=0&&v_fbp[ii].second <= v_fbp[ii+1].second
+				&& v_fbp[ii].second >= v_fbp[ii+1].first) {
 				fprintf(stderr, "\nConstraints create pseudoknots, exiting !!!\n");
 				exit(-1);
 			}
@@ -451,5 +452,11 @@ int check_hairpin(int i, int j) {
 		//return is_ss(i,j) || force_pair(i,j) || force_pair(j,i);
 	}	
 	else return 0;
+}
 
+int withinCD(int i, int j){
+	if (LIMIT_DISTANCE){	
+		return j-i+1>contactDistance;
+	}
+	else return 1;
 }

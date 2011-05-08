@@ -65,10 +65,6 @@ void init_fold(string seq) {
 		init_constraints(constraintsFile.c_str(), len);
 	}
 
-	if (LIMIT_DISTANCE){
-		printf("Limit distance is currently not implemented.");
-	}
-
 	if (SHAPE_ENABLED) {
 		readSHAPEarray(shapeFile.c_str(),len);
 	}

@@ -34,6 +34,7 @@ int check_pair(int i, int j) ;
 int check_stack(int i, int j) ;
 int check_hairpin(int i, int j) ;
 int can_dangle(int i);
+int withinCD(int i, int j);
 #ifdef __cplusplus
 }
 #endif
