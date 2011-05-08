@@ -39,6 +39,7 @@
 #include "constraints.h"
 #include "traceback.h"
 #include "subopt_traceback.h"
+#include "shapereader.h"
 
 using namespace std;
 
@@ -63,11 +64,23 @@ void init_fold(string seq) {
 	if (CONS_ENABLED) {
 		init_constraints(constraintsFile.c_str(), len);
 	}
+
+	if (LIMIT_DISTANCE){
+		printf("Limit distance is currently not implemented.");
+	}
+
+	if (SHAPE_ENABLED) {
+		readSHAPEarray(shapeFile.c_str(),len);
+	}
+
 }
 
 void free_fold(int len) {
 	if (CONS_ENABLED) 
 		free_constraints(len);
+	if (SHAPE_ENABLED){
+		free_shapeArray(len);
+	}
 
 	free_tables(len);
 	free_global_params();
@@ -195,7 +208,7 @@ int main(int argc, char** argv) {
 	printRunConfiguration(seq);
 	
 	init_fold(seq);
-	
+
 	printf("\nComputing minimum free energy structure...\n");
 	fflush(stdout);
 
@@ -229,6 +242,10 @@ int main(int argc, char** argv) {
 	if (CONS_ENABLED)
 		print_constraints(seq.length());
 
+
+	if (SHAPE_ENABLED && VERBOSE)
+		print_shapeArray(seq.length());
+	
 
 	save_ct_file(outputFile, seq, energy);
 	printf("\nMFE structure saved in .ct format to %s\n", outputFile.c_str());

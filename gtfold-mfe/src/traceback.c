@@ -69,9 +69,9 @@ void traceW(int j) {
 
 		Widjd = Wijd =  Widj = INFINITY_;
 		Wij = V(i,j) + auPenalty(i, j) + wim1;
-		Widjd =(check_base(i)&&check_base(j))?(V(i+1,j-1) + auPenalty(i+1, j-1) + Ed3(j-1,i+1,i) + Ed5(j-1,i+1,j) + wim1): INFINITY_;
-		Wijd = (check_base(j))?(V(i,j-1) + auPenalty(i,j-1) + Ed5(j-1,i,j) + wim1):INFINITY_;
-		Widj = (check_base(i))?(V(i+1,j) + auPenalty(i+1,j) + Ed3(j,i+1,i) + wim1):INFINITY_;
+		Widjd =(can_dangle(i)&&can_dangle(j))?(V(i+1,j-1) + auPenalty(i+1, j-1) + Ed3(j-1,i+1,i) + Ed5(j-1,i+1,j) + wim1): INFINITY_;
+		Wijd = (can_dangle(j))?(V(i,j-1) + auPenalty(i,j-1) + Ed5(j-1,i,j) + wim1):INFINITY_;
+		Widj = (can_dangle(i))?(V(i+1,j) + auPenalty(i+1,j) + Ed3(j,i+1,i) + wim1):INFINITY_;
 		Wj_temp=Wj;
 		Wj = MIN(MIN(MIN(Wij, Widjd), MIN(Wijd, Widj)), Wj);
 
@@ -84,9 +84,9 @@ void traceW(int j) {
 				structure[i] = j;
 				structure[j] = i;
 				traceV(i, j);
-				if (flag || is_ss(1,i)) traceW(i - 1);
+				if (flag || force_ssregion1(1,i)) traceW(i - 1);
 				break;
-			} else if (W[j] == Widjd && check_base(i) && check_base(j)) { 
+			} else if (W[j] == Widjd && can_dangle(i) && can_dangle(j)) { 
 				done = 1;
 				if (verbose == 1) 
 					printf("i %5d j %5d ExtLoop   %12.2f\n", i+1, j-1, (auPenalty(i+1, j-1) + Ed3(j-1,i+1,i) + Ed5(j-1,i+1,j))/100.00);
@@ -94,9 +94,9 @@ void traceW(int j) {
 				structure[i + 1] = j - 1;
 				structure[j - 1] = i + 1;
 				traceV(i + 1, j - 1);
-				if (flag || is_ss(1,i)) traceW(i - 1);
+				if (flag || force_ssregion1(1,i)) traceW(i - 1);
 				break;
-			} else if (W[j] == Wijd && check_base(j)) { 
+			} else if (W[j] == Wijd && can_dangle(j)) { 
 				done = 1;
 				if (verbose == 1) 
 					printf("i %5d j %5d ExtLoop   %12.2f\n", i, j-1, (auPenalty(i,j-1) + Ed5(j-1,i,j))/100.00);
@@ -104,9 +104,9 @@ void traceW(int j) {
 				structure[i] = j - 1;
 				structure[j - 1] = i;
 				traceV(i, j - 1);
-				if (flag || is_ss(1,i)) traceW(i - 1);
+				if (flag || force_ssregion1(1,i)) traceW(i - 1);
 				break;
-			} else if (W[j] == Widj && check_base(i)) { 
+			} else if (W[j] == Widj && can_dangle(i)) { 
 				done = 1;
 				if (verbose == 1) 
 					printf("i %5d j %5d ExtLoop   %12.2f\n", i+1, j, (auPenalty(i+1,j) + Ed3(j,i+1,i))/100.00);
@@ -114,7 +114,7 @@ void traceW(int j) {
 				structure[i + 1] = j;
 				structure[j] = i + 1;
 				traceV(i + 1, j);
-				if (flag || is_ss(1,i)) traceW(i - 1);
+				if (flag || force_ssregion1(1,i)) traceW(i - 1);
 				break;
 			}
 		}
@@ -220,7 +220,7 @@ int traceVM(int i, int j) {
 		}
 	}
 
-	if (check_base(i+1)) {
+	if (can_dangle(i+1)) {
 		for (h = i + 3; h <= j - 1 && !done; h++) {
 			A_temp = WM(i + 2,h - 1) + WM(h,j - 1) + Ea + Eb + auPenalty(i,j) + Ed5(i,j,i + 1); 
 			if (A_temp == VMij) {
@@ -232,7 +232,7 @@ int traceVM(int i, int j) {
 		}
 	}
 
-	if (check_base(j-1)) {
+	if (can_dangle(j-1)) {
 		for (h = i + 2; h <= j - 2 && !done; h++) { 
 			A_temp = WM(i + 1,h - 1) + WM(h,j - 2) + Ea + Eb + auPenalty(i, j) + Ed3(i,j,j - 1);
 			if (A_temp == VMij) {
@@ -244,7 +244,7 @@ int traceVM(int i, int j) {
 		}
 	}
 
-	if (check_base(i+1)&&check_base(j-1)) {
+	if (can_dangle(i+1)&&can_dangle(j-1)) {
 		for (h = i + 3; h <= j - 2 && !done; h++) { 
 			A_temp = WM(i + 2,h - 1) + WM(h,j - 2) + Ea + Eb + auPenalty(i,j) + Ed5(i,j,i + 1) + Ed3(i,j,j - 1);
 			if (A_temp == VMij) {
@@ -288,25 +288,25 @@ int traceWM(int i, int j) {
 				structure[i] = j;
 				structure[j] = i;
 				eWM += traceV(i, j);
-			} else if (WM(i,j) == V(i+1, j) + Ed3(j,i + 1,i) + auPenalty(i+1, j) + Eb + Ec && check_base(i)) { 
+			} else if (WM(i,j) == V(i+1, j) + Ed3(j,i + 1,i) + auPenalty(i+1, j) + Eb + Ec && can_dangle(i)) { 
 				done = 1;
 				eWM += traceV(i + 1, j);
 				structure[i + 1] = j;
 				structure[j] = i + 1;
-			} else if (WM(i,j) == V(i,j-1) + Ed5(j-1,i,j) + auPenalty(i,j-1) +  Eb + Ec && check_base(j) ) { 
+			} else if (WM(i,j) == V(i,j-1) + Ed5(j-1,i,j) + auPenalty(i,j-1) +  Eb + Ec && can_dangle(j) ) { 
 				done = 1;
 				eWM += traceV(i, j - 1);
 				structure[i] = j - 1;
 				structure[j - 1] = i;
-			} else if (WM(i,j) == V(i+1,j-1) + Ed3(j-1,i+1,i) + Ed5(j-1,i+1,j) + auPenalty(i+1, j-1) + Eb + 2*Ec && check_base(i) && check_base(j)) { 
+			} else if (WM(i,j) == V(i+1,j-1) + Ed3(j-1,i+1,i) + Ed5(j-1,i+1,j) + auPenalty(i+1, j-1) + Eb + 2*Ec && can_dangle(i) && can_dangle(j)) { 
 				done = 1;
 				eWM += traceV(i + 1, j - 1);
 				structure[i + 1] = j - 1;
 				structure[j - 1] = i + 1;
-			} else if (WM(i,j) == WM(i + 1,j) + Ec && check_base(i)) { 
+			} else if (WM(i,j) == WM(i + 1,j) + Ec && can_dangle(i)) { 
 				done = 1;
 				eWM += traceWM(i + 1, j);
-			} else if (WM(i,j) == WM(i,j - 1) + Ec && check_base(j)) { 
+			} else if (WM(i,j) == WM(i,j - 1) + Ec && can_dangle(j)) { 
 				done = 1;
 				eWM += traceWM(i, j - 1);
 			}

@@ -78,5 +78,5 @@ int update_checkPair(int i, int j) {
 }
 
 inline int canPair(int a, int b) {
-	return (chPairKey & (1 << (((a)<<2) + (b)))); 
+	return (chPairKey & (1 << (((a)<<2) + (b))));
 }

@@ -8,26 +8,31 @@
 
 using namespace std;
 
-extern bool ILSA; 
+extern bool ILSA;
 extern bool NOISOLATE;
 extern bool USERDATA;
 extern bool PARAMS;
-extern bool LIMIT_DISTANCE;
 extern bool BPP_ENABLED;
 extern bool SUBOPT_ENABLED;
 extern bool CONS_ENABLED;
 extern bool VERBOSE;
+extern bool SHAPE_ENABLED;
 
 extern string seqfile;
 extern string constraintsFile;
+extern string shapeFile;
 extern string outputFile;
 
 extern int suboptDelta;
 extern int nThreads;
+
+extern bool LIMIT_DISTANCE;
 extern int contactDistance;
 
-void help(); 
+
+void help();
 void parse_options(int argc, char** argv);
 void printRunConfiguration(string seq);
+
 
 #endif

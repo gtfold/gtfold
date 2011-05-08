@@ -15,8 +15,8 @@ gtfold_SOURCES = \
 	energy.c\
 	algorithms.c \
 	traceback.c \
-	subopt_traceback.cc
-
+	subopt_traceback.cc\
+	shapereader.cc
 
 gtfold_LDFLAGS = 
 

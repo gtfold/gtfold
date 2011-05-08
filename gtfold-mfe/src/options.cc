@@ -12,10 +12,12 @@ bool BPP_ENABLED;
 bool SUBOPT_ENABLED;
 bool CONS_ENABLED = false;
 bool VERBOSE = false;
+bool SHAPE_ENABLED = false;
 
 string seqfile = "";
 string constraintsFile = "";
 string outputFile = "";
+string shapeFile = "";
 
 int suboptDelta = -1;
 int nThreads = -1;
@@ -32,6 +34,7 @@ void help() {
     printf("OPTIONS\n");
     printf("   -c, --constraints FILE\n");
     printf("                        Load constraints from FILE.  See Constraint syntax below\n");
+
     printf("   -d, --limitCD num    Set a maximum base pair contact distance to num. If no\n");
     printf("                        limit is given, base pairs can be over any distance\n");
     printf("   -n, --noisolate      Prevent isolated base pairs from forming\n");
@@ -46,6 +49,7 @@ void help() {
     printf("   --bpp                Calculate base pair probabilities\n");
     printf("   --subopt range       Calculate suboptimal structures within 'range' kcal/mol\n");
     printf("                        of the mfe\n");
+    printf("   -s, --useSHAPE FILE  Use SHAPE constraints from FILE");      
 
     printf("\nConstraint syntax:\n");
     printf("\tF i j k  # force (i,j)(i+1,j-1),.......,(i+k-1,j-k+1) pairs\n");
@@ -72,8 +76,10 @@ void parse_options(int argc, char** argv) {
 				else
 					help();
 			} else if(strcmp(argv[i], "--limitCD") == 0 || strcmp(argv[i], "-d") == 0) {
-				if(i < argc)
+				if(i < argc){
+					LIMIT_DISTANCE = true;
 					contactDistance = atoi(argv[++i]);
+				}
 				else
 					help();
 			} else if(strcmp(argv[i], "--noisolate") == 0 || strcmp(argv[i], "-n") == 0) {
@@ -100,6 +106,14 @@ void parse_options(int argc, char** argv) {
 				else
 					help();
 			}
+			else if (strcmp(argv[i], "--useSHAPE") == 0){
+				if( i < argc){
+					shapeFile = argv[++i];
+					SHAPE_ENABLED = true;
+				}
+				else
+					help();
+			}				
 		} else {
 			seqfile = argv[i];
 		}
@@ -152,6 +166,9 @@ void printRunConfiguration(string seq) {
 		standardRun = false;
 	}
 
+	if(!shapeFile.empty()){
+		printf("- using SHAPE data file: %s\n", shapeFile.c_str());
+	}
 	if (contactDistance != -1) {
 		printf("- maximum contact distance: %d\n", contactDistance);
 		standardRun = false;

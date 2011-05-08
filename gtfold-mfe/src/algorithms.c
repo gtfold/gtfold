@@ -89,17 +89,18 @@ int calculate(int len, int nThreads) {
 						newWM = MIN(newWM, VMij);
 					}
 
-					int d3 = Ed3(i,j,j-1);
-					int d5 = Ed5(i,j,i+1);
+					int d3 = can_dangle(j-1)?Ed3(i,j,j-1):INFINITY_;
+					int d5 = can_dangle(i+1)?Ed5(i,j,i+1):INFINITY_;
 
-					VMij = MIN(VMij, check_base(i+1)?(VMidj + d5 +Ec):INFINITY_) ;
-					VMij = MIN(VMij, check_base(j-1)?(VMijd + d3 +Ec):INFINITY_);
-					VMij = MIN(VMij, (check_base(i+1)&&check_base(j-1))?(VMidjd + d5 +  d3+ 2*Ec):INFINITY_);
+					VMij = MIN(VMij, (VMidj + d5 +Ec)) ;
+					VMij = MIN(VMij, (VMijd + d3 +Ec));
+					VMij = MIN(VMij, (VMidjd + d5 +  d3+ 2*Ec));
 					VMij = VMij + Ea + Eb + auPenalty(i,j);
 					VM(i,j) = check_pair(i,j)?INFINITY_:VMij;
 				} // Multi Loop END
 
 				V(i,j) = check_pair(i,j)?INFINITY_:MIN4(eh,es,VBI(i,j),VM(i,j));
+				V(i,j) = V(i,j) + getShapeEnergy(i) + getShapeEnergy(j);
 			}
 			else
 				V(i,j) = INFINITY_;
@@ -113,12 +114,12 @@ int calculate(int len, int nThreads) {
 				}
 				
 				newWM = MIN(V(i,j) + auPenalty(i,j) + Eb, newWM); 
-				newWM = check_base(i)?MIN(V(i+1,j) + Ed3(j,i+1,i) + auPenalty(i+1,j) + Eb + Ec, newWM): INFINITY_; 
-				newWM = check_base(j)?MIN(V(i,j-1) + Ed5(j-1,i,j) + auPenalty(i,j-1) + Eb + Ec, newWM) : INFINITY_; 
-				newWM = (check_base(i)&&check_base(j))?MIN(V(i+1,j-1) + Ed3(j-1,i+1,i) + Ed5(j-1,i+1,j) + auPenalty(i+1,j-1) + Eb + 2*Ec, newWM): INFINITY_;
+				newWM = can_dangle(i)?MIN(V(i+1,j) + Ed3(j,i+1,i) + auPenalty(i+1,j) + Eb + Ec, newWM): INFINITY_; 
+				newWM = can_dangle(j)?MIN(V(i,j-1) + Ed5(j-1,i,j) + auPenalty(i,j-1) + Eb + Ec, newWM) : INFINITY_; 
+				newWM = (can_dangle(i)&&can_dangle(j))?MIN(V(i+1,j-1) + Ed3(j-1,i+1,i) + Ed5(j-1,i+1,j) + auPenalty(i+1,j-1) + Eb + 2*Ec, newWM): INFINITY_;
 				
-				newWM = check_base(i)?MIN(WMU(i+1,j) + Ec, newWM):INFINITY_;
-				newWM = check_base(j)?MIN(WML(i,j-1) + Ec, newWM):INFINITY_;
+				newWM = can_dangle(i)?MIN(WMU(i+1,j) + Ec, newWM):INFINITY_;
+				newWM = can_dangle(j)?MIN(WML(i,j-1) + Ec, newWM):INFINITY_;
 
 				WMU(i,j) = WML(i,j) = newWM;
 			} // WM END
@@ -132,9 +133,9 @@ int calculate(int len, int nThreads) {
 			Wij = Widjd = Wijd = Widj = INFINITY_;
 			Wim1 = MIN(0, W[i-1]); 
 			Wij = V(i, j) + auPenalty(i, j) + Wim1;
-			Widjd = (check_base(i)&&check_base(j))?(V(i+1,j-1) + auPenalty(i+1,j-1) + Ed3(j-1,i + 1,i) + Ed5(j-1,i+1,j) + Wim1):INFINITY_;
-			Wijd = check_base(j)?(V(i,j-1) + auPenalty(i,j-1) + Ed5(j-1,i,j) + Wim1):INFINITY_;
-			Widj =  (check_base(i))?(V(i+1, j) + auPenalty(i+1,j) + Ed3(j,i + 1,i) + Wim1):INFINITY_;
+			Widjd = (can_dangle(i)&&can_dangle(j))?(V(i+1,j-1) + auPenalty(i+1,j-1) + Ed3(j-1,i + 1,i) + Ed5(j-1,i+1,j) + Wim1):INFINITY_;
+			Wijd = can_dangle(j)?(V(i,j-1) + auPenalty(i,j-1) + Ed5(j-1,i,j) + Wim1):INFINITY_;
+			Widj =  (can_dangle(i))?(V(i+1, j) + auPenalty(i+1,j) + Ed3(j,i + 1,i) + Wim1):INFINITY_;
 			Wj = MIN(MIN4(Wij, Widjd, Wijd, Widj), Wj); 
 			
 			if (Wj<INFINITY_) {
