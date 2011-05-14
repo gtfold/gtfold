@@ -22,7 +22,7 @@ traceback.o: traceback.c /usr/include/stdio.h /usr/include/features.h \
  /usr/include/assert.h ../include/data.h ../include/constants.h \
  ../include/constants.h ../include/constraints.h ../include/energy.h \
  ../include/data.h ../include/global.h ../include/traceback.h \
- ../include/utils.h
+ ../include/utils.h ../include/shapereader.h
 
 /usr/include/stdio.h:
 
@@ -125,3 +125,5 @@ traceback.o: traceback.c /usr/include/stdio.h /usr/include/features.h \
 ../include/traceback.h:
 
 ../include/utils.h:
+
+../include/shapereader.h:

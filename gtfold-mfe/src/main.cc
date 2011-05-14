@@ -246,6 +246,16 @@ int main(int argc, char** argv) {
 	save_ct_file(outputFile, seq, energy);
 	printf("\nMFE structure saved in .ct format to %s\n", outputFile.c_str());
 
+
+	if(CONS_ENABLED && VERBOSE){
+		printf("Verifying that structure fulfills constraint criteria... ");
+		if(verify_structure()){
+			printf("OK\n");
+		}
+		else{
+			printf("ERROR: NOT OK!!\n");
+		}
+	}
 	// release the malloc'd arrays
 	free_fold(seq.length());
 

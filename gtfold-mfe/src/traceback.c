@@ -28,6 +28,7 @@
 #include "global.h"
 #include "traceback.h"
 #include "utils.h"
+#include "shapereader.h"
 
 int verbose = -1;
 int total_en = 0;
@@ -60,12 +61,16 @@ void traceW(int j) {
 	
 	if (j == 0 || j == 1) return;
 
+	
 	for (i = 1; i < j && !done; i++) {
+
 		if (j-i < TURN) continue;
 
 		wim1 = MIN(0, W[i-1]);
 		flag = 1;
-		if (wim1 != W[i-1]) flag = 0;
+		if (wim1 != W[i-1] && !check_ssregion(1,i)) flag = 0; 
+		//ZS: flag is false if the free energy of the best structure to W[i] is > 0 --> all should be ss 
+		//UNLESS there is at least one base that is forced to pair in that region, this is revealed by check_ssregion(1,i)
 
 		Widjd = Wijd =  Widj = INFINITY_;
 		Wij = V(i,j) + auPenalty(i, j) + wim1;
@@ -76,7 +81,8 @@ void traceW(int j) {
 		Wj = MIN(MIN(MIN(Wij, Widjd), MIN(Wijd, Widj)), Wj);
 
 		if (W[j] == Wj) {
-			if (W[j] == Wij) { 
+			//if we know W[j] is pairing with something
+			if (W[j] == Wij || force_pair1(i,j)){ 
 				done = 1;
 				if (verbose == 1) 
 					printf("i %5d j %5d ExtLoop   %12.2f\n", i, j, auPenalty(i, j)/100.00);
@@ -86,7 +92,7 @@ void traceW(int j) {
 				traceV(i, j);
 				if (flag || force_ssregion1(1,i)) traceW(i - 1);
 				break;
-			} else if (W[j] == Widjd && can_dangle(i) && can_dangle(j)) { 
+			} else if ((W[j] == Widjd && can_dangle(i) && can_dangle(j)) || force_pair1(i+1,j-1)) { 
 				done = 1;
 				if (verbose == 1) 
 					printf("i %5d j %5d ExtLoop   %12.2f\n", i+1, j-1, (auPenalty(i+1, j-1) + Ed3(j-1,i+1,i) + Ed5(j-1,i+1,j))/100.00);
@@ -96,7 +102,7 @@ void traceW(int j) {
 				traceV(i + 1, j - 1);
 				if (flag || force_ssregion1(1,i)) traceW(i - 1);
 				break;
-			} else if (W[j] == Wijd && can_dangle(j)) { 
+			} else if ((W[j] == Wijd && can_dangle(j))||force_pair1(i,j-1)) { 
 				done = 1;
 				if (verbose == 1) 
 					printf("i %5d j %5d ExtLoop   %12.2f\n", i, j-1, (auPenalty(i,j-1) + Ed5(j-1,i,j))/100.00);
@@ -106,7 +112,7 @@ void traceW(int j) {
 				traceV(i, j - 1);
 				if (flag || force_ssregion1(1,i)) traceW(i - 1);
 				break;
-			} else if (W[j] == Widj && can_dangle(i)) { 
+			} else if ((W[j] == Widj && can_dangle(i))||force_pair1(i+1,j)) { 
 				done = 1;
 				if (verbose == 1) 
 					printf("i %5d j %5d ExtLoop   %12.2f\n", i+1, j, (auPenalty(i+1,j) + Ed3(j,i+1,i))/100.00);
@@ -119,21 +125,22 @@ void traceW(int j) {
 			}
 		}
 	}
-		
+
 	if (W[j] == W[j - 1] && !done) traceW(j-1);
 
 	return;
 }
 
 int traceV(int i, int j) {
+
 	int a, b, c, d, Vij;
 	if (j-i < TURN)  return INFINITY_;
 
-	a = eH(i, j);
-	b = eS(i, j) + V(i + 1, j - 1);
+	a = eH(i, j)+getShapeEnergy(i) + getShapeEnergy(j);
+	b = eS(i, j) + V(i + 1, j - 1) + getShapeEnergy(i) + getShapeEnergy(j);
 	if (eS(i, j) == 0) b = INFINITY_;
-	c = VBI(i,j);
-	d = VM(i,j);
+	c = VBI(i,j) + getShapeEnergy(i) + getShapeEnergy(j);
+	d = VM(i,j) + getShapeEnergy(i) + getShapeEnergy(j);
 	
 	Vij = MIN(MIN(a, b), MIN(c, d));
 	
@@ -251,6 +258,7 @@ int traceVM(int i, int j) {
 				done = 1;
 				eVM += traceWM(i + 2, h - 1);
 				eVM += traceWM(h, j - 2);
+
 				break;
 			}
 		}
@@ -260,7 +268,6 @@ int traceVM(int i, int j) {
 }
 
 int traceWM(int i, int j) {
-
 	int done;
 	int h1, h;
 	int eWM = 0; 
@@ -311,6 +318,21 @@ int traceWM(int i, int j) {
 				eWM += traceWM(i, j - 1);
 			}
 		}
+	}
+	//ZS: This is for debugging purposes. 
+	if(!done){
+		printf("ERROR: WM couldn't be traced!\n");
+		printf("%d %d \n", i, j);
+		printf("WM(i,j) = %d\n", WM(i,j));
+		printf("candangle i? %d\n", can_dangle(i));
+		printf("candangle j? %d\n", can_dangle(j));
+		printf("The options were: \n"); 
+		printf("Option 1 %d \n" , V(i,j) + auPenalty(i, j) + Eb);
+		printf("Option 2 %d \n" , V(i+1, j) + Ed3(j,i + 1,i) + auPenalty(i+1, j) + Eb + Ec);
+		printf("Option 3 %d \n", V(i,j-1) + Ed5(j-1,i,j) + auPenalty(i,j-1) +  Eb + Ec);
+		printf("Option 4 %d \n", V(i+1,j-1) + Ed3(j-1,i+1,i) + Ed5(j-1,i+1,j) + auPenalty(i+1, j-1) + Eb + 2*Ec);
+		printf("Option 5 %d \n", WM(i + 1,j) + Ec );
+		printf("Option 6 %d \n", WM(i,j - 1) + Ec);
 	}
 	return eWM;
 }

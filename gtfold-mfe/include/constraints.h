@@ -35,6 +35,7 @@ int check_stack(int i, int j) ;
 int check_hairpin(int i, int j) ;
 int can_dangle(int i);
 int withinCD(int i, int j);
+int verify_structure();
 #ifdef __cplusplus
 }
 #endif

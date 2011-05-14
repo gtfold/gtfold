@@ -263,6 +263,76 @@ int init_constraints(const char* constr_file,int length) {
 	return 0;
 }
 
+int verify_structure(){
+	//ZS: This method returns true if the structure (global.h) is consistent with
+	//the constraints, and false if it is not.
+	
+	if(CONS_ENABLED){
+	int errorhappened = 0;
+	int it, k;
+	//Check prohibited constraints
+	if(nPBP != 0){
+		for(it = 0; it < nPBP; it++){
+			if(PBP[it][2] < 1 || PBP[it][1] == 0){
+				//printf("Invalid entry (P: %d %d %d)\n", PBP[it][0], PBP[it][1], PBP[it][2]);
+				continue;
+			}
+			for(k = 1; k <= PBP[it][2]; k++){
+				//correct answer: strcuture(PBP[it][0]+k-1) != structure(PBP[it][1]-(k-1))
+				if(structure[PBP[it][0]+k-1] == PBP[it][1]-(k-1) || structure[PBP[it][1]-(k-1)] == PBP[it][0]+k-1){	
+					errorhappened = 1; 
+					printf("Constraint P %d %d %d is not fulfilled.\n",PBP[it][0], PBP[it][1], PBP[it][2]);
+					break;
+				}
+			}
+		}	
+	}
+
+	//Check forced constraints
+	if(nFBP != 0){
+		for(it = 0; it<nFBP; it++){
+			if(FBP[it][2] < 1){
+				//printf("Invalid entry (F: %d %d %d)\n", FBP[it][0], FBP[it][1], FBP[it][2]);
+				continue;
+			}
+
+			for(k = 1; k<=FBP[it][2]; k++){
+				int i1 = FBP[it][0]+k-1;
+				int j1 = FBP[it][1]-k+1;
+				if(FBP[it][1]!=0&&!canPair(RNA[FBP[it][0]+k-1], RNA[FBP[it][1]-k+1])){
+					//printf("Can't force (%d, %d) to pair (non-canonical) \n", FBP[it][0]+k-1, FBP[it][1]-k+1);
+					continue;			
+				}
+				if(FBP[it][1]!=0&&(j1-i1 < TURN)){
+					//printf("Can't force (%d, %d) to pair (turn too tight) \n", FBP[it][0]+k-1, FBP[it][1]-k+1);
+					continue;
+				}
+				if(FBP[it][1] == 0){
+					//force single-stranded
+					if(structure[FBP[it][0]] != 0){
+						printf("Constraint F %d %d %d is not fulfilled.\n",FBP[it][0], FBP[it][1], FBP[it][2]);
+						errorhappened = 1;
+					}
+				}
+				else{
+					if(structure[FBP[it][0]+k-1] != FBP[it][1]-(k-1) || structure[FBP[it][1]-(k-1)] != FBP[it][0]+k-1){
+						printf("Constraint F %d %d %d is not fulfilled.\n",FBP[it][0], FBP[it][1], FBP[it][2]);
+						errorhappened = 1;
+					}
+					
+				}
+			}
+		}
+	}
+		return errorhappened?0:1;
+	}
+	else{
+		return 1;
+	}
+		 
+}
+
+
 void free_constraints(int len) {
 	free(BP);
 }
@@ -377,10 +447,13 @@ int force_ss1(int i){
 
 int force_ssregion1(int i, int j){
 	if(CONS_ENABLED){
+		int value = 1;
 		for(int p = i; p<j; p++){
-			if(BP(p,p)==3){return 1;}
+			if(BP(p,p)!=3){
+				value= 0;
+			}
 		}
-		return 0;
+		return value;
 	}
 	else return 0;
 }
@@ -390,7 +463,7 @@ int check_iloop(int i, int j, int p, int q) {
 	if (CONS_ENABLED){
 		//Need to check that i,j and p,q pairs are allowed, 
 		//and single-stranded regions between i,p and q,j are allowed
-		return check_pair(i,j)&&check_pair(p,q)&&check_ssregion(i,p)&&check_ssregion(q,j);
+		return check_pair(i,j)||check_pair(p,q)||check_ssregion(i,p)||check_ssregion(q,j);
 	}
 		//Original code (Prashant's):
 		//return is_ss(i,p) || is_ss(q,j);
@@ -416,10 +489,12 @@ int check_pair(int i, int j) {
 int check_ssregion(int i, int j){
 //ZS: This function returns 1 if any nucleotide between i and j is forced to pair with something
 //(i and j are NOT included in the check)
-	for(int p = i+1; p<j; p++){
-		if(BP(p,p)==4) return 1;
-	}
-	return 0;
+	if(CONS_ENABLED){
+		for(int p = i+1; p<j; p++){
+			if(BP(p,p)==4) return 1;
+		}
+		return 0;}
+	else{ return 0; }
 }
 
 int can_dangle(int i){
@@ -447,7 +522,7 @@ int check_hairpin(int i, int j) {
 	//1 when a hairpin with i,j as closing pair isn't allowed.
 	if (CONS_ENABLED){
 		//Need to check if pair is allowed and if anything pairs between them
-		return check_pair(i,j)&&check_ssregion(i,j);
+		return check_pair(i,j)||check_ssregion(i,j);
 		//Original code (Prashant's)
 		//return is_ss(i,j) || force_pair(i,j) || force_pair(j,i);
 	}	

@@ -56,7 +56,6 @@ int calculate(int len, int nThreads) {
 		for (i = 1; i <= len - b; i++) {
 			j = i + b;
 			int flag = 0, newWM = INFINITY_; 
-
 			if (canPair(RNA[i], RNA[j]) && withinCD(i,j)) {
 				flag = 1;
 				int eh = check_hairpin(i,j)?INFINITY_:eH(i, j); //hair pin
@@ -65,14 +64,23 @@ int calculate(int len, int nThreads) {
 					int p=0, q=0;
 					int VBIij = INFINITY_;
 
+					int found_forced_pair = 0;
 					for (p = i+1; p <= MIN(j-2-TURN,i+MAXLOOP+1) ; p++) {
 						int minq = j-i+p-MAXLOOP-2;
 						if (minq < p+1+TURN) minq = p+1+TURN;
 						for (q = minq; q < j; q++) {
 							if (!canPair(RNA[p], RNA[q])) continue;
 							if (check_iloop(i,j,p,q)) continue;
+							if(force_pair1(p,q)){
+							//ZS: if we know a pair should be forced, we should 
+							//just enforce it and not care about other options.
+								VBIij = eL(i,j,p,q) + V(p,q); 
+								found_forced_pair = 1;
+								break; 
+							}	
 							VBIij = MIN(eL(i, j, p, q) + V(p,q), VBIij);
 						}
+						if(found_forced_pair){break;}
 					}
 					VBI(i,j) = check_pair(i,j)?INFINITY_:VBIij;
 				} 	// Internal Loop END
@@ -87,7 +95,12 @@ int calculate(int len, int nThreads) {
 						VMidj = MIN(VMidj, WMU(i+2,h-1) + WML(h,j-1));	
 						VMijd = MIN(VMijd, WMU(i+1,h-1) + WML(h,j-2));	
 						VMidjd = MIN(VMidjd, WMU(i+2,h-1) + WML(h,j-2));	
-						newWM = MIN(newWM, VMij);
+						//ZS: I don't think the following line is being checked in traceback, so 
+						//if you enable it, sometimes huge parts of the structure will not be possible
+						//to trace. 
+						//I don't know if it should be here or not. If it is here, it should be in traceback
+						//too. For now, I am removing it! 
+						//newWM = MIN(newWM, VMij);
 					}
 
 					int d3 = can_dangle(j-1)?Ed3(i,j,j-1):INFINITY_;
@@ -108,20 +121,24 @@ int calculate(int len, int nThreads) {
 
 			if (j-i > 4) {	// WM BEGIN
 				int h; 
-				if (!flag) {
+				//ZS: if we know that i,j are pairing, we just have to set WM(i,j) = V(i,j) in the best possible way.
+				//Conversely, we only need to find the best partitioning if we know that i,j are not forced to pair.
+
+				//Prashant's original code had if(!flag) here... I don't know what that was supposed to do?
+				if (!force_pair1(i,j)) {
 					for (h = i+TURN+1 ; h <= j-TURN-1; h++) {
 						newWM = MIN(newWM, WMU(i,h-1) + WML(h,j));
 					}
 				}
 				
 				newWM = MIN(V(i,j) + auPenalty(i,j) + Eb, newWM); 
-				newWM = can_dangle(i)?MIN(V(i+1,j) + Ed3(j,i+1,i) + auPenalty(i+1,j) + Eb + Ec, newWM): INFINITY_; 
-				newWM = can_dangle(j)?MIN(V(i,j-1) + Ed5(j-1,i,j) + auPenalty(i,j-1) + Eb + Ec, newWM) : INFINITY_; 
-				newWM = (can_dangle(i)&&can_dangle(j))?MIN(V(i+1,j-1) + Ed3(j-1,i+1,i) + Ed5(j-1,i+1,j) + auPenalty(i+1,j-1) + Eb + 2*Ec, newWM): INFINITY_;
-				
-				newWM = can_dangle(i)?MIN(WMU(i+1,j) + Ec, newWM):INFINITY_;
-				newWM = can_dangle(j)?MIN(WML(i,j-1) + Ec, newWM):INFINITY_;
 
+				//ZS: if i,j are forced to pair then can_dangle(i) and can_dangle(j) will be false 
+				newWM = can_dangle(i)?MIN(V(i+1,j) + Ed3(j,i+1,i) + auPenalty(i+1,j) + Eb + Ec, newWM): newWM; 
+				newWM = can_dangle(j)?MIN(V(i,j-1) + Ed5(j-1,i,j) + auPenalty(i,j-1) + Eb + Ec, newWM) : newWM; 
+				newWM = (can_dangle(i)&&can_dangle(j))?MIN(V(i+1,j-1) + Ed3(j-1,i+1,i) + Ed5(j-1,i+1,j) + auPenalty(i+1,j-1) + Eb + 2*Ec, newWM): newWM;
+				newWM = can_dangle(i)?MIN(WMU(i+1,j) + Ec, newWM):newWM;
+				newWM = can_dangle(j)?MIN(WML(i,j-1) + Ec, newWM):newWM;
 				WMU(i,j) = WML(i,j) = newWM;
 			} // WM END
 		}
@@ -147,7 +164,7 @@ int calculate(int len, int nThreads) {
 				else if	(Wj==Wijd && force_pair1(i,j-1))
 				  branch = 1;	
 				else if	(force_pair1(i+1,j))
-					branch = 1;
+				  branch = 1;
 			}
 		}
 		W[j] = branch?Wj:MIN(Wj, W[j-1]);
