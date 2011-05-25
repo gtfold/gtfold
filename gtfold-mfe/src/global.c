@@ -2,6 +2,7 @@
 #include <stdlib.h>
 
 #include "global.h"
+#include "constraints.h"
 
 unsigned char *RNA; 
 int *structure; 

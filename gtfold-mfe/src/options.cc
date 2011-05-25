@@ -5,8 +5,9 @@ using namespace std;
 
 bool ILSA;
 bool NOISOLATE;
-bool USERDATA;
-bool PARAMS;
+//bool USERDATA;
+//bool PARAMS;
+bool PARAM_DIR = false;
 bool LIMIT_DISTANCE;
 bool BPP_ENABLED;
 bool SUBOPT_ENABLED;
@@ -18,6 +19,8 @@ string seqfile = "";
 string constraintsFile = "";
 string outputFile = "";
 string shapeFile = "";
+string paramDir = "Turner99"; // default value
+
 
 int suboptDelta = -1;
 int nThreads = -1;
@@ -37,7 +40,8 @@ void help() {
 
     printf("   -d, --limitCD num    Set a maximum base pair contact distance to num. If no\n");
     printf("                        limit is given, base pairs can be over any distance\n");
-    printf("   -n, --noisolate      Prevent isolated base pairs from forming\n");
+    printf("   -p  --paramdir DIR   Path to directory from where parameters are to be read\n");
+   	printf("   -n, --noisolate      Prevent isolated base pairs from forming\n");
     printf("   -o, --output FILE    Output to FILE (default output is to a .ct extension)\n");
     printf("   -t, --threads num    Limit number of threads used\n");
 
@@ -89,7 +93,15 @@ void parse_options(int argc, char** argv) {
 					outputFile = argv[++i];
 				else
 					help();
-			} else if(strcmp(argv[i], "--threads") == 0 || strcmp(argv[i], "-t") == 0) {
+			} else if (strcmp(argv[i], "--paramdir") == 0 || strcmp(argv[i], "-p") == 0) {
+				if(i < argc) {
+					paramDir = argv[++i];
+					PARAM_DIR = true;
+				}
+				else
+					help();
+			}
+		   	else if(strcmp(argv[i], "--threads") == 0 || strcmp(argv[i], "-t") == 0) {
 				if(i < argc)
 					nThreads = atoi(argv[++i]);
 				else
@@ -189,7 +201,6 @@ void printRunConfiguration(string seq) {
 
 	printf("- thermodynamic parameters: %s\n", EN_DATADIR.c_str());
 	printf("- input file: %s\n", seqfile.c_str());
-	printf("  - sequence length: %d\n", (int)seq.length());
-	printf("  - sequence contents: %s\n", seq.c_str());
+	printf("- sequence length: %d\n", (int)seq.length());
 	printf("- output file: %s\n", outputFile.c_str());
 }

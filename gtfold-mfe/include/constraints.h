@@ -21,19 +21,17 @@ void print_constraints(int length) ;
 #ifdef __cplusplus
 extern "C" {
 #endif
-//int is_ss(int i, int j); 
-//int prohibit_base(int i) ;
-int check_ssregion(int i, int j);
-//int check_base(int i) ;
-//int force_pair(int i, int j) ;
-int force_pair1(int i, int j) ;
-int force_ss1(int i);
-int force_ssregion1(int i, int j);
-int check_iloop(int i, int j, int p, int q) ;
-int check_pair(int i, int j) ;
-int check_stack(int i, int j) ;
-int check_hairpin(int i, int j) ;
-int can_dangle(int i);
+int canStack(int i, int j);
+int canSS(int i);
+int canSSregion(int i, int j);
+int canHairpin(int i, int j);
+int canILoop(int i, int j, int p, int q);
+
+int forceSS(int i);
+int forceSSregion(int i, int j);
+int forcePair(int i, int j);
+
+
 int withinCD(int i, int j);
 int verify_structure();
 #ifdef __cplusplus

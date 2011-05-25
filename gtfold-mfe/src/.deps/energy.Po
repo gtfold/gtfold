@@ -19,7 +19,8 @@ energy.o: energy.c /usr/include/stdlib.h /usr/include/features.h \
  /usr/include/bits/nan.h /usr/include/bits/mathdef.h \
  /usr/include/bits/mathcalls.h /usr/include/bits/mathinline.h \
  ../include/energy.h ../include/data.h ../include/constants.h \
- ../include/utils.h ../include/global.h ../include/constants.h
+ ../include/utils.h ../include/global.h ../include/constants.h \
+ ../include/shapereader.h
 
 /usr/include/stdlib.h:
 
@@ -114,3 +115,5 @@ energy.o: energy.c /usr/include/stdlib.h /usr/include/features.h \
 ../include/global.h:
 
 ../include/constants.h:
+
+../include/shapereader.h:

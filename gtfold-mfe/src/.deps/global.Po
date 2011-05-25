@@ -14,7 +14,8 @@ global.o: global.c /usr/include/stdio.h /usr/include/features.h \
  /usr/include/bits/select.h /usr/include/bits/sigset.h \
  /usr/include/bits/time.h /usr/include/sys/sysmacros.h \
  /usr/include/bits/pthreadtypes.h /usr/include/alloca.h \
- /usr/include/bits/stdlib.h ../include/global.h ../include/constants.h
+ /usr/include/bits/stdlib.h ../include/global.h ../include/constants.h \
+ ../include/constraints.h
 
 /usr/include/stdio.h:
 
@@ -83,3 +84,5 @@ global.o: global.c /usr/include/stdio.h /usr/include/features.h \
 ../include/global.h:
 
 ../include/constants.h:
+
+../include/constraints.h:

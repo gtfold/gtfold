@@ -1,29 +1,24 @@
 /*
- GTfold: compute minimum free energy of RNA secondary structure
- Copyright (C) 2008  David A. Bader
- http://www.cc.gatech.edu/~bader
-
- This program is free software: you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
-
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
-
- You should have received a copy of the GNU General Public License
- along with this program.  If not, see <http://www.gnu.org/licenses/>.
+GTfold: compute minimum free energy of RNA secondary structure
+Copyright (C) 2008 David A. Bader
+http://www.cc.gatech.edu/~bader
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
+You should have received a copy of the GNU General Public License
+along with this program. If not, see <http://www.gnu.org/licenses/>.
 */ 
-
 #include <stdio.h>
 #include <math.h>
 #include <time.h>
 #include <sys/time.h>
 #include <stdlib.h>
 #include <assert.h>
-
 #include "constants.h"
 #include "utils.h"
 #include "energy.h"
@@ -31,23 +26,20 @@
 #include "algorithms.h"
 #include "constraints.h"
 #include "shapereader.h"
-
-#ifdef _OPENMP   
+#ifdef _OPENMP 
 #include "omp.h"
 #endif
-
 int calculate(int len, int nThreads) { 
 	int b, i, j;
-
 #ifdef _OPENMP
 	if (nThreads>0) omp_set_num_threads(nThreads);
 #endif
-
 #ifdef _OPENMP
 #pragma omp parallel
 #pragma omp master
 	fprintf(stdout,"Thread count: %3d \n",omp_get_num_threads());
 #endif
+
 
 	for (b = TURN+1; b <= len-1; b++) {
 #ifdef _OPENMP
@@ -56,119 +48,79 @@ int calculate(int len, int nThreads) {
 		for (i = 1; i <= len - b; i++) {
 			j = i + b;
 			int flag = 0, newWM = INFINITY_; 
-			if (canPair(RNA[i], RNA[j]) && withinCD(i,j)) {
+			if (canPair(RNA[i], RNA[j])) {
 				flag = 1;
-				int eh = check_hairpin(i,j)?INFINITY_:eH(i, j); //hair pin
-				int es = check_stack(i,j)?INFINITY_:(eS(i, j) + V(i+1,j-1)); // stack
-				if (j-i > 6) {  // Internal Loop BEGIN
+				int eh = canHairpin(i,j)?eH(i,j):INFINITY_; //hair pin
+				int es = canStack(i,j)?eS(i,j)+getShapeEnergy(i)+getShapeEnergy(j)+V(i+1,j-1):INFINITY_; // stack
+				if (j-i > 6) { // Internal Loop BEGIN
 					int p=0, q=0;
 					int VBIij = INFINITY_;
-
-					int found_forced_pair = 0;
 					for (p = i+1; p <= MIN(j-2-TURN,i+MAXLOOP+1) ; p++) {
 						int minq = j-i+p-MAXLOOP-2;
 						if (minq < p+1+TURN) minq = p+1+TURN;
-						for (q = minq; q < j; q++) {
+						int maxq = (p==i+1)?(j-2):(j-1);
+						for (q = minq; q <= maxq; q++) {
 							if (!canPair(RNA[p], RNA[q])) continue;
-							if (check_iloop(i,j,p,q)) continue;
-							if(force_pair1(p,q)){
-							//ZS: if we know a pair should be forced, we should 
-							//just enforce it and not care about other options.
-								VBIij = eL(i,j,p,q) + V(p,q); 
-								found_forced_pair = 1;
-								break; 
-							}	
+							if (!canILoop(i,j,p,q)) continue;
 							VBIij = MIN(eL(i, j, p, q) + V(p,q), VBIij);
 						}
-						if(found_forced_pair){break;}
 					}
-					VBI(i,j) = check_pair(i,j)?INFINITY_:VBIij;
-				} 	// Internal Loop END
-				
-				if (j-i > 10) {	 // Multi Loop BEGIN
+					VBI(i,j) = VBIij;
+					V(i,j) = V(i,j) + getShapeEnergy(i) + getShapeEnergy(j);
+
+				} // Internal Loop END
+				if (j-i > 10) { // Multi Loop BEGIN
 					int h;
 					int VMij, VMijd, VMidj, VMidjd;
 					VMij = VMijd = VMidj = VMidjd = INFINITY_;
-
 					for (h = i+TURN+1; h <= j-1-TURN; h++) { 
-						VMij = MIN(VMij, WMU(i+1,h-1) + WML(h,j-1));		
-						VMidj = MIN(VMidj, WMU(i+2,h-1) + WML(h,j-1));	
-						VMijd = MIN(VMijd, WMU(i+1,h-1) + WML(h,j-2));	
-						VMidjd = MIN(VMidjd, WMU(i+2,h-1) + WML(h,j-2));	
-						//ZS: I don't think the following line is being checked in traceback, so 
-						//if you enable it, sometimes huge parts of the structure will not be possible
-						//to trace. 
-						//I don't know if it should be here or not. If it is here, it should be in traceback
-						//too. For now, I am removing it! 
-						//newWM = MIN(newWM, VMij);
+						VMij = MIN(VMij, WMU(i+1,h-1) + WML(h,j-1)); 
+						VMidj = MIN(VMidj, WMU(i+2,h-1) + WML(h,j-1)); 
+						VMijd = MIN(VMijd, WMU(i+1,h-1) + WML(h,j-2)); 
+						VMidjd = MIN(VMidjd, WMU(i+2,h-1) + WML(h,j-2)); 
 					}
-
-					int d3 = can_dangle(j-1)?Ed3(i,j,j-1):INFINITY_;
-					int d5 = can_dangle(i+1)?Ed5(i,j,i+1):INFINITY_;
-
+					int d3 = canSS(j-1)?Ed3(i,j,j-1):INFINITY_;
+					int d5 = canSS(i+1)?Ed5(i,j,i+1):INFINITY_;
 					VMij = MIN(VMij, (VMidj + d5 +Ec)) ;
 					VMij = MIN(VMij, (VMijd + d3 +Ec));
-					VMij = MIN(VMij, (VMidjd + d5 +  d3+ 2*Ec));
+					VMij = MIN(VMij, (VMidjd + d5 + d3+ 2*Ec));
 					VMij = VMij + Ea + Eb + auPenalty(i,j);
-					VM(i,j) = check_pair(i,j)?INFINITY_:VMij;
+					VM(i,j) = canStack(i,j)?VMij:INFINITY_;
 				} // Multi Loop END
-
-				V(i,j) = check_pair(i,j)?INFINITY_:MIN4(eh,es,VBI(i,j),VM(i,j));
-				V(i,j) = V(i,j) + getShapeEnergy(i) + getShapeEnergy(j);
+				V(i,j) = MIN4(eh,es,VBI(i,j),VM(i,j));
 			}
-			else
-				V(i,j) = INFINITY_;
-
-			if (j-i > 4) {	// WM BEGIN
+			else V(i,j) = INFINITY_;
+			if (j-i > 4) { // WM BEGIN
 				int h; 
-				//ZS: if we know that i,j are pairing, we just have to set WM(i,j) = V(i,j) in the best possible way.
-				//Conversely, we only need to find the best partitioning if we know that i,j are not forced to pair.
-
-				//Prashant's original code had if(!flag) here... I don't know what that was supposed to do?
-				if (!force_pair1(i,j)) {
-					for (h = i+TURN+1 ; h <= j-TURN-1; h++) {
-						newWM = MIN(newWM, WMU(i,h-1) + WML(h,j));
-					}
+				for (h = i+TURN+1 ; h <= j-TURN-1; h++) {
+					//ZS: This sum corresponds to when i,j are NOT paired with each other.
+					//So we need to make sure only terms where i,j aren't pairing are considered. 
+					newWM = (!forcePair(i,j))?MIN(newWM, WMU(i,h-1) + WML(h,j)):newWM;
 				}
-				
 				newWM = MIN(V(i,j) + auPenalty(i,j) + Eb, newWM); 
-
-				//ZS: if i,j are forced to pair then can_dangle(i) and can_dangle(j) will be false 
-				newWM = can_dangle(i)?MIN(V(i+1,j) + Ed3(j,i+1,i) + auPenalty(i+1,j) + Eb + Ec, newWM): newWM; 
-				newWM = can_dangle(j)?MIN(V(i,j-1) + Ed5(j-1,i,j) + auPenalty(i,j-1) + Eb + Ec, newWM) : newWM; 
-				newWM = (can_dangle(i)&&can_dangle(j))?MIN(V(i+1,j-1) + Ed3(j-1,i+1,i) + Ed5(j-1,i+1,j) + auPenalty(i+1,j-1) + Eb + 2*Ec, newWM): newWM;
-				newWM = can_dangle(i)?MIN(WMU(i+1,j) + Ec, newWM):newWM;
-				newWM = can_dangle(j)?MIN(WML(i,j-1) + Ec, newWM):newWM;
+				newWM = canSS(i)?MIN(V(i+1,j) + Ed3(j,i+1,i) + auPenalty(i+1,j) + Eb + Ec, newWM):newWM; //i dangle
+				newWM = canSS(j)?MIN(V(i,j-1) + Ed5(j-1,i,j) + auPenalty(i,j-1) + Eb + Ec, newWM):newWM;  //j dangle
+				newWM = (canSS(i)&&canSS(j))?MIN(V(i+1,j-1) + Ed3(j-1,i+1,i) + Ed5(j-1,i+1,j) + auPenalty(i+1,j-1) + Eb + 2*Ec, newWM):newWM; //i,j dangle
+				newWM = canSS(i)?MIN(WMU(i+1,j) + Ec, newWM):newWM; //i dangle
+				newWM = canSS(j)?MIN(WML(i,j-1) + Ec, newWM):newWM; //j dangle
 				WMU(i,j) = WML(i,j) = newWM;
 			} // WM END
 		}
 	}
-
-	for (j = TURN+2; j <= len; j++)	{
-		int i, branch=0, Wj, Widjd, Wijd, Widj, Wij, Wim1;
+	for (j = TURN+2; j <= len; j++) {
+		int i, Wj, Widjd, Wijd, Widj, Wij, Wim1;
 		Wj = INFINITY_;
 		for (i = 1; i < j-TURN; i++) {
 			Wij = Widjd = Wijd = Widj = INFINITY_;
 			Wim1 = MIN(0, W[i-1]); 
 			Wij = V(i, j) + auPenalty(i, j) + Wim1;
-			Widjd = (can_dangle(i)&&can_dangle(j))?(V(i+1,j-1) + auPenalty(i+1,j-1) + Ed3(j-1,i + 1,i) + Ed5(j-1,i+1,j) + Wim1):INFINITY_;
-			Wijd = can_dangle(j)?(V(i,j-1) + auPenalty(i,j-1) + Ed5(j-1,i,j) + Wim1):INFINITY_;
-			Widj =  (can_dangle(i))?(V(i+1, j) + auPenalty(i+1,j) + Ed3(j,i + 1,i) + Wim1):INFINITY_;
+			Widjd = (canSS(i)&&canSS(j))?V(i+1,j-1) + auPenalty(i+1,j-1) + Ed3(j-1,i + 1,i) + Ed5(j-1,i+1,j) + Wim1:Widjd;
+			Wijd = canSS(j)?V(i,j-1) + auPenalty(i,j-1) + Ed5(j-1,i,j) + Wim1:Wijd;
+			Widj = canSS(i)?V(i+1, j) + auPenalty(i+1,j) + Ed3(j,i + 1,i) + Wim1:Widj;
 			Wj = MIN(MIN4(Wij, Widjd, Wijd, Widj), Wj); 
-			
-			if (Wj<INFINITY_) {
-				if (Wj==Wij && force_pair1(i,j))
-				   branch = 1;
-				else if	(Wj==Widjd && force_pair1(i+1,j-1))
-				   branch = 1;
-				else if	(Wj==Wijd && force_pair1(i,j-1))
-				  branch = 1;	
-				else if	(force_pair1(i+1,j))
-				  branch = 1;
-			}
 		}
-		W[j] = branch?Wj:MIN(Wj, W[j-1]);
+		W[j] = canSS(j)?MIN(Wj, W[j-1]):Wj;
 	}
-
 	return W[len];
 }
+

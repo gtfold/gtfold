@@ -174,6 +174,16 @@ int init_constraints(const char* constr_file,int length) {
 	
 	//ZS: set prohibited basepairs
 	if(nPBP != 0){
+		int temp;
+		//Make sure smallest one is first 
+		for(it = 0; it < nPBP; it++){
+			if(PBP[it][0] > PBP[it][1]){
+				temp = PBP[it][0];	
+				PBP[it][0] = PBP[it][1];
+				PBP[it][1] = temp;
+			}
+		}
+
 		for(it = 0; it < nPBP; it++){
 			if(PBP[it][2] < 1 || PBP[it][1] == 0){
 				printf("Invalid entry (P: %d %d %d)\n", PBP[it][0], PBP[it][1], PBP[it][2]);
@@ -194,6 +204,14 @@ int init_constraints(const char* constr_file,int length) {
 	//ZS: set forced basepairs and single-stranded nucleotides
 
 	if(nFBP != 0){
+		int temp; 
+		for(it  = 0; it < nFBP; it++){
+			if(FBP[it][0] > FBP[it][1]){
+				temp = FBP[it][0];
+				FBP[it][0] = FBP[it][1];
+				FBP[it][1] = temp; 
+			}
+		}
 		for(it = 0; it<nFBP; it++){
 			if(FBP[it][2] < 1){
 				printf("Invalid entry (F: %d %d %d)\n", FBP[it][0], FBP[it][1], FBP[it][2]);
@@ -281,7 +299,7 @@ int verify_structure(){
 				//correct answer: strcuture(PBP[it][0]+k-1) != structure(PBP[it][1]-(k-1))
 				if(structure[PBP[it][0]+k-1] == PBP[it][1]-(k-1) || structure[PBP[it][1]-(k-1)] == PBP[it][0]+k-1){	
 					errorhappened = 1; 
-					printf("Constraint P %d %d %d is not fulfilled.\n",PBP[it][0], PBP[it][1], PBP[it][2]);
+					fprintf(stderr, "Constraint P %d %d %d is not fulfilled.\n",PBP[it][0], PBP[it][1], PBP[it][2]);
 					break;
 				}
 			}
@@ -310,13 +328,13 @@ int verify_structure(){
 				if(FBP[it][1] == 0){
 					//force single-stranded
 					if(structure[FBP[it][0]] != 0){
-						printf("Constraint F %d %d %d is not fulfilled.\n",FBP[it][0], FBP[it][1], FBP[it][2]);
+						fprintf(stderr, "Constraint F %d %d %d is not fulfilled.\n",FBP[it][0], FBP[it][1], FBP[it][2]);
 						errorhappened = 1;
 					}
 				}
 				else{
 					if(structure[FBP[it][0]+k-1] != FBP[it][1]-(k-1) || structure[FBP[it][1]-(k-1)] != FBP[it][0]+k-1){
-						printf("Constraint F %d %d %d is not fulfilled.\n",FBP[it][0], FBP[it][1], FBP[it][2]);
+						fprintf(stderr, "Constraint F %d %d %d is not fulfilled.\n",FBP[it][0], FBP[it][1], FBP[it][2]);
 						errorhappened = 1;
 					}
 					
@@ -381,123 +399,75 @@ void print_constraints(int len) {
 			printf(".");
 			break;
 		default:
-			printf("ERROR in constraint value, debugging info: i=%d, BP(i,i)=%d",i,BP(i,i));break;
+			fprintf(stderr,"ERROR in constraint value, debugging info: i=%d, BP(i,i)=%d",i,BP(i,i));break;
 	    }  
     }
     printf("\n");
  
 }
-/* Original Prashant's code commented out
-int is_ss(int i, int j) {
 
-	if (CONS_ENABLED) {
-		int it;
-		for (it = i + 1; it < j; it++) {
-			if (BP[it] > 0) return 1;
-		}
-		return 0;
-	}
-	else
-		return 0;
-
-return 0;
-}
-
-
-int prohibit_base(int i) {
-//	return (BP[i] == -1);
-return 0;
-}
-
-*/
-//int check_base(int i) {
-
-//	if (CONS_ENABLED) 
-//		return (BP[i] <= 0);
-//	else
-//		return 1;
-
-//return 1;
-//}
-
-/*int force_pair(int i, int j) {
-
-		return (BP[i] > 0 && j != BP[i]);
-
-return 0;
-}*/
-
-int force_pair1(int i, int j) {
-//ZS: this function returns true if a pair between i and j is forced.
-
+int forcePair(int i, int j) {
+//ZS: this function returns true if the pair i-j is forced.
 	if (CONS_ENABLED) 
 		return BP(i,j)==1;
 	else
 		return 0;
 }
 
-int force_ss1(int i){
-//ZS: this function returns true if a base is forced to be single-stranded 
-
+int forceSS(int i){
+//ZS: this function returns true if base i is forced to be single-stranded 
 	if(CONS_ENABLED)
 		return BP(i,i)==3;
 	else 
 		return 0;
 }
 
-int force_ssregion1(int i, int j){
+int forceSSregion(int i, int j){
+	//ZS: This returns 1 if all nucleotides between i and j are forced to be single-stranded, 0 if there is at least one that is not
 	if(CONS_ENABLED){
-		int value = 1;
 		for(int p = i; p<j; p++){
 			if(BP(p,p)!=3){
-				value= 0;
+				return 0;
 			}
 		}
-		return value;
+		return 1;
 	}
 	else return 0;
 }
 
-int check_iloop(int i, int j, int p, int q) {
-//ZS: This function returns 1 if internal loop with pairs i,j and p,q is not allowed.
+int canILoop(int i, int j, int p, int q) {
+//ZS: This function returns 1 if internal loop with pairs i,j and p,q is allowed, 0 if not allowed
 	if (CONS_ENABLED){
 		//Need to check that i,j and p,q pairs are allowed, 
 		//and single-stranded regions between i,p and q,j are allowed
-		return check_pair(i,j)||check_pair(p,q)||check_ssregion(i,p)||check_ssregion(q,j);
+		return canStack(i,j) && canStack(p,q) && canSSregion(i,p) && canSSregion(q,j);
 	}
-		//Original code (Prashant's):
-		//return is_ss(i,p) || is_ss(q,j);
 	else 
-		return 0;
+		return withinCD(i,j) && withinCD(p,q);
 }
 
-int check_pair(int i, int j) {
-//ZS: This function returns 1 if i and j are not allowed
-//to pair according to the constraints. 
-	if (CONS_ENABLED){ 
-		//can't pair if i,j is prohibited or i or j are forced to be single-stranded
-		if(BP(i,j)==2||BP(i,i)==3||BP(j,j)==3) return 1;
-		//can't pair if i or j are forced to pair with something other than each other
-		if((BP(i,i)==4||BP(j,j)==4)&&BP(i,j)!=1) return 1;	
-		else return 0;
-		//Original code (Prashant's):
-		//return prohibit_base(i) || prohibit_base(j) || force_pair(i,j) || force_pair(j,i);
-	}
-	else return 0;
+int canHairpin(int i, int j) {
+	//ZS: Returns 1 if a hairpin between i,j is allowed, 0 if not allowed
+	if (CONS_ENABLED){
+		//Need to check if pair is allowed and if anything pairs between them
+		return canStack(i,j) && canSSregion(i,j);
+	}	
+	else return withinCD(i,j);
 }
 
-int check_ssregion(int i, int j){
-//ZS: This function returns 1 if any nucleotide between i and j is forced to pair with something
+int canSSregion(int i, int j){
+//ZS: This function returns 0 if any nucleotide between i and j is forced to pair with something
 //(i and j are NOT included in the check)
 	if(CONS_ENABLED){
 		for(int p = i+1; p<j; p++){
-			if(BP(p,p)==4) return 1;
+			if(BP(p,p)==4) return 0;
 		}
-		return 0;}
-	else{ return 0; }
+		return 1;}
+	else{ return 1; }
 }
 
-int can_dangle(int i){
+int canSS(int i){
+	//ZS: This function returns 0 if i is forced to pair with something, 1 if it can be single stranded. 
 	if (CONS_ENABLED){
 		return BP(i,i)!=4;
 	}
@@ -506,32 +476,25 @@ int can_dangle(int i){
 	}
 }
 
-int check_stack(int i, int j) {
-	if (CONS_ENABLED){
-		//Just need to check if pair is allowed
-		return check_pair(i,j);
-		//Original code (Prashant's)
-		//return force_pair(i,j) || force_pair(j,i);
+int canStack(int i, int j) {
+// ZS: This function returns 1 if an i,j pair is allowed, 0 if not allowed
+// (Unfortunately the more intuitive "canPair" name is already used to mark complementary nucleotides so 
+// I couldn't use that again) 
+	if (CONS_ENABLED){ 
+		//can't pair if i,j is prohibited, or i or j are forced to be single-stranded
+		if(BP(i,j)==2||BP(i,i)==3||BP(j,j)==3) return 0;
+		//can't pair if i or j are forced to pair with something other than each other
+		if((BP(i,i)==4||BP(j,j)==4)&&BP(i,j)!=1) return 0;	
+		else return withinCD(i,j);
 	}
-	else return 0;
-}
-
-int check_hairpin(int i, int j) {
-
-	//ZS: According to algorithms.c, this should return 
-	//1 when a hairpin with i,j as closing pair isn't allowed.
-	if (CONS_ENABLED){
-		//Need to check if pair is allowed and if anything pairs between them
-		return check_pair(i,j)||check_ssregion(i,j);
-		//Original code (Prashant's)
-		//return is_ss(i,j) || force_pair(i,j) || force_pair(j,i);
-	}	
-	else return 0;
+	else return withinCD(i,j);
 }
 
 int withinCD(int i, int j){
-	if (LIMIT_DISTANCE){	
-		return j-i+1>contactDistance;
+	//ZS: This function returns 1 if i and j are within the required contact distance from each other. 
+	if (LIMIT_DISTANCE){
+		return (j-i>=contactDistance);
 	}
 	else return 1;
 }
+
