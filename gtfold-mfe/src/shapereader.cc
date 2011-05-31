@@ -42,7 +42,7 @@ void readSHAPEarray(const char* filename, int seqlength){
 	
 	while(getline(infile,line)>0){
 		if(sscanf(line.c_str(), "%d %lf", &position, &SHAPEnumber)==2){
-			if(position < seqlength){
+			if(position <= seqlength){
 				SHAPEarray[position] = SHAPEnumber;
 				SHAPEenergies[position] = calcShapeEnergy(SHAPEnumber);
 			}

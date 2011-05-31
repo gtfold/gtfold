@@ -51,7 +51,7 @@ int calculate(int len, int nThreads) {
 			if (canPair(RNA[i], RNA[j])) {
 				flag = 1;
 				int eh = canHairpin(i,j)?eH(i,j):INFINITY_; //hair pin
-				int es = canStack(i,j)?eS(i,j)+getShapeEnergy(i)+getShapeEnergy(j)+V(i+1,j-1):INFINITY_; // stack
+				int es = canStack(i,j)?eS(i,j)+V(i+1,j-1):INFINITY_; // stack
 				if (j-i > 6) { // Internal Loop BEGIN
 					int p=0, q=0;
 					int VBIij = INFINITY_;
@@ -66,7 +66,6 @@ int calculate(int len, int nThreads) {
 						}
 					}
 					VBI(i,j) = VBIij;
-					V(i,j) = V(i,j) + getShapeEnergy(i) + getShapeEnergy(j);
 
 				} // Internal Loop END
 				if (j-i > 10) { // Multi Loop BEGIN

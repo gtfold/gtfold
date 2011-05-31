@@ -223,11 +223,11 @@ int init_constraints(const char* constr_file,int length) {
 				int i1 = FBP[it][0]+k-1;
 				int j1 = FBP[it][1]-k+1;
 				if(FBP[it][1]!=0&&!canPair(RNA[FBP[it][0]+k-1], RNA[FBP[it][1]-k+1])){
-					printf("Can't force (%d, %d) to pair (non-canonical) \n", FBP[it][0]+k-1, FBP[it][1]-k+1);
+					fprintf(stderr,"Can't force (%d, %d) to pair (non-canonical) \n", FBP[it][0]+k-1, FBP[it][1]-k+1);
 					continue;			
 				}
 				if(FBP[it][1]!=0&&(j1-i1 < TURN)){
-					printf("Can't force (%d, %d) to pair (turn too tight) \n", FBP[it][0]+k-1, FBP[it][1]-k+1);
+					fprintf(stderr,"Can't force (%d, %d) to pair (turn too tight) \n", FBP[it][0]+k-1, FBP[it][1]-k+1);
 					continue;
 				}
 				if(FBP[it][1] == 0){
