@@ -205,8 +205,9 @@ int init_constraints(const char* constr_file,int length) {
 
 	if(nFBP != 0){
 		int temp; 
+		//Make sure smallest one is first, UNLESS forcing single-stranded 
 		for(it  = 0; it < nFBP; it++){
-			if(FBP[it][0] > FBP[it][1]){
+			if(FBP[it][0] > FBP[it][1] && FBP[it][1]!=0){
 				temp = FBP[it][0];
 				FBP[it][0] = FBP[it][1];
 				FBP[it][1] = temp; 
