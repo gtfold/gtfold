@@ -4,24 +4,20 @@
 #include "data.h"
 
 extern int *V; 
-extern int *VV; 
-extern int *VV1; 
 extern int *W; 
 extern int *VBI; 
 extern int *VM; 
 extern int **WM; 
-extern int *WMu; 
-extern int *WMl; 
+extern int **WMPrime; 
 extern int *indx; 
 
 
 #define V(i,j) V[indx[j]+i]
 #define VM(i,j) VM[indx[j]+i]
 #define WM(i,j) WM[i][j]
+#define WMPrime(i,j) WMPrime[i][j]
 #define WMU(i,j) WM[i][j]
 #define WML(i,j) WM[j][i]
-//#define WMU(i,j) WMu[indx[j]+i]
-//#define WML(i,j) WMl[indx[j]+i]
 #define VBI(i,j) VBI[indx[j]+i]
 
 #define auPen(i, j) ((( (i)==BASE_U || (j)==BASE_U ) && ( (i)==BASE_A || (i)==BASE_G || (j)==BASE_A || (j)==BASE_G )) ? auend : 0)

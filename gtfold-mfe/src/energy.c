@@ -9,12 +9,11 @@
 #include "shapereader.h"
 
 int *V; 
-int *VV; 
-int *VV1; 
 int *W; 
 int *VBI; 
 int *VM; 
 int **WM; 
+int **WMPrime; 
 int *indx; 
 
 int alloc_flag = 0;
@@ -26,18 +25,6 @@ void create_tables(int len) {
 		exit(-1);
 	}
 
-	VV1 = (int *) malloc((len+ 1)*sizeof(int));
-	if (VV1 == NULL) {
-		perror("Cannot allocate variable 'V'");
-		exit(-1);
-	}
-
-	VV = (int *) malloc((len+ 1)*sizeof(int));
-	if (VV == NULL) {
-		perror("Cannot allocate variable 'V'");
-		exit(-1);
-	}
-	
 	int i;
 	WM = (int **) malloc((len+1)* sizeof(int *));
 	if (WM == NULL) {
@@ -50,7 +37,20 @@ void create_tables(int len) {
 			perror("Cannot allocate variable 'WM[i]'");
 			exit(-1);
 		}   
+	}
+
+  WMPrime = (int **) malloc((len+1)* sizeof(int *));
+	if (WMPrime == NULL) {
+		perror("Cannot allocate variable 'WM'");
+		exit(-1);
 	}   
+	for (i = 0; i <= len; i++) {
+		WMPrime[i] = (int *)malloc((len+1)* sizeof(int));
+		if (WMPrime[i] == NULL) {
+			perror("Cannot allocate variable 'WM[i]'");
+			exit(-1);
+		}   
+	}
 
 	VM = (int *) malloc(((len+1)*len/2 + 1) * sizeof(int));
 	if (VM == NULL) {
@@ -87,15 +87,13 @@ void init_tables(int len) {
 	
 	for (i = 0; i <= len; i++) {
 		W[i] = INFINITY_; 
-		VV[i] = INFINITY_;
-		VV1[i] = INFINITY_;
-		for (j = 0; j <= len; j++) 
+		for (j = 0; j <= len; j++) {
 			WM[i][j] = INFINITY_;
+			WMPrime[i][j] = INFINITY_;
+    }
 	}
 	
-	
 	LLL = (len)*(len+1)/2 + 1;
-
 	for (i = 0; i < LLL; i++) {
 		V[i] = INFINITY_;
 		VM[i] = INFINITY_;
@@ -116,11 +114,12 @@ void free_tables(int len) {
 		for (i = 0; i <= len; i++) free(WM[i]);
 		free(WM);
 
+		for (i = 0; i <= len; i++) free(WMPrime[i]);
+		free(WMPrime);
+
 		free(VM);
 		free(VBI);
 		free(V);
-		free(VV);
-		free(VV1);
 		free(W);
 	}
 }

@@ -40,19 +40,19 @@ int calculate(int len, int nThreads) {
 	fprintf(stdout,"Thread count: %3d \n",omp_get_num_threads());
 #endif
 
-
 	for (b = TURN+1; b <= len-1; b++) {
 #ifdef _OPENMP
 #pragma omp parallel for private (i,j) schedule(guided)
 #endif
 		for (i = 1; i <= len - b; i++) {
 			j = i + b;
-			int flag = 0, newWM = INFINITY_; 
+			int newWM = INFINITY_; 
 			if (canPair(RNA[i], RNA[j])) {
-				flag = 1;
 				int eh = canHairpin(i,j)?eH(i,j):INFINITY_; //hair pin
-				int es = canStack(i,j)?eS(i,j)+getShapeEnergy(i)+getShapeEnergy(j)+V(i+1,j-1):INFINITY_; // stack
-				if (j-i > 6) { // Internal Loop BEGIN
+				
+        int es = canStack(i,j)?eS(i,j)+getShapeEnergy(i)+getShapeEnergy(j)+V(i+1,j-1):INFINITY_; // stack
+				
+        if (j-i > 6) { // Internal Loop BEGIN
 					int p=0, q=0;
 					int VBIij = INFINITY_;
 					for (p = i+1; p <= MIN(j-2-TURN,i+MAXLOOP+1) ; p++) {
@@ -67,18 +67,14 @@ int calculate(int len, int nThreads) {
 					}
 					VBI(i,j) = VBIij;
 					V(i,j) = V(i,j) + getShapeEnergy(i) + getShapeEnergy(j);
-
 				} // Internal Loop END
-				if (j-i > 10) { // Multi Loop BEGIN
-					int h;
-					int VMij, VMijd, VMidj, VMidjd;
-					VMij = VMijd = VMidj = VMidjd = INFINITY_;
-					for (h = i+TURN+1; h <= j-1-TURN; h++) { 
-						VMij = MIN(VMij, WMU(i+1,h-1) + WML(h,j-1)); 
-						VMidj = MIN(VMidj, WMU(i+2,h-1) + WML(h,j-1)); 
-						VMijd = MIN(VMijd, WMU(i+1,h-1) + WML(h,j-2)); 
-						VMidjd = MIN(VMidjd, WMU(i+2,h-1) + WML(h,j-2)); 
-					}
+				
+        if (j-i > 10) { // Multi Loop BEGIN
+					int VMij =  WMPrime[i+1][j-1]; 
+					int VMidj = WMPrime[i+2][j-1]; 
+					int VMijd = WMPrime[i+1][j-2]; 
+					int VMidjd = WMPrime[i+2][j-2]; 
+          
 					int d3 = canSS(j-1)?Ed3(i,j,j-1):INFINITY_;
 					int d5 = canSS(i+1)?Ed5(i,j,i+1):INFINITY_;
 					VMij = MIN(VMij, (VMidj + d5 +Ec)) ;
@@ -87,16 +83,21 @@ int calculate(int len, int nThreads) {
 					VMij = VMij + Ea + Eb + auPenalty(i,j);
 					VM(i,j) = canStack(i,j)?VMij:INFINITY_;
 				} // Multi Loop END
-				V(i,j) = MIN4(eh,es,VBI(i,j),VM(i,j));
+				
+        V(i,j) = MIN4(eh,es,VBI(i,j),VM(i,j));
 			}
 			else V(i,j) = INFINITY_;
-			if (j-i > 4) { // WM BEGIN
+			
+      if (j-i > 4) { // WM BEGIN
 				int h; 
 				for (h = i+TURN+1 ; h <= j-TURN-1; h++) {
 					//ZS: This sum corresponds to when i,j are NOT paired with each other.
 					//So we need to make sure only terms where i,j aren't pairing are considered. 
-					newWM = (!forcePair(i,j))?MIN(newWM, WMU(i,h-1) + WML(h,j)):newWM;
+					// Added auxillary storage WMPrime to speedup multiloop calculations
+          WMPrime[i][j] = MIN(WMPrime[i][j], WMU(i,h-1) + WML(h,j)); 
+					//newWM = (!forcePair(i,j))?MIN(newWM, WMU(i,h-1) + WML(h,j)):newWM;
 				}
+				newWM = (!forcePair(i,j))?MIN(newWM, WMPrime[i][j]):newWM;
 				newWM = MIN(V(i,j) + auPenalty(i,j) + Eb, newWM); 
 				newWM = canSS(i)?MIN(V(i+1,j) + Ed3(j,i+1,i) + auPenalty(i+1,j) + Eb + Ec, newWM):newWM; //i dangle
 				newWM = canSS(j)?MIN(V(i,j-1) + Ed5(j-1,i,j) + auPenalty(i,j-1) + Eb + Ec, newWM):newWM;  //j dangle
@@ -107,6 +108,7 @@ int calculate(int len, int nThreads) {
 			} // WM END
 		}
 	}
+
 	for (j = TURN+2; j <= len; j++) {
 		int i, Wj, Widjd, Wijd, Widj, Wij, Wim1;
 		Wj = INFINITY_;
@@ -123,4 +125,3 @@ int calculate(int len, int nThreads) {
 	}
 	return W[len];
 }
-
