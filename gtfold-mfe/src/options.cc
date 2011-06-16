@@ -14,6 +14,7 @@ bool SUBOPT_ENABLED;
 bool CONS_ENABLED = false;
 bool VERBOSE = false;
 bool SHAPE_ENABLED = false;
+bool T_MISMATCH = false;
 
 string seqfile = "";
 string constraintsFile = "";
@@ -41,6 +42,7 @@ void help() {
     printf("   -d, --limitCD num    Set a maximum base pair contact distance to num. If no\n");
     printf("                        limit is given, base pairs can be over any distance\n");
     printf("   -p  --paramdir DIR   Path to directory from where parameters are to be read\n");
+    printf("   -m   			    enable terminal mismatch calculations\n");
    	printf("   -n, --noisolate      Prevent isolated base pairs from forming\n");
     printf("   -o, --output FILE    Output to FILE (default output is to a .ct extension)\n");
     printf("   -t, --threads num    Limit number of threads used\n");
@@ -100,6 +102,8 @@ void parse_options(int argc, char** argv) {
 				}
 				else
 					help();
+			} else if (strcmp(argv[i], "-m") == 0) {
+                T_MISMATCH = true;
 			}
 		   	else if(strcmp(argv[i], "--threads") == 0 || strcmp(argv[i], "-t") == 0) {
 				if(i < argc)

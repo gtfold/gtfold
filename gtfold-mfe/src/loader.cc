@@ -34,7 +34,6 @@
 
 #define xstr(s) str(s)
 #define str(s) #s
-//#define GENBIN 1
 
 using namespace std;
 
@@ -53,14 +52,20 @@ int tstkh[256]; /* Terminal mismatch energy used in the calculations of hairpin 
 int tstki[256]; /* Terminal mismatch energy used in the calculations of internal loops */
 int tloop[maxtloop + 1][2];
 int numoftloops;
-int iloop22[5][5][5][5][5][5][5][5]; /* 2*2 internal looops */
 int iloop21[5][5][5][5][5][5][5]; /* 2*1 internal loops */
+int iloop22[5][5][5][5][5][5][5][5]; /* 2*2 internal looops */
 int iloop11[5][5][5][5][5][5]; /* 1*1 internal loops */
-int coax[6][6][6][6];
-int tstackcoax[6][6][6][6];
-int coaxstack[6][6][6][6];
-int tstack[6][6][6][6];
-int tstkm[6][6][6][6];
+
+//int coax[6][6][6][6];
+//int tstackcoax[6][6][6][6];
+//int coaxstack[6][6][6][6];
+//int tstack[6][6][6][6];
+//int tstkm[6][6][6][6];
+
+int tstackm[5][5][6][6];
+int tstacke[5][5][6][6];
+int tstacki23[5][5][5][5];
+
 int auend;
 int gubonus;
 int cint; /* cint, cslope, c3 are used for poly C hairpin loops */
@@ -75,7 +80,7 @@ int init;
 int gail; /* It is either 0 or 1. It is used for grosely asymmetric internal loops */
 float prelog;
 
-void readThermodynamicParameters(const char *userdatadir,bool userdatalogic) {
+void readThermodynamicParameters(const char *userdatadir,bool userdatalogic, int t_mismatch=0) {
 	if (!userdatalogic) {
 		EN_DATADIR.assign(xstr(DATADIR));
 		EN_DATADIR += "/";
@@ -96,9 +101,19 @@ void readThermodynamicParameters(const char *userdatadir,bool userdatalogic) {
 	initTstkhValues("tstackh.DAT", EN_DATADIR);
 	initTstkiValues("tstacki.DAT", EN_DATADIR);
 	initTloopValues("tloop.DAT", EN_DATADIR);
-	initInt21Values("int21.DAT", EN_DATADIR);
-	initInt22Values("int22.DAT", EN_DATADIR);
-	initInt11Values("int11.DAT", EN_DATADIR);
+
+	if (t_mismatch) {
+		initInt21Values("asint1x2.DAT", EN_DATADIR);
+		initInt22Values("sint4.DAT", EN_DATADIR);
+		initInt11Values("sint2.DAT", EN_DATADIR);
+		initTstkmValues("tstackm.DAT", EN_DATADIR);
+		initTstkeValues("tstacke.DAT", EN_DATADIR);
+		initTstk23Values("tstacki23.DAT", EN_DATADIR);
+	} else {
+		initInt21Values("int21.DAT", EN_DATADIR);
+		initInt22Values("int22.DAT", EN_DATADIR);
+		initInt11Values("int11.DAT", EN_DATADIR);
+	}
 }
 
 int initStackValues(const string& fileName, const string& dirPath)  { 
@@ -111,7 +126,7 @@ int initStackValues(const string& fileName, const string& dirPath)  {
 	for (int i = 0; i < 4; i++) {
 		for (int j = 0; j < 4; j++) {
 			for (int k = 0; k < 4; k++) {
-				for (int l = 0; l < 2; l++) {
+				for (int l = 0; l < 4; l++) {
 					stack[fourBaseIndex(i,j,k,l)] = INFINITY_;
 				}
 			}
@@ -309,7 +324,7 @@ int initLoopValues( const string& fileName, const string& dirPath) {
 	int tempValue = 0;
 
 	if (cf.fail()) {
-		cerr << "File open failed" << endl;
+		cerr << "File open failed " << filePath << endl;
 		exit(-1);
 	}
 
@@ -338,6 +353,119 @@ int initLoopValues( const string& fileName, const string& dirPath) {
 			}
 		}
 	}
+	cf.close();
+
+	return 0;
+}
+
+int initTstk23Values(const std::string& fileName, const std::string& dirPath) {
+	int i1, j1, i2, j2;                                                              
+	std::string filePath;
+	std::ifstream cf;
+	std::string val;						
+
+	filePath = dirPath + fileName;
+	cf.open(filePath.c_str(), ios::in);
+
+	if (cf.fail()) {
+		cerr << "File open failed " << filePath << endl;
+		exit(-1);
+	}
+
+	for (i1 = 0; i1 < 5; ++i1)
+		for (i2 = 0; i2 < 5; ++i2)
+			for (j1 = 0; j1 < 5; ++j1)
+				for (j2 = 0; j2 < 5; ++j2)
+					if (i1 == 4 || j1 == 4)
+						tstacki23[i1][j1][i2][j2] = INFINITY_;
+					else if (i2 == 4 || j2 == 4)
+						tstacki23[i1][j1][i2][j2] = 0;
+					else {
+						cf >> val;
+						tstacki23[i1][j1][i2][j2] = (val == "inf")? (INFINITY_): 
+							((int) floor(100.0 * atof(val.c_str()) + .5));
+					}
+	cf.close();
+
+	return 0;
+}
+
+
+
+
+int initTstkeValues(const std::string& fileName, const std::string& dirPath) {
+	int i1, j1, i2, j2;                                                              
+	std::string filePath;
+	std::ifstream cf;
+	std::string val;						
+
+	filePath = dirPath + fileName;
+	cf.open(filePath.c_str(), ios::in);
+
+	if (cf.fail()) {
+		cerr << "File open failed " << filePath << endl;
+		exit(-1);
+	}
+
+	for (i1 = 0; i1 < 5; ++i1) {                                    
+		for (i2 = 0; i2 < 6; ++i2) {                                                     
+			for (j1 = 0; j1 < 5; ++j1) {                                                   
+				for (j2 = 0; j2 < 6; ++j2) {                                                      
+					if (i1 == 4 || j1 == 4)                                                       
+						tstacke[i1][j1][i2][j2] = INFINITY_;                                         
+					else if (i2 == 5 || j2 == 5)                                                  
+						tstacke[i1][j1][i2][j2] = INFINITY_;                                         
+					else if (i2 == 4 || j2 == 4)                                                  
+						tstacke[i1][j1][i2][j2] = 0;                                                
+					else { 
+						cf >> val;
+						tstacke[i1][j1][i2][j2] = (val == "inf")? (INFINITY_): 
+							((int) floor(100.0 * atof(val.c_str()) + .5));
+					}
+				}
+			}
+		}			
+	}
+
+	cf.close();
+
+	return 0;
+}
+
+int initTstkmValues(const std::string& fileName, const std::string& dirPath) {
+	int i1, j1, i2, j2;                                                              
+	std::string filePath;
+	std::ifstream cf;
+	std::string val;						
+
+	filePath = dirPath + fileName;
+	cf.open(filePath.c_str(), ios::in);
+	
+	if (cf.fail()) {
+		cerr << "File open failed " << filePath << endl;
+		exit(-1);
+	}
+
+	for (i1 = 0; i1 < 5; ++i1) {                                    
+		for (i2 = 0; i2 < 6; ++i2) {                                                     
+			for (j1 = 0; j1 < 5; ++j1) {                                                   
+				for (j2 = 0; j2 < 6; ++j2) {                                                      
+					if (i1 == 4 || j1 == 4)                                                       
+						tstackm[i1][j1][i2][j2] = INFINITY_;                                         
+					else if (i2 == 5 || j2 == 5)                                                  
+						tstackm[i1][j1][i2][j2] = INFINITY_;                                         
+					else if (i2 == 4 || j2 == 4)                                                  
+						tstackm[i1][j1][i2][j2] = 0;                                                
+					else { 
+						cf >> val;
+						tstackm[i1][j1][i2][j2] = (val == "inf")? (INFINITY_): 
+							((int) floor(100.0 * atof(val.c_str()) + .5));
+					}
+				}
+			}
+		}			
+	}
+
 	cf.close();
 
 	return 0;
@@ -476,9 +604,11 @@ int initTloopValues(const std::string& fileName, const std::string& dirPath) {
 			currentValue[count] = currentLine[count + clindex];
 			count++;
 		}
-
+		
 		tloop[numoftloops][0] = (int) atoi(currentSeqNumbers);
-		tloop[numoftloops][1] = (int) floor(100.0 * atof(currentValue) + 0.5);
+		
+		if (!(strcmp(currentValue,"inf")==0)) 
+			tloop[numoftloops][1] = (int) floor(100.0 * atof(currentValue) + 0.5);
 	}
 	cf.close();
 	return 0;
@@ -510,7 +640,7 @@ int initInt22Values(const std::string& fileName, const std::string& dirPath) {
 	string filePath = dirPath + fileName;
 	cf.open(filePath.c_str(), ios::in);
 	if (!cf.good()) {
-		cerr << "File open failed " << endl;
+		cerr << "File open failed " << filePath << endl;
 		exit(-1);
 	}
 
@@ -556,8 +686,9 @@ int initInt22Values(const std::string& fileName, const std::string& dirPath) {
 				l = ((colIndex - 1) - (colIndex - 1) % 4) / 4;
 				m = (colIndex - 1) % 4;
 
-				iloop22[base[0]][base[1]][base[2]][base[3]][j][l][k][m] 
-					= (int) floor(100.0 * atof(currentValue) + 0.5);
+				if (!(strcmp(currentValue,"inf")==0)) 
+					iloop22[base[0]][base[1]][base[2]][base[3]][j][l][k][m] 
+						= (int) floor(100.0 * atof(currentValue) + 0.5);
 			}
 		}
 	}
@@ -617,7 +748,7 @@ int initInt21Values(const std::string& fileName, const std::string& dirPath) {
 	std::string filePath = dirPath + fileName;
 	cf.open(filePath.c_str(), ios::in);
 	if (cf.fail()) {
-		cerr << "File open failed" << endl;
+		cerr << "File open failed" << filePath << endl;
 		exit(-1);
 	}
 
@@ -646,8 +777,8 @@ int initInt21Values(const std::string& fileName, const std::string& dirPath) {
 					c = k;
 					e = j;
 
-					iloop21[a - 1][b - 1][c - 1][d - 1][e - 1][f - 1][g - 1]
-						= temp;
+					if (!(strcmp(value,"inf")==0)) 
+						iloop21[a - 1][b - 1][c - 1][d - 1][e - 1][f - 1][g - 1] = temp;
 					r++;
 					if (r % 4 == 0) jj++;
 					d++;
@@ -662,6 +793,7 @@ int initInt21Values(const std::string& fileName, const std::string& dirPath) {
 	cf.close();
 	return 0;
 }
+
 
 int initInt11Values(const std::string& fileName, const std::string& dirPath) {
 	int i, j, k, r, q, t;
@@ -685,7 +817,7 @@ int initInt11Values(const std::string& fileName, const std::string& dirPath) {
 	std::string filePath = dirPath + fileName;
 	cf.open(filePath.c_str(), ios::in);
 	if (cf.fail()) {
-		cerr << "File open failed" << endl;
+		cerr << "File open failed " << filePath << endl;
 		exit(-1);
 	}
 
@@ -729,7 +861,10 @@ int initInt11Values(const std::string& fileName, const std::string& dirPath) {
 				d = base2[k];
 				c = base1[jj];
 				f = base2[jj];
-				iloop11[a - 1][b - 1][c - 1][d - 1][e - 1][f - 1] = temp;
+				
+				if (!(strcmp(value,"inf")==0)) 
+					iloop11[a - 1][b - 1][c - 1][d - 1][e - 1][f - 1] = temp;
+				
 				r++;
 				if (r % 4 == 0) jj++;
 				e++;
@@ -740,5 +875,6 @@ int initInt11Values(const std::string& fileName, const std::string& dirPath) {
 	}
 
 	cf.close();
+	
 	return 0;
 }

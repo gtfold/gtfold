@@ -15,6 +15,7 @@ int *VM;
 int **WM; 
 int **WMPrime; 
 int *indx; 
+int **PP; 
 
 int alloc_flag = 0;
 
@@ -39,7 +40,20 @@ void create_tables(int len) {
 		}   
 	}
 
-  WMPrime = (int **) malloc((len+1)* sizeof(int *));
+	PP = (int **) malloc((len+1)* sizeof(int *));
+	if (PP == NULL) {
+		perror("Cannot allocate variable 'WM'");
+		exit(-1);
+	}   
+	for (i = 0; i <= len; i++) {
+		PP[i] = (int *)malloc((len+1)* sizeof(int));
+		if (PP[i] == NULL) {
+			perror("Cannot allocate variable 'WM[i]'");
+			exit(-1);
+		}   
+	}
+
+  	WMPrime = (int **) malloc((len+1)* sizeof(int *));
 	if (WMPrime == NULL) {
 		perror("Cannot allocate variable 'WM'");
 		exit(-1);
@@ -90,7 +104,8 @@ void init_tables(int len) {
 		for (j = 0; j <= len; j++) {
 			WM[i][j] = INFINITY_;
 			WMPrime[i][j] = INFINITY_;
-    }
+    		PP[i][j] = 0;
+		}
 	}
 	
 	LLL = (len)*(len+1)/2 + 1;
@@ -129,6 +144,67 @@ inline int Ed3(int i, int j, int k) { return dangle[RNA[i]][RNA[j]][RNA[k]][1];}
 inline int Ed5(int i, int j, int k) { return dangle[RNA[i]][RNA[j]][RNA[k]][0]; }
 inline int auPenalty(int i, int j) { return auPen(RNA[i], RNA[j]);}
 
+inline int eL1(int i, int j, int ii, int jj) {
+	int loopSize1, loopSize2;
+	int loopEnergy, asPenalty;
+
+	loopSize1 = ii - i - 1;
+	loopSize2 = j - jj - 1;
+	if (loopSize1 + loopSize2 > MAXLOOP)
+		return INFINITY_;
+
+	if (loopSize1 == 0) {
+		if (loopSize2 == 1)
+			return bulge[1] + stack[fourBaseIndex(RNA[i], RNA[j], RNA[ii], RNA[jj])];
+		else if (loopSize2 <= 30)
+			return bulge[loopSize2] + auPenalty(i, j) + auPenalty(ii, jj);
+		else
+			return bulge[30] + (int)floor(prelog*log((double) loopSize2 / 30)) + auPenalty(i, j) + auPenalty(ii, jj);
+	}
+	else if (loopSize2 == 0) {
+		if (loopSize1 == 1)
+			return bulge[1] + stack[fourBaseIndex(RNA[i], RNA[j], RNA[ii], RNA[jj])];
+		else if (loopSize1 <= 30)
+			return bulge[loopSize1] + auPenalty(i, j) + auPenalty(ii, jj);
+		else
+			return bulge[30] + (int)floor(prelog* log((double) loopSize1 / 30)) + auPenalty(i, j) + auPenalty(ii, jj);
+	}
+	else if (loopSize1 == 1 && loopSize2 == 1)
+		return iloop11[RNA[i]][RNA[i + 1]][RNA[ii]][RNA[j]][RNA[j - 1]][RNA[jj]];
+	else if (loopSize1 == 1 && loopSize2 == 2)
+		return iloop21[RNA[i]][RNA[j]][RNA[i + 1]][RNA[j - 1]][RNA[j - 2]][RNA[ii]][RNA[jj]];
+	else if (loopSize1 == 2 && loopSize2 == 1)
+		return iloop21[RNA[jj]][RNA[ii]][RNA[j - 1]][RNA[i + 2]][RNA[i + 1]][RNA[j]][RNA[i]];
+	else if (loopSize1 == 2 && loopSize2 == 2)
+		return iloop22[RNA[i]][RNA[ii]][RNA[j]][RNA[jj]][RNA[i+1]][RNA[i+2]][RNA[j-1]][RNA[j-2]];
+	else if ((loopSize1 == 2 && loopSize2 == 3) ||
+			 (loopSize1 == 3 && loopSize2 == 2)) {
+		return tstacki23[RNA[i]][RNA[j]][RNA[i + 1]][RNA[j - 1]] +
+			tstacki23[RNA[jj]][RNA[ii]][RNA[jj + 1]][RNA[ii - 1]];
+	}
+	else {
+		if (loopSize1 + loopSize2 <= 30)
+			loopEnergy = inter[loopSize1 + loopSize2];
+		else
+			loopEnergy = inter[30] + (int)floor(prelog* log((double) (loopSize1 + loopSize2) / 30));
+		
+		if (gail && (loopSize1 == 1 || loopSize2 == 1)) {
+			loopEnergy += tstki[fourBaseIndex(RNA[i], RNA[j], BASE_A, BASE_A)];
+			loopEnergy += tstki[fourBaseIndex(RNA[jj], RNA[ii], BASE_A, BASE_A)];
+		}
+		else {
+			loopEnergy += tstki[fourBaseIndex(RNA[i], RNA[j], RNA[i + 1], RNA[j - 1])];
+			loopEnergy += tstki[fourBaseIndex(RNA[jj], RNA[ii], RNA[jj + 1], RNA[ii - 1])];
+		}
+		asPenalty = abs(loopSize1 - loopSize2)*poppen[MIN3(2, loopSize1, loopSize2) - 1];
+		asPenalty = MIN(asPenalty, maxpen);
+
+		loopEnergy += asPenalty;
+
+		return loopEnergy;
+	}
+}
+
 inline int eL(int i, int j, int ip, int jp) {
 	int energy;
 	int size1, size2, size;
@@ -165,53 +241,36 @@ inline int eL(int i, int j, int ip, int jp) {
 		if (size > 30) {
 			loginc = (int) floor(prelog * log((double) size / 30.0));
 
-			/* Please check what should be the difference in the following two options. Is it correct?*/
 			if (!((size1 == 1 || size2 == 1) && gail)) { /* normal internal loop with size > 30*/
 
-				energy = tstki[fourBaseIndex(RNA[i], RNA[j], RNA[i + 1], RNA[j
-											 - 1])] + tstki[fourBaseIndex(RNA[jp], RNA[ip], RNA[jp
-																		  + 1], RNA[ip - 1])] + inter[30] + loginc + eparam[3]
-											 + MIN(maxpen, (lopsided * poppen[MIN(2, MIN(size1,
-																						 size2))]));
+				energy = tstki[fourBaseIndex(RNA[i], RNA[j], RNA[i + 1], RNA[j - 1])] + 
+					tstki[fourBaseIndex(RNA[jp], RNA[ip], RNA[jp + 1], RNA[ip - 1])] + inter[30] + loginc +
+				   	eparam[3] + MIN(maxpen, (lopsided * poppen[MIN(2, MIN(size1, size2))]));
 			} else { /* if size is more than 30 and it is a grossely asymmetric internal loop and gail is not zero*/
-				energy
-					= tstki[fourBaseIndex(RNA[i], RNA[j], BASE_A, BASE_A)]
-					+ tstki[fourBaseIndex(RNA[jp], RNA[ip], BASE_A,
-										  BASE_A)] + inter[30] + loginc
-					+ eparam[3] + MIN(maxpen, (lopsided
-											   * poppen[MIN(2, MIN(size1, size2))]));
+				energy = tstki[fourBaseIndex(RNA[i], RNA[j], BASE_A, BASE_A)] + tstki[fourBaseIndex(RNA[jp], RNA[ip], BASE_A,
+										  BASE_A)] + inter[30] + loginc + eparam[3] + MIN(maxpen, (lopsided * poppen[MIN(2, MIN(size1, size2))]));
 			}
 		}
-		/* if size is not > 30, we have a looooot of cases... */
-		else if (size1 == 2 && size2 == 2) {
-			/* 2x2 internal loop */
-			energy
-				= iloop22[RNA[i]][RNA[ip]][RNA[j]][RNA[jp]][RNA[i + 1]][RNA[i
-				+ 2]][RNA[j - 1]][RNA[j - 2]];
+		else if (size1 == 2 && size2 == 2) { /* 2x2 internal loop */
+			energy = iloop22[RNA[i]][RNA[ip]][RNA[j]][RNA[jp]][RNA[i + 1]][RNA[i + 2]][RNA[j - 1]][RNA[j - 2]];
+			if (i==1 && j==22) printf("2x2 loop at %d %d %d\n", i,j, energy);
 		} else if (size1 == 1 && size2 == 2) {
-			energy
-				= iloop21[RNA[i]][RNA[j]][RNA[i + 1]][RNA[j - 1]][RNA[j - 2]][RNA[ip]][RNA[jp]];
-		} else if (size1 == 2 && size2 == 1) {
-			/* 1x2 internal loop */
-			energy = iloop21[RNA[jp]][RNA[ip]][RNA[j - 1]][RNA[i + 2]][RNA[i
-				+ 1]][RNA[j]][RNA[i]];
-		} else if (size == 2) {
-			/* 1*1 internal loops */
-			energy
-				= iloop11[RNA[i]][RNA[i + 1]][RNA[ip]][RNA[j]][RNA[j - 1]][RNA[jp]];
-		} else if ((size1 == 1 || size2 == 1) && gail) { /* gail = (Grossly Asymmetric Interior Loop Rule) (on/off <-> 1/0)  */
-			energy = tstki[fourBaseIndex(RNA[i], RNA[j], BASE_A, BASE_A)]
-				+ tstki[fourBaseIndex(RNA[jp], RNA[ip], BASE_A, BASE_A)]
-				+ inter[size] + loginc + eparam[3] + MIN(maxpen, (lopsided
-																  * poppen[MIN(2, MIN(size1, size2))]));
+			energy = iloop21[RNA[i]][RNA[j]][RNA[i + 1]][RNA[j - 1]][RNA[j - 2]][RNA[ip]][RNA[jp]];
+		} else if (size1 == 2 && size2 == 1) { /* 1x2 internal loop */
+			energy = iloop21[RNA[jp]][RNA[ip]][RNA[j - 1]][RNA[i + 2]][RNA[i + 1]][RNA[j]][RNA[i]];
+		} else if (size == 2) { /* 1*1 internal loops */
+			energy = iloop11[RNA[i]][RNA[i + 1]][RNA[ip]][RNA[j]][RNA[j - 1]][RNA[jp]];
+		} else if ((size1 == 2 && size2 == 3) || (size1 == 3 && size2 == 2)) {
+			return tstacki23[RNA[i]][RNA[j]][RNA[i + 1]][RNA[j - 1]] +
+				tstacki23[RNA[jp]][RNA[ip]][RNA[jp + 1]][RNA[ip - 1]];
+		}
+		else if ((size1 == 1 || size2 == 1) && gail) { /* gail = (Grossly Asymmetric Interior Loop Rule) (on/off <-> 1/0)  */
+			energy = tstki[fourBaseIndex(RNA[i], RNA[j], BASE_A, BASE_A)] + tstki[fourBaseIndex(RNA[jp], RNA[ip], BASE_A, BASE_A)]
+				+ inter[size] + loginc + eparam[3] + MIN(maxpen, (lopsided * poppen[MIN(2, MIN(size1, size2))]));
 		} else { /* General Internal loops */
-			energy
-				= tstki[fourBaseIndex(RNA[i], RNA[j], RNA[i + 1],
-									  RNA[j - 1])] + tstki[fourBaseIndex(RNA[jp],
-																		 RNA[ip], RNA[jp + 1], RNA[ip - 1])] + inter[size]
-										  + loginc + eparam[3] /* AM: I don't understand this eparam value, I think they do not play any role currently. Please look in loader.cc file, for what value have been assinged to various elements of eparam array */
-										  + MIN(maxpen,
-												(lopsided * poppen[MIN(2, MIN(size1, size2))])); /*  */
+			energy = tstki[fourBaseIndex(RNA[i], RNA[j], RNA[i + 1], RNA[j - 1])] + tstki[fourBaseIndex(RNA[jp], RNA[ip], RNA[jp + 1], RNA[ip - 1])] + inter[size]
+										  + loginc + eparam[3] + MIN(maxpen, (lopsided * poppen[MIN(2, MIN(size1, size2))])); 
+		
 		}
 	}
 
@@ -330,4 +389,12 @@ inline int eS(int i, int j) {
 		+ getShapeEnergy(i) + getShapeEnergy(j) + getShapeEnergy(i+1) + getShapeEnergy(j-1) ;
 
 	return energy;
+}
+
+inline int Estackm(int i, int j) {
+	return tstackm[RNA[i]][RNA[j]][RNA[i + 1]][RNA[j - 1]];
+}
+
+inline int Estacke(int i, int j) {
+	return tstacke[RNA[i]][RNA[j]][RNA[i + 1]][RNA[j - 1]];
 }

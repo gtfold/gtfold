@@ -19,6 +19,7 @@ extern bool CONS_ENABLED;
 extern bool VERBOSE;
 extern bool SHAPE_ENABLED;
 extern bool PARAM_DIR;
+extern bool T_MISMATCH;
 
 extern string seqfile;
 extern string constraintsFile;

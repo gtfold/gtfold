@@ -169,11 +169,18 @@ void print_header() {
  * @param outputFile The file to save to
  * @param energy The MFE energy (multiplied by 100)
  */
-void save_ct_file(string outputFile, string seq, int energy) {
+void save_ct_file(string outputFile, string seq, int energy, string seqfile) {
+	if(seqfile.find("/") != string::npos) {
+		size_t pos = seqfile.find_last_of("/");
+		seqfile.erase(0,pos+1);
+	}
+	if(seqfile.find(".") != string::npos)
+		seqfile.erase(seqfile.rfind("."));
 	ofstream outfile;
 	outfile.open(outputFile.c_str());
 
 	outfile << seq.length() << "\t  dG = " << energy/100.0 << endl;
+	//outfile << seq.length() << "\tdG = " << energy/100.0 << "\t" << seqfile << endl;
 
 	unsigned int i = 1;
 	for(i=1; i <= seq.length(); i++)
@@ -197,7 +204,7 @@ int main(int argc, char** argv) {
 	}
 	
 	// Read in thermodynamic parameters. Always use Turner99 data (for now)
-	readThermodynamicParameters(paramDir.c_str(), PARAM_DIR);
+	readThermodynamicParameters(paramDir.c_str(), PARAM_DIR, T_MISMATCH);
 
 	printRunConfiguration(seq);
 	
@@ -207,7 +214,7 @@ int main(int argc, char** argv) {
 	fflush(stdout);
 
 	t1 = get_seconds();
-	energy = calculate(seq.length(), nThreads);
+	energy = calculate(seq.length(), nThreads, T_MISMATCH);
 	t1 = get_seconds() - t1;
 	
 	printf("Done.\n\n");
@@ -227,7 +234,7 @@ int main(int argc, char** argv) {
 	}
 	
 	t1 = get_seconds();
-	trace(seq.length(), VERBOSE);
+	trace(seq.length(), VERBOSE, T_MISMATCH);
 	t1 = get_seconds() - t1;
 
 	printf("\n");
@@ -241,7 +248,7 @@ int main(int argc, char** argv) {
 		print_shapeArray(seq.length());
 	
 
-	save_ct_file(outputFile, seq, energy);
+	save_ct_file(outputFile, seq, energy,seqfile);
 	printf("\nMFE structure saved in .ct format to %s\n", outputFile.c_str());
 
 

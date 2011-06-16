@@ -29,7 +29,79 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #ifdef _OPENMP 
 #include "omp.h"
 #endif
-int calculate(int len, int nThreads) { 
+
+//#define DEBUG 1
+
+void initializeMatrix(int len) {
+	int i, j;
+
+	for (i = 1; i <= len; ++i) 
+		for (j = len; j >= i; --j) 
+			if (canPair(RNA[i],RNA[j]) && j-i >= TURN) 
+				PP[i][j]  = 1;
+}
+
+void prefilter(int len, int prefilter1, int prefilter2) {
+	char** in;
+	int i, j, k, count;
+
+	in = (char**)malloc(len*sizeof(char*));
+	for (i = 1; i <= len; ++i) in[i - 1] = (char*)malloc(len*sizeof(char));
+
+	for (i = 1; i <= len - prefilter2 + 1; ++i)
+		for (j = len; j >= prefilter2 && j >= i; --j) {
+			count = 0;
+			for (k = 0; k < prefilter2 && k <= (j - i) / 2; ++k)
+				if (PP[i + k][j - k] == 1) ++count;
+			if (count >= prefilter1)
+				for (k = 0; k < prefilter2 && k <= (j - i) / 2; ++k)
+					++in[i + k - 1][j - k - 1];
+		}
+
+	for (i = 1; i <= len; ++i) {
+		for (j = len; j >= i; --j)
+			if (!in[i - 1][j - 1]) PP[i][j] = 0;
+		free(in[i - 1]);
+	}
+
+	free(in);
+}
+
+int calcVBI(int i, int j) {
+	int p=0, q=0;
+	int VBIij = INFINITY_;
+
+	for (p = i+1; p <= MIN(j-2-TURN,i+MAXLOOP+1) ; p++) {
+		int minq = j-i+p-MAXLOOP-2;
+		if (minq < p+1+TURN) minq = p+1+TURN;
+		int maxq = (p==(i+1))?(j-2):(j-1);
+
+		for (q = minq; q <= maxq; q++) {
+			if (PP[p][q]==0) continue;
+			if (!canILoop(i,j,p,q)) continue;
+			VBIij = MIN(eL(i, j, p, q) + V(p,q), VBIij);
+		}
+	}
+
+	return VBIij;
+}
+
+int calcVBI2(int i, int j, int  len) {
+	int d, ii, jj; 
+	int energy = INFINITY_;
+
+	for (d = j-i-3; d >= TURN+1 && d >= j-i-2-MAXLOOP; --d) 
+		for (ii = i + 1; ii < j - d && ii <= len; ++ii)
+		{    
+			jj = d + ii;
+			if (PP[ii][jj]==1)
+				energy = MIN(energy, eL(i, j, ii, jj) + V(ii, jj));
+		}    
+
+	return energy;
+}
+
+int calculate(int len, int nThreads, int t_mismatch) { 
 	int b, i, j;
 #ifdef _OPENMP
 	if (nThreads>0) omp_set_num_threads(nThreads);
@@ -40,6 +112,11 @@ int calculate(int len, int nThreads) {
 	fprintf(stdout,"Thread count: %3d \n",omp_get_num_threads());
 #endif
 
+	initializeMatrix(len);
+	if (t_mismatch) {
+		prefilter(len,2,2);
+	}
+
 	for (b = TURN+1; b <= len-1; b++) {
 #ifdef _OPENMP
 #pragma omp parallel for private (i,j) schedule(guided)
@@ -47,65 +124,66 @@ int calculate(int len, int nThreads) {
 		for (i = 1; i <= len - b; i++) {
 			j = i + b;
 			int newWM = INFINITY_; 
-			if (canPair(RNA[i], RNA[j])) {
+			
+			if (PP[i][j]==1) {
 				int eh = canHairpin(i,j)?eH(i,j):INFINITY_; //hair pin
-				
-        int es = canStack(i,j)?eS(i,j)+getShapeEnergy(i)+getShapeEnergy(j)+V(i+1,j-1):INFINITY_; // stack
-				
-        if (j-i > 6) { // Internal Loop BEGIN
-					int p=0, q=0;
-					int VBIij = INFINITY_;
-					for (p = i+1; p <= MIN(j-2-TURN,i+MAXLOOP+1) ; p++) {
-						int minq = j-i+p-MAXLOOP-2;
-						if (minq < p+1+TURN) minq = p+1+TURN;
-						int maxq = (p==i+1)?(j-2):(j-1);
-						for (q = minq; q <= maxq; q++) {
-							if (!canPair(RNA[p], RNA[q])) continue;
-							if (!canILoop(i,j,p,q)) continue;
-							VBIij = MIN(eL(i, j, p, q) + V(p,q), VBIij);
-						}
-					}
-					VBI(i,j) = VBIij;
-					V(i,j) = V(i,j) + getShapeEnergy(i) + getShapeEnergy(j);
-				} // Internal Loop END
-				
-        if (j-i > 10) { // Multi Loop BEGIN
-					int VMij =  WMPrime[i+1][j-1]; 
-					int VMidj = WMPrime[i+2][j-1]; 
-					int VMijd = WMPrime[i+1][j-2]; 
-					int VMidjd = WMPrime[i+2][j-2]; 
-          
-					int d3 = canSS(j-1)?Ed3(i,j,j-1):INFINITY_;
-					int d5 = canSS(i+1)?Ed5(i,j,i+1):INFINITY_;
-					VMij = MIN(VMij, (VMidj + d5 +Ec)) ;
-					VMij = MIN(VMij, (VMijd + d3 +Ec));
+				int es = canStack(i,j)?eS(i,j)+V(i+1,j-1):INFINITY_; // stack
+
+				// Internal Loop BEGIN
+				VBI(i,j) = calcVBI(i,j);
+				// Internal Loop END
+
+				// Multi Loop BEGIN
+				int VMij =  WMPrime[i+1][j-1]; 
+				int VMidj = WMPrime[i+2][j-1]; 
+				int VMijd = WMPrime[i+1][j-2]; 
+				int VMidjd = WMPrime[i+2][j-2]; 
+
+				int d3 = canSS(j-1)?Ed3(i,j,j-1):INFINITY_;
+				int d5 = canSS(i+1)?Ed5(i,j,i+1):INFINITY_;
+				VMij = MIN(VMij, (VMidj + d5 +Ec)) ;
+				VMij = MIN(VMij, (VMijd + d3 +Ec));
+
+				if (t_mismatch) {
+					VMij = MIN(VMij, (VMidjd + Estackm(i,j) + 2*Ec));
+				} else {
 					VMij = MIN(VMij, (VMidjd + d5 + d3+ 2*Ec));
-					VMij = VMij + Ea + Eb + auPenalty(i,j);
-					VM(i,j) = canStack(i,j)?VMij:INFINITY_;
-				} // Multi Loop END
-				
-        V(i,j) = MIN4(eh,es,VBI(i,j),VM(i,j));
+				}
+
+				VMij = VMij + Ea + Eb + auPenalty(i,j);
+				VM(i,j) = canStack(i,j)?VMij:INFINITY_;
+				// Multi Loop END
+
+				V(i,j) = MIN4(eh,es,VBI(i,j),VM(i,j));
 			}
 			else V(i,j) = INFINITY_;
+
+			int h; 
+			for (h = i+TURN+1 ; h <= j-TURN-2; h++) {
+				// Added auxillary storage WMPrime to speedup multiloop calculations
+				WMPrime[i][j] = MIN(WMPrime[i][j], WMU(i,h-1) + WML(h,j)); 
+				//newWM = (!forcePair(i,j))?MIN(newWM, WMU(i,h-1) + WML(h,j)):newWM;
+			}
 			
-      if (j-i > 4) { // WM BEGIN
-				int h; 
-				for (h = i+TURN+1 ; h <= j-TURN-1; h++) {
-					//ZS: This sum corresponds to when i,j are NOT paired with each other.
-					//So we need to make sure only terms where i,j aren't pairing are considered. 
-					// Added auxillary storage WMPrime to speedup multiloop calculations
-          WMPrime[i][j] = MIN(WMPrime[i][j], WMU(i,h-1) + WML(h,j)); 
-					//newWM = (!forcePair(i,j))?MIN(newWM, WMU(i,h-1) + WML(h,j)):newWM;
-				}
-				newWM = (!forcePair(i,j))?MIN(newWM, WMPrime[i][j]):newWM;
-				newWM = MIN(V(i,j) + auPenalty(i,j) + Eb, newWM); 
-				newWM = canSS(i)?MIN(V(i+1,j) + Ed3(j,i+1,i) + auPenalty(i+1,j) + Eb + Ec, newWM):newWM; //i dangle
-				newWM = canSS(j)?MIN(V(i,j-1) + Ed5(j-1,i,j) + auPenalty(i,j-1) + Eb + Ec, newWM):newWM;  //j dangle
+			//ZS: This sum corresponds to when i,j are NOT paired with each other.
+			//So we need to make sure only terms where i,j aren't pairing are considered. 
+			newWM = (!forcePair(i,j))?MIN(newWM, WMPrime[i][j]):newWM;
+			
+			newWM = MIN(V(i,j) + auPenalty(i,j) + Eb, newWM); 
+			newWM = canSS(i)?MIN(V(i+1,j) + Ed3(j,i+1,i) + auPenalty(i+1,j) + Eb + Ec, newWM):newWM; //i dangle
+			newWM = canSS(j)?MIN(V(i,j-1) + Ed5(j-1,i,j) + auPenalty(i,j-1) + Eb + Ec, newWM):newWM;  //j dangle
+
+			if (t_mismatch) {
+				if (i<j-TURN-2)
+					newWM = (canSS(i)&&canSS(j))?MIN(V(i+1,j-1) + Estackm(j-1,i+1) + auPenalty(i+1,j-1) + Eb + 2*Ec, newWM):newWM; 
+			}
+			else {
 				newWM = (canSS(i)&&canSS(j))?MIN(V(i+1,j-1) + Ed3(j-1,i+1,i) + Ed5(j-1,i+1,j) + auPenalty(i+1,j-1) + Eb + 2*Ec, newWM):newWM; //i,j dangle
-				newWM = canSS(i)?MIN(WMU(i+1,j) + Ec, newWM):newWM; //i dangle
-				newWM = canSS(j)?MIN(WML(i,j-1) + Ec, newWM):newWM; //j dangle
-				WMU(i,j) = WML(i,j) = newWM;
-			} // WM END
+			}
+
+			newWM = canSS(i)?MIN(WMU(i+1,j) + Ec, newWM):newWM; //i dangle
+			newWM = canSS(j)?MIN(WML(i,j-1) + Ec, newWM):newWM; //j dangle
+			WMU(i,j) = WML(i,j) = newWM;
 		}
 	}
 
@@ -116,12 +194,38 @@ int calculate(int len, int nThreads) {
 			Wij = Widjd = Wijd = Widj = INFINITY_;
 			Wim1 = MIN(0, W[i-1]); 
 			Wij = V(i, j) + auPenalty(i, j) + Wim1;
-			Widjd = (canSS(i)&&canSS(j))?V(i+1,j-1) + auPenalty(i+1,j-1) + Ed3(j-1,i + 1,i) + Ed5(j-1,i+1,j) + Wim1:Widjd;
+		
+			if (t_mismatch) {
+				Widjd = (canSS(i)&&canSS(j))?V(i+1,j-1) + auPenalty(i+1,j-1) + Estacke(j-1,i+1) + Wim1:Widjd;
+			} else {
+				Widjd = (canSS(i)&&canSS(j))?V(i+1,j-1) + auPenalty(i+1,j-1) + Ed3(j-1,i + 1,i) + Ed5(j-1,i+1,j) + Wim1:Widjd;
+			}
+			
 			Wijd = canSS(j)?V(i,j-1) + auPenalty(i,j-1) + Ed5(j-1,i,j) + Wim1:Wijd;
 			Widj = canSS(i)?V(i+1, j) + auPenalty(i+1,j) + Ed3(j,i + 1,i) + Wim1:Widj;
 			Wj = MIN(MIN4(Wij, Widjd, Wijd, Widj), Wj); 
 		}
 		W[j] = canSS(j)?MIN(Wj, W[j-1]):Wj;
 	}
+
+#ifdef DEBUG
+	FILE* file = fopen("VM.txt", "w");
+	int ii, jj;
+	for (ii = 1; ii <= len; ++ii) {    
+		for (jj = 1; jj <= len; ++jj) {
+			fprintf(file, "%d %d %d\n",ii,jj,VM(ii,jj));
+		}
+	}    
+	fclose(file);
+	
+ 	file = fopen("WM.txt", "w");
+	for (ii = 1; ii <= len; ++ii) {    
+		for (jj = 1; jj <= len; ++jj) {
+			fprintf(file, "%d %d %d\n",ii,jj,WM(ii,jj));
+		}
+	}    
+	fclose(file);
+#endif
+	
 	return W[len];
 }

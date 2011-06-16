@@ -59,6 +59,11 @@ extern int init;
 extern int gail; /* It is either 0 or 1. It is used for grosely asymmetric internal loops */
 extern float prelog;
 
+extern int tstackm[5][5][6][6];
+extern int tstacke[5][5][6][6];
+extern int tstacki23[5][5][5][5];
+
+
 #define fourBaseIndex(a, b, c, d) (((a) << 6) + ((b) << 4) + ((c) << 2) + (d))
 
 #endif

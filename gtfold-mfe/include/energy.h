@@ -10,7 +10,7 @@ extern int *VM;
 extern int **WM; 
 extern int **WMPrime; 
 extern int *indx; 
-
+extern int **PP; 
 
 #define V(i,j) V[indx[j]+i]
 #define VM(i,j) VM[indx[j]+i]
@@ -36,6 +36,9 @@ int auPenalty(int i, int j);
 int eS(int i, int j);
 int eH(int i, int j);
 int eL(int i, int j, int ip, int jp);
+int eL1(int i, int j, int ip, int jp);
+int Estackm(int i, int j);
+int Estacke(int i, int j);
 
 void create_tables(int len);
 void init_tables(int len);
