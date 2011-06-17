@@ -86,6 +86,25 @@ int calcVBI(int i, int j) {
 	return VBIij;
 }
 
+int calcVBI1(int i, int j) {
+	int p=0, q=0;
+	int VBIij = INFINITY_;
+
+	for (p = i+1; p <= MIN(j-2-TURN,i+MAXLOOP+1) ; p++) {
+		int minq = j-i+p-MAXLOOP-2;
+		if (minq < p+1+TURN) minq = p+1+TURN;
+		int maxq = (p==(i+1))?(j-2):(j-1);
+
+		for (q = minq; q <= maxq; q++) {
+			if (PP[p][q]==0) continue;
+			if (!canILoop(i,j,p,q)) continue;
+			VBIij = MIN(eL1(i, j, p, q) + V(p,q), VBIij);
+		}
+	}
+
+	return VBIij;
+}
+
 int calcVBI2(int i, int j, int  len) {
 	int d, ii, jj; 
 	int energy = INFINITY_;
@@ -95,7 +114,7 @@ int calcVBI2(int i, int j, int  len) {
 		{    
 			jj = d + ii;
 			if (PP[ii][jj]==1)
-				energy = MIN(energy, eL(i, j, ii, jj) + V(ii, jj));
+				energy = MIN(energy, eL1(i, j, ii, jj) + V(ii, jj));
 		}    
 
 	return energy;
@@ -130,7 +149,10 @@ int calculate(int len, int nThreads, int t_mismatch) {
 				int es = canStack(i,j)?eS(i,j)+V(i+1,j-1):INFINITY_; // stack
 
 				// Internal Loop BEGIN
-				VBI(i,j) = calcVBI(i,j);
+				if (t_mismatch) 
+					VBI(i,j) = calcVBI1(i,j);
+				else
+					VBI(i,j) = calcVBI(i,j);
 				// Internal Loop END
 
 				// Multi Loop BEGIN
