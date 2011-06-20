@@ -165,19 +165,27 @@ void print_header() {
 	printf("Georgia Institute of Technology\n\n");
 }
 
+void save_subopt_file(string outputFile, ss_map_t& ss_data)
+{
+	ofstream outfile;
+	outfile.open(outputFile.c_str());
+	
+	for (ss_map_t::iterator it = ss_data.begin();
+						it != ss_data.end(); ++it) {
+		outfile << it->first << '\t' << it->second/100.0 << std::endl;
+	}
+
+	outfile.close();
+}
+
 /**
  * Save the output to a ct file
  *
  * @param outputFile The file to save to
  * @param energy The MFE energy (multiplied by 100)
  */
-void save_ct_file(string outputFile, string seq, int energy, string seqfile) {
-	if(seqfile.find("/") != string::npos) {
-		size_t pos = seqfile.find_last_of("/");
-		seqfile.erase(0,pos+1);
-	}
-	if(seqfile.find(".") != string::npos)
-		seqfile.erase(seqfile.rfind("."));
+void save_ct_file(string outputFile, string seq, int energy) {
+
 	ofstream outfile;
 	outfile.open(outputFile.c_str());
 
@@ -227,10 +235,22 @@ int main(int argc, char** argv) {
 	
 	if (SUBOPT_ENABLED) {	
 		t1 = get_seconds();
-		subopt_traceback(seq.length(), suboptDelta);
+		ss_map_t subopt_data = subopt_traceback(seq.length(), suboptDelta);
 		t1 = get_seconds() - t1;
 		printf("Subopt traceback running time: %9.6f seconds\n\n", t1);
-
+		
+		string suboptfile;
+		suboptfile	+= seqfile;
+		if(suboptfile.find("/") != string::npos) {
+			size_t pos = suboptfile.find_last_of("/");
+			suboptfile.erase(0,pos+1);
+		}
+		if(suboptfile.find(".") != string::npos)
+			suboptfile.erase(suboptfile.rfind("."));
+		suboptfile += ".ss";	
+		
+		printf("Suboptimal structures saved in %s\n", suboptfile.c_str());
+		save_subopt_file(suboptfile, subopt_data);	
 		free_fold(seq.length());
 		exit(0);
 	}
@@ -250,7 +270,7 @@ int main(int argc, char** argv) {
 		print_shapeArray(seq.length());
 	
 
-	save_ct_file(outputFile, seq, energy,seqfile);
+	save_ct_file(outputFile, seq, energy);
 	printf("\nMFE structure saved in .ct format to %s\n", outputFile.c_str());
 
 
