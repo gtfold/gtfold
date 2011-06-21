@@ -23,7 +23,7 @@ string shapeFile = "";
 string paramDir = "Turner99"; // default value
 
 
-int suboptDelta = -1;
+float suboptDelta = 0.0;
 int nThreads = -1;
 int contactDistance = -1;
 
@@ -118,7 +118,7 @@ void parse_options(int argc, char** argv) {
 			} else if(strcmp(argv[i], "--subopt") == 0) {
 				SUBOPT_ENABLED = true;
 				if(i < argc)
-					suboptDelta = atoi(argv[++i]);
+					suboptDelta = atof(argv[++i]);
 				else
 					help();
 			}
@@ -196,7 +196,7 @@ void printRunConfiguration(string seq) {
 	}
 
 	if (SUBOPT_ENABLED) {
-		printf("+ calculating suboptimal structures within %d kcal/mol of MFE\n", suboptDelta);
+		printf("+ calculating suboptimal structures within %f kcal/mol of MFE\n", suboptDelta);
 		standardRun = false;
 	}
 

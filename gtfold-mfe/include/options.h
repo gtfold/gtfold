@@ -27,7 +27,7 @@ extern string shapeFile;
 extern string outputFile;
 extern string paramDir;
 
-extern int suboptDelta;
+extern float suboptDelta;
 extern int nThreads;
 
 extern bool LIMIT_DISTANCE;

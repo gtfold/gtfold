@@ -217,10 +217,10 @@ void push_to_gstack(ps_stack_t & gs, const ps_t& v);
 
 ss_map_t subopt_traceback(int len, int gap);
 
-void traceV(int i, int j, ps_t & ps, ps_stack_t & gs, int energy); 
-void traceVBI(int i, int j, ps_t & ps, ps_stack_t & gs, int energy);
-void traceW(int i, int j, ps_t & ps, ps_stack_t & gs, int energy);
-void traceVM(int i, int j, ps_t & ps, ps_stack_t & gs, int energy);
+void traceV(int i, int j, ps_t & ps, ps_stack_t & gs); 
+void traceVBI(int i, int j, ps_t & ps, ps_stack_t & gs);
+void traceW(int i, int j, ps_t & ps, ps_stack_t & gs);
+void traceVM(int i, int j, ps_t & ps, ps_stack_t & gs);
 void traceWM(ps_t& ps, ps_map_t& filter);
 
 #endif

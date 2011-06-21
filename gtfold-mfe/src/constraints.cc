@@ -494,7 +494,7 @@ int canStack(int i, int j) {
 int withinCD(int i, int j){
 	//ZS: This function returns 1 if i and j are within the required contact distance from each other. 
 	if (LIMIT_DISTANCE){
-		return (j-i>=contactDistance);
+		return (j-i<=contactDistance);
 	}
 	else return 1;
 }

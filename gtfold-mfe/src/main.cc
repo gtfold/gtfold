@@ -235,7 +235,7 @@ int main(int argc, char** argv) {
 	
 	if (SUBOPT_ENABLED) {	
 		t1 = get_seconds();
-		ss_map_t subopt_data = subopt_traceback(seq.length(), suboptDelta);
+		ss_map_t subopt_data = subopt_traceback(seq.length(), 100.0*suboptDelta);
 		t1 = get_seconds() - t1;
 		printf("Subopt traceback running time: %9.6f seconds\n\n", t1);
 		
