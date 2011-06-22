@@ -165,14 +165,20 @@ void print_header() {
 	printf("Georgia Institute of Technology\n\n");
 }
 
-void save_subopt_file(string outputFile, ss_map_t& ss_data)
+void save_subopt_file(string outputFile, ss_map_t& ss_data, 
+		const string& seq, int energy)
 {
 	ofstream outfile;
 	outfile.open(outputFile.c_str());
-	
-	for (ss_map_t::iterator it = ss_data.begin();
-						it != ss_data.end(); ++it) {
-		outfile << it->first << '\t' << it->second/100.0 << std::endl;
+	char buff[1024];
+
+	sprintf(buff,"%s\t%0.2f", seq.c_str(), energy/100.0);
+	outfile << buff << std::endl;
+	for (ss_map_t::iterator it = ss_data.begin(); it!= ss_data.end(); ++it) 
+	{
+		sprintf(buff,"%s %0.2f", (it->first).c_str(), it->second/100.0);
+		//outfile << it->first << '\t' << it->second/100.0 << std::endl;
+		outfile << buff << std::endl;
 	}
 
 	outfile.close();
@@ -250,7 +256,7 @@ int main(int argc, char** argv) {
 		suboptfile += ".ss";	
 		
 		printf("Suboptimal structures saved in %s\n", suboptfile.c_str());
-		save_subopt_file(suboptfile, subopt_data);	
+		save_subopt_file(suboptfile, subopt_data, seq, energy);	
 		free_fold(seq.length());
 		exit(0);
 	}

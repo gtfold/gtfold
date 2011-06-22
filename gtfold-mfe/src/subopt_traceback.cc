@@ -66,15 +66,17 @@ void process(ss_map_t& subopt_data, int len)
 
 		if (ps.empty()) 
 		{
+			//std::cout << ps.str << ' ' << ps.ae_/100.0 << std::endl;
 			ss_map_t::iterator it = subopt_data.find(ps.str); 
 			if ( it == subopt_data.end())
 			{
 				subopt_data.insert(std::make_pair<std::string,int>(ps.str,ps.ae_));
 				count++;
-			} else 
+			} 
+			else 
 			{
 				int energy = it->second;
-				if (ps.ae_ < energy && (ps.ae_ >= mfe && ps.ae_ >= mfe + delta)) {
+				if (ps.ae_ < energy && (ps.ae_ >= mfe && ps.ae_ <= mfe + delta)) {
 					subopt_data[it->first] = ps.ae_;					
 				}		
 			}

@@ -37,7 +37,7 @@ void initializeMatrix(int len) {
 
 	for (i = 1; i <= len; ++i) 
 		for (j = len; j >= i; --j) 
-			if (canPair(RNA[i],RNA[j]) && j-i >= TURN) 
+			if (canPair(RNA[i],RNA[j]) && j-i > TURN) 
 				PP[i][j]  = 1;
 }
 
