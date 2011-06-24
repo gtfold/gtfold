@@ -33,12 +33,14 @@
 int verbose = -1;
 int total_en = 0;
 int total_ex = 0;
-int t_mismatch = 0;
+int unamode = 0;
 
-void trace(int len, int vbose, int t_mismatch_) {
+void trace(int len, int vv, int mode, int mismatch) {
 	int i;
-	verbose = vbose;
-	t_mismatch = t_mismatch_;
+	verbose = vv;
+	unamode = mode;
+	if (mismatch) unamode = 1;
+
 	for (i = 0; i < len+1; i++)
 		structure[i] = 0;
 
@@ -74,7 +76,7 @@ void traceW(int j) {
 		Widjd = Wijd =  Widj = INFINITY_;
 		Wij = V(i,j) + auPenalty(i, j) + wim1;
 		
-		if (t_mismatch) {
+		if (unamode) {
 			Widjd = V(i+1,j-1) + auPenalty(i+1, j-1) + Estacke(j-1,i+1) + wim1;
 		}
 		else {
@@ -94,7 +96,7 @@ void traceW(int j) {
 			traceV(i, j);
 			if (flag ) traceW(i - 1);
 			break;
-		} else if ((W[j] == Widjd && t_mismatch && canSS(i) && canSS(j) && canStack(i+1,j-1)) || forcePair(i+1,j-1)) { 
+		} else if ((W[j] == Widjd && unamode && canSS(i) && canSS(j) && canStack(i+1,j-1)) || forcePair(i+1,j-1)) { 
 			done = 1;
 			if (verbose == 1) 
 				printf("i %5d j %5d ExtLoop   %12.2f\n", i+1, j-1, (auPenalty(i+1, j-1) + Estacke(j-1,i+1))/100.00);
@@ -148,9 +150,8 @@ int traceV(int i, int j) {
 	if (j-i < TURN)  return INFINITY_;
 
 	a = canHairpin(i,j)?eH(i, j):INFINITY_;
-	// TODO 
-	// if (eS(i, j) == 0) b = INFINITY_;
 	b = canStack(i,j)?eS(i, j) + V(i + 1, j - 1):INFINITY_;
+	// if (eS(i, j) == 0) b = INFINITY_;
 	c = canStack(i,j)?VBI(i,j):INFINITY_;
 	d = canStack(i,j)?VM(i,j):INFINITY_;
 	
@@ -228,7 +229,7 @@ int traceVM(int i, int j) {
 	done = 0;
 	int VMij = VM(i,j);
 
-	if (t_mismatch && i<j-TURN-2) {
+	if (unamode && i<j-TURN-2) {
 		for (h = i + 3; h <= j - 2 && !done; h++) { 
 			A_temp = WM(i + 2,h - 1) + WM(h,j - 2) + Ea + Eb + auPenalty(i,j) + Estackm(i,j);
 			if (A_temp == VMij && canSS(i+1) && canSS(j-1)) {
@@ -330,7 +331,7 @@ int traceWM(int i, int j) {
 				structure[i + 1] = j - 1;
 				structure[j - 1] = i + 1;
 			}
-		   	else if (WM(i,j) == V(i+1,j-1) + Estackm(j-1,i+1) + auPenalty(i+1, j-1) + Eb + 2*Ec && canSS(i) && canSS(j) && canStack(i+1,j-1) && t_mismatch) {
+		   	else if (WM(i,j) == V(i+1,j-1) + Estackm(j-1,i+1) + auPenalty(i+1, j-1) + Eb + 2*Ec && canSS(i) && canSS(j) && canStack(i+1,j-1) && unamode) {
 				done = 1;
 				eWM += traceV(i + 1, j - 1);
 				structure[i + 1] = j - 1;

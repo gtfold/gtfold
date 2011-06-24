@@ -80,7 +80,7 @@ int init;
 int gail; /* It is either 0 or 1. It is used for grosely asymmetric internal loops */
 float prelog;
 
-void readThermodynamicParameters(const char *userdatadir,bool userdatalogic, int t_mismatch=0) {
+void readThermodynamicParameters(const char *userdatadir,bool userdatalogic, int unamode=0, int mismatch=0) {
 	if (!userdatalogic) {
 		EN_DATADIR.assign(xstr(DATADIR));
 		EN_DATADIR += "/";
@@ -102,14 +102,22 @@ void readThermodynamicParameters(const char *userdatadir,bool userdatalogic, int
 	initTstkiValues("tstacki.DAT", EN_DATADIR);
 	initTloopValues("tloop.DAT", EN_DATADIR);
 
-	if (t_mismatch) {
+	if (unamode) {
 		initInt21Values("asint1x2.DAT", EN_DATADIR);
 		initInt22Values("sint4.DAT", EN_DATADIR);
 		initInt11Values("sint2.DAT", EN_DATADIR);
 		initTstkmValues("tstackm.DAT", EN_DATADIR);
 		initTstkeValues("tstacke.DAT", EN_DATADIR);
 		initTstk23Values("tstacki23.DAT", EN_DATADIR);
-	} else {
+	} else if (mismatch) {
+		initTstkmValues("tstackm.DAT", EN_DATADIR);
+		initTstkeValues("tstacke.DAT", EN_DATADIR);
+		initInt21Values("int21.DAT", EN_DATADIR);
+		initInt22Values("int22.DAT", EN_DATADIR);
+		initInt11Values("int11.DAT", EN_DATADIR);
+		
+	}	
+	else {
 		initInt21Values("int21.DAT", EN_DATADIR);
 		initInt22Values("int22.DAT", EN_DATADIR);
 		initInt11Values("int11.DAT", EN_DATADIR);

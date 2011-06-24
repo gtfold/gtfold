@@ -20,6 +20,7 @@ extern bool VERBOSE;
 extern bool SHAPE_ENABLED;
 extern bool PARAM_DIR;
 extern bool T_MISMATCH;
+extern bool UNAMODE;
 
 extern string seqfile;
 extern string constraintsFile;

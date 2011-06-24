@@ -25,7 +25,7 @@
 #include "constants.h"
 #include "data.h"
 
-void readThermodynamicParameters(const char *userdatadir,bool userdatalogic, int t_mismatch);
+void readThermodynamicParameters(const char *userdatadir,bool userdatalogic, int unamode,int t_mismatch);
 
 int initStackValues(const std::string& fileName, const std::string& dirPath);
 int initMiscloopValues(const std::string& fileName, const std::string& dirPath);

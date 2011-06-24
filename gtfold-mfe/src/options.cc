@@ -15,6 +15,7 @@ bool CONS_ENABLED = false;
 bool VERBOSE = false;
 bool SHAPE_ENABLED = false;
 bool T_MISMATCH = false;
+bool UNAMODE = false;
 
 string seqfile = "";
 string constraintsFile = "";
@@ -42,10 +43,11 @@ void help() {
     printf("   -d, --limitCD num    Set a maximum base pair contact distance to num. If no\n");
     printf("                        limit is given, base pairs can be over any distance\n");
     printf("   -p  --paramdir DIR   Path to directory from where parameters are to be read\n");
-    printf("   -m   			    enable terminal mismatch calculations\n");
+    printf("   -m   		Enable terminal mismatch calculations\n");
    	printf("   -n, --noisolate      Prevent isolated base pairs from forming\n");
     printf("   -o, --output FILE    Output to FILE (default output is to a .ct extension)\n");
     printf("   -t, --threads num    Limit number of threads used\n");
+    printf("   --unamode DIR	Enable UNAfold mode. Path to directory containing UNAfold parameters\n");
 
     printf("\n");
     printf("   -h, --help           Output help (this message) and exit\n");
@@ -104,6 +106,14 @@ void parse_options(int argc, char** argv) {
 					help();
 			} else if (strcmp(argv[i], "-m") == 0) {
                 T_MISMATCH = true;
+			} else if (strcmp(argv[i], "--unamode") == 0) {
+				if(i < argc) {
+					paramDir = argv[++i];
+					UNAMODE = true;
+					PARAM_DIR = true;
+				}
+				else
+					help();
 			}
 		   	else if(strcmp(argv[i], "--threads") == 0 || strcmp(argv[i], "-t") == 0) {
 				if(i < argc)
@@ -171,6 +181,14 @@ void printRunConfiguration(string seq) {
 	bool standardRun = true;
 
 	printf("Run Configuration:\n");
+	if (UNAMODE == true) {
+		printf("+ running in unamode\n");
+		standardRun = false;
+	}
+	if (T_MISMATCH == true) {
+		printf("+ enabled terminal mismatch calculations\n");
+		standardRun = false;
+	}
 
 	if (NOISOLATE == true) {
 		printf("- preventing isolated base pairs\n");

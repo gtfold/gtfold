@@ -220,7 +220,7 @@ int main(int argc, char** argv) {
 	}
 	
 	// Read in thermodynamic parameters. Always use Turner99 data (for now)
-	readThermodynamicParameters(paramDir.c_str(), PARAM_DIR, T_MISMATCH);
+	readThermodynamicParameters(paramDir.c_str(), PARAM_DIR, UNAMODE, T_MISMATCH);
 
 	printRunConfiguration(seq);
 	
@@ -230,7 +230,7 @@ int main(int argc, char** argv) {
 	fflush(stdout);
 
 	t1 = get_seconds();
-	energy = calculate(seq.length(), nThreads, T_MISMATCH);
+	energy = calculate(seq.length(), nThreads, UNAMODE, T_MISMATCH);
 	t1 = get_seconds() - t1;
 	
 	printf("Done.\n\n");
@@ -262,7 +262,7 @@ int main(int argc, char** argv) {
 	}
 	
 	t1 = get_seconds();
-	trace(seq.length(), VERBOSE, T_MISMATCH);
+	trace(seq.length(), VERBOSE, UNAMODE, T_MISMATCH);
 	t1 = get_seconds() - t1;
 
 	printf("\n");

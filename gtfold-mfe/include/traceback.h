@@ -26,7 +26,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-	void trace(int len, int vbose, int t_mismatch);
+	void trace(int len, int vv, int mode, int mismatch);
 #ifdef __cplusplus
 }
 #endif
