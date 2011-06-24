@@ -7,6 +7,14 @@ extern unsigned char *RNA;
 extern int *structure; 
 extern int* constraints;
 
+extern int g_nthreads;
+extern int g_unamode;
+extern int g_mismatch;
+extern int g_verbose;
+extern int g_prefilter_mode;
+extern int g_prefilter1;
+extern int g_prefilter2;
+
 extern unsigned int chPairKey;
 
 // The possible base pairs are (A,U), (U,A), (C,G), (G,C), (G,U) and (U,G). 

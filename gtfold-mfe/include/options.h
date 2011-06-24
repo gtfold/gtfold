@@ -30,6 +30,9 @@ extern string paramDir;
 
 extern float suboptDelta;
 extern int nThreads;
+extern bool b_prefilter;
+extern int prefilter1;
+extern int prefilter2;
 
 extern bool LIMIT_DISTANCE;
 extern int contactDistance;

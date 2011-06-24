@@ -1,12 +1,12 @@
 #include "loader.h"
 #include "options.h"
 
+#include <sstream>
+
 using namespace std;
 
 bool ILSA;
 bool NOISOLATE;
-//bool USERDATA;
-//bool PARAMS;
 bool PARAM_DIR = false;
 bool LIMIT_DISTANCE;
 bool BPP_ENABLED;
@@ -16,13 +16,16 @@ bool VERBOSE = false;
 bool SHAPE_ENABLED = false;
 bool T_MISMATCH = false;
 bool UNAMODE = false;
+bool b_prefilter = false;
 
 string seqfile = "";
 string constraintsFile = "";
 string outputFile = "";
 string shapeFile = "";
-string paramDir = "Turner99"; // default value
+string paramDir; // default value
 
+int prefilter1=2;
+int prefilter2=2;
 
 float suboptDelta = 0.0;
 int nThreads = -1;
@@ -47,7 +50,8 @@ void help() {
    	printf("   -n, --noisolate      Prevent isolated base pairs from forming\n");
     printf("   -o, --output FILE    Output to FILE (default output is to a .ct extension)\n");
     printf("   -t, --threads num    Limit number of threads used\n");
-    printf("   --unamode DIR	Enable UNAfold mode. Path to directory containing UNAfold parameters\n");
+    printf("   --unamode 	Enable UNAfold mode. \n");
+    printf("   --prefilter value1,value2 Sets the prefilter mode similar to UNAfold\n");
 
     printf("\n");
     printf("   -h, --help           Output help (this message) and exit\n");
@@ -105,14 +109,23 @@ void parse_options(int argc, char** argv) {
 				else
 					help();
 			} else if (strcmp(argv[i], "-m") == 0) {
-                T_MISMATCH = true;
+				T_MISMATCH = true;
 			} else if (strcmp(argv[i], "--unamode") == 0) {
+				UNAMODE = true;
+			} else if (strcmp(argv[i], "--prefilter") == 0) {
 				if(i < argc) {
-					paramDir = argv[++i];
-					UNAMODE = true;
-					PARAM_DIR = true;
-				}
-				else
+					int value1 = -1, value2 = -1;
+					std::stringstream ss;
+					ss << argv[++i];
+					sscanf(ss.str().c_str(),"%d,%d", &value1, &value2);
+					if (value1 <= 0 || value2 <= 0) {
+						printf("INVALID ARGUMENTS: --prefilter accepts positive integers\n\n");
+						help();
+					}
+					b_prefilter =true;
+					prefilter1 = value1;
+					prefilter2 = value2;
+				} else 
 					help();
 			}
 		   	else if(strcmp(argv[i], "--threads") == 0 || strcmp(argv[i], "-t") == 0) {
@@ -187,6 +200,10 @@ void printRunConfiguration(string seq) {
 	}
 	if (T_MISMATCH == true) {
 		printf("+ enabled terminal mismatch calculations\n");
+		standardRun = false;
+	}
+	if (b_prefilter == true) {
+		printf("+ running with prefilter values = %d,%d\n",prefilter1,prefilter2);
 		standardRun = false;
 	}
 

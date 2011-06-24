@@ -80,11 +80,17 @@ int init;
 int gail; /* It is either 0 or 1. It is used for grosely asymmetric internal loops */
 float prelog;
 
-void readThermodynamicParameters(const char *userdatadir,bool userdatalogic, int unamode=0, int mismatch=0) {
-	if (!userdatalogic) {
+void readThermodynamicParameters(const char *userdatadir,bool userdatalogic, int unamode = 0, int mismatch = 0) {
+	
+	if (!userdatalogic && unamode) {
 		EN_DATADIR.assign(xstr(DATADIR));
 		EN_DATADIR += "/";
-		EN_DATADIR += userdatadir;
+		EN_DATADIR += "UNAParams";
+	}
+    else if (!userdatalogic) {
+		EN_DATADIR.assign(xstr(DATADIR));
+		EN_DATADIR += "/";
+		EN_DATADIR += "Turner99";
 	} else {
 		EN_DATADIR.assign(userdatadir);
 	}

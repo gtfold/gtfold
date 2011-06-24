@@ -70,7 +70,14 @@ void init_fold(string seq) {
 	if (SHAPE_ENABLED) {
 		readSHAPEarray(shapeFile.c_str(),len);
 	}
-
+	
+	g_nthreads = nThreads;
+	g_unamode  = UNAMODE;
+	g_mismatch = T_MISMATCH;
+	g_verbose  = VERBOSE;
+	g_prefilter_mode  = b_prefilter;
+	g_prefilter1  = prefilter1;
+	g_prefilter2  = prefilter2;
 }
 
 void free_fold(int len) {
@@ -230,7 +237,7 @@ int main(int argc, char** argv) {
 	fflush(stdout);
 
 	t1 = get_seconds();
-	energy = calculate(seq.length(), nThreads, UNAMODE, T_MISMATCH);
+	energy = calculate(seq.length()) ; //, nThreads, UNAMODE, T_MISMATCH);
 	t1 = get_seconds() - t1;
 	
 	printf("Done.\n\n");

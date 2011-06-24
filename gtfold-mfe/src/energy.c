@@ -192,7 +192,6 @@ inline int eL1(int i, int j, int ip, int jp) {
 		}
 		else if (size1 == 2 && size2 == 2) { /* 2x2 internal loop */
 			energy = iloop22[RNA[i]][RNA[ip]][RNA[j]][RNA[jp]][RNA[i + 1]][RNA[i + 2]][RNA[j - 1]][RNA[j - 2]];
-			if (i==1 && j==22) printf("2x2 loop at %d %d %d\n", i,j, energy);
 		} else if (size1 == 1 && size2 == 2) {
 			energy = iloop21[RNA[i]][RNA[j]][RNA[i + 1]][RNA[j - 1]][RNA[j - 2]][RNA[ip]][RNA[jp]];
 		} else if (size1 == 2 && size2 == 1) { /* 1x2 internal loop */
@@ -264,7 +263,6 @@ inline int eL(int i, int j, int ip, int jp) {
 		}
 		else if (size1 == 2 && size2 == 2) { /* 2x2 internal loop */
 			energy = iloop22[RNA[i]][RNA[ip]][RNA[j]][RNA[jp]][RNA[i + 1]][RNA[i + 2]][RNA[j - 1]][RNA[j - 2]];
-			if (i==1 && j==22) printf("2x2 loop at %d %d %d\n", i,j, energy);
 		} else if (size1 == 1 && size2 == 2) {
 			energy = iloop21[RNA[i]][RNA[j]][RNA[i + 1]][RNA[j - 1]][RNA[j - 2]][RNA[ip]][RNA[jp]];
 		} else if (size1 == 2 && size2 == 1) { /* 1x2 internal loop */

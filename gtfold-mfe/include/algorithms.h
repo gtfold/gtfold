@@ -23,7 +23,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-	int calculate(int len, int nThreads, int unamode ,int t_mismatch);
+	int calculate(int len);//, int nThreads, int unamode ,int t_mismatch);
 #ifdef __cplusplus
 }
 #endif
