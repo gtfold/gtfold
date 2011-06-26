@@ -119,7 +119,7 @@ void fill_partition_fn_arrays(int len, double** Q, double** QB, double** QM) {
             }
         }
     }
-	printf("Total partition number: %f", Q[1][len]);
+	printf("Total partition number: %f\n", Q[1][len]);
 }
 
 /**

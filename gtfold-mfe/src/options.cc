@@ -50,8 +50,8 @@ void help() {
    	printf("   -n, --noisolate      Prevent isolated base pairs from forming\n");
     printf("   -o, --output FILE    Output to FILE (default output is to a .ct extension)\n");
     printf("   -t, --threads num    Limit number of threads used\n");
-    printf("   --unamode 	Enable UNAfold mode. \n");
-    printf("   --prefilter value1,value2 Sets the prefilter mode similar to UNAfold\n");
+    printf("   --unamode 		Enable UNAfold mode. \n");
+    printf("   --prefilter 		value1,value2 Sets the prefilter mode similar to UNAfold\n");
 
     printf("\n");
     printf("   -h, --help           Output help (this message) and exit\n");
