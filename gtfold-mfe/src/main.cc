@@ -243,10 +243,13 @@ int main(int argc, char** argv) {
 	
 	printf("Done.\n\n");
 	printf("Results:\n");
-	printf("- Minimum Free Energy: %12.4f kcal/mol\n", energy/100.00);
+	if (energy >= MAXENG)	
+		printf("- Minimum Free Energy: %12.4f kcal/mol\n", 0.00);
+	else
+		printf("- Minimum Free Energy: %12.4f kcal/mol\n", energy/100.00);
 	printf("- MFE runtime: %9.6f seconds\n", t1);
-	
-	
+
+
 	if (SUBOPT_ENABLED) {	
 		t1 = get_seconds();
 		ss_map_t subopt_data = subopt_traceback(seq.length(), 100.0*suboptDelta);
@@ -263,17 +266,15 @@ int main(int argc, char** argv) {
 	t1 = get_seconds();
 	trace(seq.length(), VERBOSE, UNAMODE, T_MISMATCH);
 	t1 = get_seconds() - t1;
-
+	
 	printf("\n");
 	print_sequence(seq.length());
 	print_structure(seq.length());
 	if (CONS_ENABLED)
 		print_constraints(seq.length());
 
-
 	if (SHAPE_ENABLED && VERBOSE)
 		print_shapeArray(seq.length());
-	
 
 	save_ct_file(outputFile, seq, energy);
 	printf("\nMFE structure saved in .ct format to %s\n", outputFile.c_str());

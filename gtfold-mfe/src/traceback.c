@@ -45,7 +45,7 @@ void trace(int len, int vv, int mode, int mismatch) {
 		structure[i] = 0;
 
 	if (W[len] >= MAXENG) {
-		printf("\n No Structure ");
+		printf("- No Structure \n");
 		return;
 	}
 
