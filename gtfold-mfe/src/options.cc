@@ -16,11 +16,16 @@ bool VERBOSE = false;
 bool SHAPE_ENABLED = false;
 bool T_MISMATCH = false;
 bool UNAMODE = false;
+bool RNAMODE = false;
 bool b_prefilter = false;
 
 string seqfile = "";
 string constraintsFile = "";
+string outputPrefix = "";
 string outputFile = "";
+string suboptFile = "";
+string bppOutFile = "";
+string outputDir = "";
 string shapeFile = "";
 string paramDir; // default value
 
@@ -48,10 +53,11 @@ void help() {
     printf("   -p  --paramdir DIR   Path to directory from where parameters are to be read\n");
     printf("   -m   		Enable terminal mismatch calculations\n");
    	printf("   -n, --noisolate      Prevent isolated base pairs from forming\n");
-    printf("   -o, --output FILE    Output to FILE (default output is to a .ct extension)\n");
+    printf("   -o, --output NAME    Name output files with prefix\n");
+    printf("   -w, --workDir DIR    Path to directory for output files\n");
     printf("   -t, --threads num    Limit number of threads used\n");
     printf("   --unamode 		Enable UNAfold mode. \n");
-    printf("   --prefilter 		value1,value2 Sets the prefilter mode similar to UNAfold\n");
+    printf("   --prefilter value1,value2 \n\t\t\tSets the prefilter mode similar to UNAfold\n");
 
     printf("\n");
     printf("   -h, --help           Output help (this message) and exit\n");
@@ -89,20 +95,30 @@ void parse_options(int argc, char** argv) {
 					help();
 			} else if(strcmp(argv[i], "--limitCD") == 0 || strcmp(argv[i], "-d") == 0) {
 				if(i < argc){
-					LIMIT_DISTANCE = true;
 					contactDistance = atoi(argv[++i]);
+					stringstream ss;
+					ss << contactDistance;
+					if (contactDistance >= 0 && !strcmp(ss.str().c_str(),argv[i]))
+						LIMIT_DISTANCE = true;
+					else
+						help();
 				}
 				else
 					help();
 			} else if(strcmp(argv[i], "--noisolate") == 0 || strcmp(argv[i], "-n") == 0) {
 				NOISOLATE = true;
-			} else if(strcmp(argv[i], "--output") == 0 || strcmp(argv[i], "-o") == 0) {
+			} else if(strcmp(argv[i], "--prefix") == 0 || strcmp(argv[i], "-o") == 0) {
 				if(i < argc)
-					outputFile = argv[++i];
+					outputPrefix = argv[++i];
+				else
+					help();
+			} else if (strcmp(argv[i], "--workdir") == 0 || strcmp(argv[i], "-w") == 0) {
+				if(i < argc)
+					outputDir = argv[++i];
 				else
 					help();
 			} else if (strcmp(argv[i], "--paramdir") == 0 || strcmp(argv[i], "-p") == 0) {
-				if(i < argc) {
+					if(i < argc) {
 					paramDir = argv[++i];
 					PARAM_DIR = true;
 				}
@@ -112,6 +128,8 @@ void parse_options(int argc, char** argv) {
 				T_MISMATCH = true;
 			} else if (strcmp(argv[i], "--unamode") == 0) {
 				UNAMODE = true;
+			} else if (strcmp(argv[i], "--rnafold") == 0) {
+				RNAMODE = true;
 			} else if (strcmp(argv[i], "--prefilter") == 0) {
 				if(i < argc) {
 					int value1 = -1, value2 = -1;
@@ -122,7 +140,7 @@ void parse_options(int argc, char** argv) {
 						printf("INVALID ARGUMENTS: --prefilter accepts positive integers\n\n");
 						help();
 					}
-					b_prefilter =true;
+					b_prefilter = true;
 					prefilter1 = value1;
 					prefilter2 = value2;
 				} else 
@@ -165,24 +183,36 @@ void parse_options(int argc, char** argv) {
 	}
 
 	// If no output file specified, create one
-	if(outputFile.empty()) {
-
+	if(outputPrefix.empty()) {
 		// base it off the input file
-		outputFile += seqfile;
+		outputPrefix += seqfile;
 		
 		size_t pos;
 		// extract file name from the path
-		if ((pos=outputFile.find_last_of('/')) > 0) {
-			outputFile = outputFile.substr(pos+1);
+		if ((pos=outputPrefix.find_last_of('/')) > 0) {
+			outputPrefix = outputPrefix.substr(pos+1);
 		}
 
 		// and if an extension exists, remove it ...
-		if(outputFile.find(".") != string::npos)
-			outputFile.erase(outputFile.rfind("."));
+		if(outputPrefix.find(".") != string::npos)
+			outputPrefix.erase(outputPrefix.rfind("."));
+	 }
 
-		// ... and append the .ct
-		outputFile += ".ct";
+	// If output dir specified
+	if (!outputDir.empty()) {
+		outputFile += outputDir;
+		suboptFile += outputDir;
+		bppOutFile += outputDir;
 	}
+	// ... and append the .ct
+	outputFile += outputPrefix;
+	outputFile += ".ct";
+
+	suboptFile += outputPrefix;	
+	suboptFile += "_ss.txt";	
+
+	bppOutFile += outputPrefix;	
+	bppOutFile += "_bpp.txt";	
 }
 
 /**
@@ -227,11 +257,13 @@ void printRunConfiguration(string seq) {
 
 	if (BPP_ENABLED == true) {
 		printf("+ calculating base pair probabilities\n");
+		printf("+ BPP output file: %s\n", bppOutFile.c_str());
 		standardRun = false;
 	}
 
 	if (SUBOPT_ENABLED) {
 		printf("+ calculating suboptimal structures within %f kcal/mol of MFE\n", suboptDelta);
+		printf("+ suboptimal structures file: %s\n", suboptFile.c_str());
 		standardRun = false;
 	}
 

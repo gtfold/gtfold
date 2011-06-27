@@ -6047,7 +6047,7 @@ fi
 
 ac_config_files="$ac_config_files Makefile src/Makefile data/Makefile include/Makefile"
 
-ac_config_files="$ac_config_files data/Turner99/Makefile data/Turner04/Makefile data/Andronescu/Makefile data/UNAParams/Makefile"
+ac_config_files="$ac_config_files data/Turner99/Makefile data/Turner04/Makefile data/Andronescu/Makefile data/UNAParams/Makefile data/RNAParams/Makefile"
 
 
 cat >confcache <<\_ACEOF
@@ -6701,6 +6701,7 @@ do
     "data/Turner04/Makefile") CONFIG_FILES="$CONFIG_FILES data/Turner04/Makefile" ;;
     "data/Andronescu/Makefile") CONFIG_FILES="$CONFIG_FILES data/Andronescu/Makefile" ;;
     "data/UNAParams/Makefile") CONFIG_FILES="$CONFIG_FILES data/UNAParams/Makefile" ;;
+    "data/RNAParams/Makefile") CONFIG_FILES="$CONFIG_FILES data/RNAParams/Makefile" ;;
 
   *) { { $as_echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
 $as_echo "$as_me: error: invalid argument: $ac_config_target" >&2;}

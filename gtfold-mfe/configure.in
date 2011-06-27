@@ -178,7 +178,7 @@ AM_CONDITIONAL(GTFOLD_DEBUG, test x$debug = xtrue)
 
 dnl Create makefiles and other configuration files
 AC_CONFIG_FILES([Makefile src/Makefile data/Makefile include/Makefile])
-AC_CONFIG_FILES([data/Turner99/Makefile data/Turner04/Makefile data/Andronescu/Makefile data/UNAParams/Makefile])
+AC_CONFIG_FILES([data/Turner99/Makefile data/Turner04/Makefile data/Andronescu/Makefile data/UNAParams/Makefile data/RNAParams/Makefile])
 
 dnl Generate `config.status' and launch it
 AC_OUTPUT

@@ -21,11 +21,15 @@ extern bool SHAPE_ENABLED;
 extern bool PARAM_DIR;
 extern bool T_MISMATCH;
 extern bool UNAMODE;
+extern bool RNAMODE;
 
 extern string seqfile;
 extern string constraintsFile;
 extern string shapeFile;
+extern string outputDir;
 extern string outputFile;
+extern string bppOutFile;
+extern string suboptFile;
 extern string paramDir;
 
 extern float suboptDelta;

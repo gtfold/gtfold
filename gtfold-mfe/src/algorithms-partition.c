@@ -199,16 +199,21 @@ void fillBasePairProbabilities(int length, double **Q, double **QB, double **QM,
  *                  unpaired.
  * @param P Partition function array
  */
-void printBasePairProbabilities(int n, int *structure, double **P) {
+void printBasePairProbabilities(int n, int *structure, double **P, const char* outfile) {
+    FILE* outp = fopen(outfile,"w");
+	if (outp == NULL) {
+		fprintf(stderr, "printBasePairProbabilities() : Cannot open %s",outfile);	
+	}	
 
     int i;
     for(i=1; i<=n; ++i) {
         int j = structure[i];
         if(j)
-            printf("%d-%d pair\tPr: %f\n", i, j, P[MIN(i,j)][MAX(i,j)]);
+            fprintf(outp, "%d-%d pair\tPr: %f\n", i, j, P[MIN(i,j)][MAX(i,j)]);
         else
-            printf("%d unpaired\tPr: %f\n", i, probabilityUnpaired(n, i, P));
+            fprintf(outp, "%d unpaired\tPr: %f\n", i, probabilityUnpaired(n, i, P));
     }
+	fclose(outp);
 }
 
 /**

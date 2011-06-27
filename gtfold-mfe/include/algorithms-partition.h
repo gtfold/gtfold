@@ -15,7 +15,7 @@ typedef struct _pFuncData {
 */
 void fill_partition_fn_arrays(int len, double** QB, double** Q, double** QM);
 void fillBasePairProbabilities(int length, double **Q, double **QB, double **QM, double**P);
-void printBasePairProbabilities(int n, int *structure, double **P);
+void printBasePairProbabilities(int n, int *structure, double **P, const char* bppfile);
 
 double probabilityUnpaired(int length, int i, double **P);
 

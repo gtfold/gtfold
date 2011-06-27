@@ -226,10 +226,11 @@ int main(int argc, char** argv) {
 		exit(-1);
 	}
 	
-	// Read in thermodynamic parameters. Always use Turner99 data (for now)
-	readThermodynamicParameters(paramDir.c_str(), PARAM_DIR, UNAMODE, T_MISMATCH);
-
 	printRunConfiguration(seq);
+	
+	// Read in thermodynamic parameters. Always use Turner99 data (for now)
+	readThermodynamicParameters(paramDir.c_str(), PARAM_DIR, UNAMODE, RNAMODE, T_MISMATCH);
+
 	
 	init_fold(seq);
 
@@ -250,20 +251,11 @@ int main(int argc, char** argv) {
 		t1 = get_seconds();
 		ss_map_t subopt_data = subopt_traceback(seq.length(), 100.0*suboptDelta);
 		t1 = get_seconds() - t1;
-		printf("Subopt traceback running time: %9.6f seconds\n\n", t1);
+		printf("\n");
+		printf("Subopt traceback running time: %9.6f seconds\n", t1);
 		
-		string suboptfile;
-		suboptfile	+= seqfile;
-		if(suboptfile.find("/") != string::npos) {
-			size_t pos = suboptfile.find_last_of("/");
-			suboptfile.erase(0,pos+1);
-		}
-		if(suboptfile.find(".") != string::npos)
-			suboptfile.erase(suboptfile.rfind("."));
-		suboptfile += ".ss";	
-		
-		printf("Suboptimal structures saved in %s\n", suboptfile.c_str());
-		save_subopt_file(suboptfile, subopt_data, seq, energy);	
+		printf("Subopt structures saved in %s\n", suboptFile.c_str());
+		save_subopt_file(suboptFile, subopt_data, seq, energy);	
 		free_fold(seq.length());
 		exit(0);
 	}
@@ -301,6 +293,7 @@ int main(int argc, char** argv) {
 	}
 
 	if(BPP_ENABLED){
+		printf("\n");
 		printf("Calculating partition function\n");
 		double ** Q,  **QM, **QB, **P;
 		Q = mallocTwoD(seq.length() + 1, seq.length() + 1);
@@ -311,7 +304,8 @@ int main(int argc, char** argv) {
 	
 		fill_partition_fn_arrays(seq.length(), Q, QB, QM);
 		fillBasePairProbabilities(seq.length(), Q, QB, QM, P);
-		printBasePairProbabilities(seq.length(), structure, P);
+		printBasePairProbabilities(seq.length(), structure, P, bppOutFile.c_str());
+		printf("Saved BPP output in %s\n",bppOutFile.c_str());
 
 		freeTwoD(Q, seq.length() + 1, seq.length() + 1);
 		freeTwoD(QM, seq.length() + 1, seq.length() + 1);
