@@ -56,8 +56,9 @@ void help() {
     printf("   -o, --output NAME    Name output files with prefix\n");
     printf("   -w, --workDir DIR    Path to directory for output files\n");
     printf("   -t, --threads num    Limit number of threads used\n");
-    printf("   --unamode 		Enable UNAfold mode. \n");
-    printf("   --prefilter value1,value2 \n\t\t\tSets the prefilter mode similar to UNAfold\n");
+    printf("   --unafold 		Run as UNAFOLD default mode (version 3.8). \n");
+    printf("   --prefilter num1,num2 \n\t\t\tSets the prefilter mode similar to UNAfold\n");
+    printf("   --rnafold 		Run as RNAFOLD default mode (version 1.8.5). \n");
 
     printf("\n");
     printf("   -h, --help           Output help (this message) and exit\n");
@@ -126,7 +127,7 @@ void parse_options(int argc, char** argv) {
 					help();
 			} else if (strcmp(argv[i], "-m") == 0) {
 				T_MISMATCH = true;
-			} else if (strcmp(argv[i], "--unamode") == 0) {
+			} else if (strcmp(argv[i], "--unafold") == 0) {
 				UNAMODE = true;
 			} else if (strcmp(argv[i], "--rnafold") == 0) {
 				RNAMODE = true;

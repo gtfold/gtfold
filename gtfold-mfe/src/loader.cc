@@ -87,7 +87,6 @@ void readThermodynamicParameters(const char *userdatadir,bool userdatalogic,
 		EN_DATADIR.assign(xstr(DATADIR));
 		EN_DATADIR += "/";
 		EN_DATADIR += "UNAParams";
-		printf("readThermodynamicParameters() %d %s\n",unamode, EN_DATADIR.c_str());
 	}else if (!userdatalogic && rnamode) {
 		EN_DATADIR.assign(xstr(DATADIR));
 		EN_DATADIR += "/";
