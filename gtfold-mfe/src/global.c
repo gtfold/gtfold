@@ -9,6 +9,7 @@ int *structure;
 unsigned int chPairKey;
 
 int g_nthreads;
+int g_dangles;
 int g_unamode;
 int g_mismatch;
 int g_verbose;

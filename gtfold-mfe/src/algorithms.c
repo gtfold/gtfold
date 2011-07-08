@@ -120,134 +120,200 @@ int calcVBI2(int i, int j, int  len) {
 	return energy;
 }
 
-int calculate(int len) { //, int nThreads, int unamode, int mismatch) { 
-	int b, i, j;
+int calculate(int len) { 
+								int b, i, j;
 #ifdef _OPENMP
-	if (g_nthreads > 0) omp_set_num_threads(g_nthreads);
+								if (g_nthreads > 0) omp_set_num_threads(g_nthreads);
 #endif
+
 #ifdef _OPENMP
 #pragma omp parallel
 #pragma omp master
-	fprintf(stdout,"Thread count: %3d \n",omp_get_num_threads());
+								fprintf(stdout,"Thread count: %3d \n",omp_get_num_threads());
 #endif
 
-	initializeMatrix(len);
-	if (g_unamode || g_prefilter_mode) {
-		prefilter(len,g_prefilter1,g_prefilter2);
-	}
-
-	for (b = TURN+1; b <= len-1; b++) {
+								initializeMatrix(len);
+								if (g_unamode || g_prefilter_mode) {
+																prefilter(len,g_prefilter1,g_prefilter2);
+								}
+								
+								for (b = TURN+1; b <= len-1; b++) {
 #ifdef _OPENMP
 #pragma omp parallel for private (i,j) schedule(guided)
 #endif
-		for (i = 1; i <= len - b; i++) {
-			j = i + b;
-			int newWM = INFINITY_; 
-			
-			if (PP[i][j]==1) {
-				int eh = canHairpin(i,j)?eH(i,j):INFINITY_; //hair pin
-				int es = canStack(i,j)?eS(i,j)+V(i+1,j-1):INFINITY_; // stack
+																for (i = 1; i <= len - b; i++) {
+																								j = i + b;
 
-				// Internal Loop BEGIN
-				if (g_unamode) 
-					VBI(i,j) = calcVBI1(i,j);
-				else
-					VBI(i,j) = calcVBI(i,j);
-				// Internal Loop END
+																								if (PP[i][j] == 1) {
+																																int eh = canHairpin(i,j)?eH(i,j):INFINITY_; //hair pin
+																																int es = canStack(i,j)?eS(i,j)+V(i+1,j-1):INFINITY_; // stack
 
-				// Multi Loop BEGIN
-				int VMij =  WMPrime[i+1][j-1]; 
-				int VMidj = WMPrime[i+2][j-1]; 
-				int VMijd = WMPrime[i+1][j-2]; 
-				int VMidjd = WMPrime[i+2][j-2]; 
+																																// Internal Loop BEGIN
+																																if (g_unamode) 
+																																								VBI(i,j) = calcVBI1(i,j);
+																																else
+																																								VBI(i,j) = calcVBI(i,j);
+																																// Internal Loop END
 
-				int d3 = canSS(j-1)?Ed3(i,j,j-1):INFINITY_;
-				int d5 = canSS(i+1)?Ed5(i,j,i+1):INFINITY_;
-				VMij = MIN(VMij, (VMidj + d5 +Ec)) ;
-				VMij = MIN(VMij, (VMijd + d3 +Ec));
+																																// Multi Loop BEGIN
+																																int d3 = canSS(j-1)?Ed3(i,j,j-1):INFINITY_;
+																																int d5 = canSS(i+1)?Ed5(i,j,i+1):INFINITY_;
 
-				if (g_unamode || g_mismatch) {
-					VMij = MIN(VMij, (VMidjd + Estackm(i,j) + 2*Ec));
-				} else {
-					VMij = MIN(VMij, (VMidjd + d5 + d3+ 2*Ec));
-				}
+																																if (g_unamode || g_mismatch) { // unamode, terminal mismatch
+																																								VM(i,j) = MIN(VM(i,j), WMPrime[i+1][j-1] + auPenalty(i,j) + Ea + Eb);
+																																								VM(i,j) = MIN(VM(i,j), WMPrime[i+2][j-1] + d5 + auPenalty(i,j) + Ea + Eb + Ec);
+																																								VM(i,j) = MIN(VM(i,j), WMPrime[i+1][j-2] + d3 + auPenalty(i,j) + Ea + Eb + Ec);
+																																								VM(i,j) = MIN(VM(i,j), WMPrime[i+2][j-2] + Estackm(i,j) + auPenalty(i,j) + Ea + Eb + 2*Ec);
+																																} else if (g_dangles == 2) { // -d2
+																																								VM(i,j) = MIN(VM(i,j), WMPrime[i+1][j-1] + d3 + d5 + auPenalty(i,j) + Ea + Eb);
+																																} else if (g_dangles == 0) { // -d0
+																																								VM(i,j) = MIN(VM(i,j), WMPrime[i+1][j-1] + auPenalty(i,j) + Ea + Eb);
+																																}	else { // default 
+																																								VM(i,j) = MIN(VM(i,j), WMPrime[i+1][j-1] + auPenalty(i,j) + Ea + Eb);
+																																								VM(i,j) = MIN(VM(i,j), WMPrime[i+2][j-1] + d5 + auPenalty(i,j) + Ea + Eb + Ec);
+																																								VM(i,j) = MIN(VM(i,j), WMPrime[i+1][j-2] + d3 + auPenalty(i,j) + Ea + Eb + Ec);
+																																								VM(i,j) = MIN(VM(i,j), WMPrime[i+2][j-2] + d3 + d5 + auPenalty(i,j) + Ea + Eb + 2*Ec);
+																																}
+																																VM(i,j) = canStack(i,j)?VM(i,j):INFINITY_;
+																																// Multi Loop END
 
-				VMij = VMij + Ea + Eb + auPenalty(i,j);
-				VM(i,j) = canStack(i,j)?VMij:INFINITY_;
-				// Multi Loop END
+																																V(i,j) = MIN4(  eh,
+																																																es,
+																																																VBI(i,j),
+																																																VM(i,j));
+																								}
+																								else {
+																																V(i,j) = INFINITY_;
+																								}
 
-				V(i,j) = MIN4(eh,es,VBI(i,j),VM(i,j));
-			}
-			else V(i,j) = INFINITY_;
+																								// Added auxillary storage WMPrime to speedup multiloop calculations
+																								int h;
+																								for (h = i+TURN+1 ; h <= j-TURN-2; h++) {
+																																WMPrime[i][j] = MIN(WMPrime[i][j], WMU(i,h-1) + WML(h,j)); 
+																								}
 
-			int h; 
-			for (h = i+TURN+1 ; h <= j-TURN-2; h++) {
-				// Added auxillary storage WMPrime to speedup multiloop calculations
-				WMPrime[i][j] = MIN(WMPrime[i][j], WMU(i,h-1) + WML(h,j)); 
-				//newWM = (!forcePair(i,j))?MIN(newWM, WMU(i,h-1) + WML(h,j)):newWM;
-			}
-			
-			//ZS: This sum corresponds to when i,j are NOT paired with each other.
-			//So we need to make sure only terms where i,j aren't pairing are considered. 
-			newWM = (!forcePair(i,j))?MIN(newWM, WMPrime[i][j]):newWM;
-			
-			newWM = MIN(V(i,j) + auPenalty(i,j) + Eb, newWM); 
-			newWM = canSS(i)?MIN(V(i+1,j) + Ed3(j,i+1,i) + auPenalty(i+1,j) + Eb + Ec, newWM):newWM; //i dangle
-			newWM = canSS(j)?MIN(V(i,j-1) + Ed5(j-1,i,j) + auPenalty(i,j-1) + Eb + Ec, newWM):newWM;  //j dangle
+																								// WM begin
+																								int newWM = INFINITY_; 
+																								
+																								//ZS: This sum corresponds to when i,j are NOT paired with each other.
+																								//So we need to make sure only terms where i,j aren't pairing are considered. 
+																								newWM = (!forcePair(i,j))?MIN(newWM, WMPrime[i][j]):newWM;
 
-			if (g_unamode || g_mismatch) {
-				if (i<j-TURN-2)
-					newWM = (canSS(i)&&canSS(j))?MIN(V(i+1,j-1) + Estackm(j-1,i+1) + auPenalty(i+1,j-1) + Eb + 2*Ec, newWM):newWM; 
-			}
-			else {
-				newWM = (canSS(i)&&canSS(j))?MIN(V(i+1,j-1) + Ed3(j-1,i+1,i) + Ed5(j-1,i+1,j) + auPenalty(i+1,j-1) + Eb + 2*Ec, newWM):newWM; //i,j dangle
-			}
+																								if (g_unamode || g_mismatch) { // unamode
+																																newWM = MIN(V(i,j) + auPenalty(i,j) + Eb, newWM); 
+																																newWM = canSS(i)?MIN(V(i+1,j) + Ed3(j,i+1,i) + auPenalty(i+1,j) + Eb + Ec, newWM):newWM; //i dangle
+																																newWM = canSS(j)?MIN(V(i,j-1) + Ed5(j-1,i,j) + auPenalty(i,j-1) + Eb + Ec, newWM):newWM;  //j dangle
+																																if (i<j-TURN-2)
+																																								newWM = (canSS(i)&&canSS(j))?MIN(V(i+1,j-1) + Estackm(j-1,i+1) + auPenalty(i+1,j-1) + Eb + 2*Ec, newWM):newWM; 
+																								} else if (g_dangles == 2) {
+																																int energy = V(i,j) + auPenalty(i,j) + Eb;
+																																energy += (i==1)?Ed3(j,i,len):Ed3(j,i,i-1);
+																																/*if (j<len)*/ energy += Ed5(j,i,j+1);
+																																newWM = (canSS(i)&&canSS(j))?MIN(energy, newWM):newWM; //i,j dangle
+																								} else if (g_dangles == 0) {
+																																newWM = MIN(V(i,j) + auPenalty(i,j) + Eb, newWM); 
+																								} else { // default
+																																newWM = MIN(V(i,j) + auPenalty(i,j) + Eb, newWM); 
+																																newWM = canSS(i)?MIN(V(i+1,j) + Ed3(j,i+1,i) + auPenalty(i+1,j) + Eb + Ec, newWM):newWM; //i dangle
+																																newWM = canSS(j)?MIN(V(i,j-1) + Ed5(j-1,i,j) + auPenalty(i,j-1) + Eb + Ec, newWM):newWM;  //j dangle
+																																newWM = (canSS(i)&&canSS(j))?MIN(V(i+1,j-1) + Ed3(j-1,i+1,i) + Ed5(j-1,i+1,j) + auPenalty(i+1,j-1) + Eb + 2*Ec, newWM):newWM; //i,j dangle
+																								}
+																								newWM = canSS(i)?MIN(WMU(i+1,j) + Ec, newWM):newWM; //i dangle
+																								newWM = canSS(j)?MIN(WML(i,j-1) + Ec, newWM):newWM; //j dangle
 
-			newWM = canSS(i)?MIN(WMU(i+1,j) + Ec, newWM):newWM; //i dangle
-			newWM = canSS(j)?MIN(WML(i,j-1) + Ec, newWM):newWM; //j dangle
-			WMU(i,j) = WML(i,j) = newWM;
-		}
-	}
+																								WMU(i,j) = WML(i,j) = newWM;
+																								// WM end
+																}
+								}
+						
+								for (j = TURN+2; j <= len; j++) {
+																int i, Wj, Widjd, Wijd, Widj, Wij, Wim1;
+																Wj = INFINITY_;
+																for (i = 1; i < j-TURN; i++) {
+																								Wij = Widjd = Wijd = Widj = INFINITY_;
+																								Wim1 = MIN(0, W[i-1]); 
 
-	for (j = TURN+2; j <= len; j++) {
-		int i, Wj, Widjd, Wijd, Widj, Wij, Wim1;
-		Wj = INFINITY_;
-		for (i = 1; i < j-TURN; i++) {
-			Wij = Widjd = Wijd = Widj = INFINITY_;
-			Wim1 = MIN(0, W[i-1]); 
-			Wij = V(i, j) + auPenalty(i, j) + Wim1;
-		
-			if (g_unamode || g_mismatch) {
-				Widjd = (canSS(i)&&canSS(j))?V(i+1,j-1) + auPenalty(i+1,j-1) + Estacke(j-1,i+1) + Wim1:Widjd;
-			} else {
-				Widjd = (canSS(i)&&canSS(j))?V(i+1,j-1) + auPenalty(i+1,j-1) + Ed3(j-1,i + 1,i) + Ed5(j-1,i+1,j) + Wim1:Widjd;
-			}
-			
-			Wijd = canSS(j)?V(i,j-1) + auPenalty(i,j-1) + Ed5(j-1,i,j) + Wim1:Wijd;
-			Widj = canSS(i)?V(i+1, j) + auPenalty(i+1,j) + Ed3(j,i + 1,i) + Wim1:Widj;
-			Wj = MIN(MIN4(Wij, Widjd, Wijd, Widj), Wj); 
-		}
-		W[j] = canSS(j)?MIN(Wj, W[j-1]):Wj;
-	}
+																								if (g_unamode || g_mismatch) { // unafold option
+																																Wij = V(i, j) + auPenalty(i, j) + Wim1;
+																																Widj = canSS(i)?V(i+1, j) + auPenalty(i+1,j) + Ed3(j,i + 1,i) + Wim1:Widj;
+																																Wijd = canSS(j)?V(i,j-1) + auPenalty(i,j-1) + Ed5(j-1,i,j) + Wim1:Wijd;
+																																Widjd = (canSS(i)&&canSS(j))?V(i+1,j-1) + auPenalty(i+1,j-1) + Estacke(j-1,i+1) + Wim1:Widjd;
+																																Wij = MIN4(Wij, Widjd, Wijd, Widj);
+																								} else if (g_dangles == 2) { // -d2 option
+																																int energy = V(i,j) +	 auPenalty(i,j) + Wim1;
+																																if (i>1) energy +=  Ed3(j,i,i-1);
+																																if (j<len) energy += Ed5(j,i,j+1);
+																																Widjd = (canSS(i)&&canSS(j))? energy:Widjd;
+																																Wij = MIN(Wij, Widjd);
+																								}	else if (g_dangles == 0) { // -d0 option
+																																Wij = V(i, j) + auPenalty(i, j) + Wim1;
+																								} else { // default
+																																Wij = V(i, j) + auPenalty(i, j) + Wim1;
+																																Widj = canSS(i)?V(i+1, j) + auPenalty(i+1,j) + Ed3(j,i + 1,i) + Wim1:INFINITY_;
+																																Wijd = canSS(j)?V(i,j-1) + auPenalty(i,j-1) + Ed5(j-1,i,j) + Wim1:INFINITY_;
+																																Widjd = (canSS(i)&&canSS(j))?V(i+1,j-1) + auPenalty(i+1,j-1) + Ed3(j-1,i + 1,i) + Ed5(j-1,i+1,j) + Wim1:INFINITY_;
+																																Wij = MIN4(Wij, Widjd, Wijd, Widj);
+																								}
+
+																								Wj = MIN(Wj,Wij); 
+																}
+																W[j] = canSS(j)?MIN(Wj, W[j-1]):Wj;
+								}
 
 #ifdef DEBUG
-	FILE* file = fopen("VM.txt", "w");
-	int ii, jj;
-	for (ii = 1; ii <= len; ++ii) {    
-		for (jj = 1; jj <= len; ++jj) {
-			fprintf(file, "%d %d %d\n",ii,jj,VM(ii,jj));
-		}
-	}    
-	fclose(file);
+								FILE* file = fopen("VBI.txt", "w");
+								int ii, jj;
+								for (ii = 1; ii <= len; ++ii) {    
+																for (jj = len; jj > ii; --jj) {
+																								fprintf(file, "%d %d %d\n",ii,jj,VBI(ii,jj));
+																}
+								}    
+								fclose(file);
+
+								file = fopen("Eh.txt", "w");
+								for (ii = 1; ii <= len; ++ii) {    
+																for (jj = len; jj > ii; --jj) {
+																				int eh = INFINITY_;
+																			 if (PP[ii][jj])	eh = eH(ii,jj);
+																				fprintf(file, "%d %d %d\n",ii,jj,eh>=INFINITY_?INFINITY_:eh);
+																}
+								}    
+								fclose(file);
 	
- 	file = fopen("WM.txt", "w");
-	for (ii = 1; ii <= len; ++ii) {    
-		for (jj = 1; jj <= len; ++jj) {
-			fprintf(file, "%d %d %d\n",ii,jj,WM(ii,jj));
-		}
-	}    
-	fclose(file);
+								file = fopen("Es.txt", "w");
+								for (ii = 1; ii <= len; ++ii) {    
+																for (jj = len; jj > ii; --jj) {
+																				int es = INFINITY_;
+																				if (PP[ii][jj] && PP[ii+1][jj-1]) es = eS(ii,jj);
+																				fprintf(file, "%d %d %d\n",ii,jj,es>=INFINITY_?INFINITY_:es);
+																}
+								}    
+								fclose(file);
+															
+								file = fopen("BP.txt", "w");
+								for (ii = 1; ii <= len; ++ii) {    
+																for (jj = len; jj > ii; --jj) {
+																								fprintf(file, "%d %d %d\n",ii,jj,PP[ii][jj]);
+																}
+								}    
+								fclose(file);
+
+								file = fopen("VM.txt", "w");
+								for (ii = 1; ii <= len; ++ii) {    
+																for (jj = len; jj > ii; --jj) {
+																								fprintf(file, "%d %d %d\n",ii,jj,VM(ii,jj));
+																}
+								}    
+								fclose(file);
+
+								file = fopen("WM.txt", "w");
+								for (ii = 1; ii <= len; ++ii) {    
+																for (jj = len; jj > ii; --jj) {
+																								fprintf(file, "%d %d %d\n",ii,jj,WM(ii,jj));
+																}
+								}    
+								fclose(file);
 #endif
-	
-	return W[len];
+
+								return W[len];
 }

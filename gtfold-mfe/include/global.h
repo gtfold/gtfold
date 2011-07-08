@@ -9,6 +9,7 @@ extern int* constraints;
 
 extern int g_nthreads;
 extern int g_unamode;
+extern int g_dangles;
 extern int g_mismatch;
 extern int g_verbose;
 extern int g_prefilter_mode;

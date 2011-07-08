@@ -29,6 +29,7 @@ string outputDir = "";
 string shapeFile = "";
 string paramDir; // default value
 
+int dangles=-1;
 int prefilter1=2;
 int prefilter2=2;
 
@@ -127,6 +128,10 @@ void parse_options(int argc, char** argv) {
 					help();
 			} else if (strcmp(argv[i], "-m") == 0) {
 				T_MISMATCH = true;
+			} else if (strcmp(argv[i], "-d2") == 0) {
+				dangles = 2;
+			} else if (strcmp(argv[i], "-d0") == 0) {
+				dangles = 0;
 			} else if (strcmp(argv[i], "--unafold") == 0) {
 				UNAMODE = true;
 			} else if (strcmp(argv[i], "--rnafold") == 0) {
@@ -202,8 +207,11 @@ void parse_options(int argc, char** argv) {
 	// If output dir specified
 	if (!outputDir.empty()) {
 		outputFile += outputDir;
+		outputFile += "/";
 		suboptFile += outputDir;
+		suboptFile += "/";
 		bppOutFile += outputDir;
+		bppOutFile += "/";
 	}
 	// ... and append the .ct
 	outputFile += outputPrefix;
@@ -225,8 +233,16 @@ void printRunConfiguration(string seq) {
 	bool standardRun = true;
 
 	printf("Run Configuration:\n");
+		if (RNAMODE == true) {
+		printf("+ running in rnafold mode\n");
+		standardRun = false;
+	}
 	if (UNAMODE == true) {
-		printf("+ running in unamode\n");
+		printf("+ running in unafold mode\n");
+		standardRun = false;
+	}
+	if (dangles == 2) {
+		printf("+ running in -d2 mode\n");
 		standardRun = false;
 	}
 	if (T_MISMATCH == true) {

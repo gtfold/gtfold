@@ -37,6 +37,7 @@ extern int nThreads;
 extern bool b_prefilter;
 extern int prefilter1;
 extern int prefilter2;
+extern int dangles;
 
 extern bool LIMIT_DISTANCE;
 extern int contactDistance;

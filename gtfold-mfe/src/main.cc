@@ -78,6 +78,7 @@ void init_fold(string seq) {
 	g_prefilter_mode  = b_prefilter;
 	g_prefilter1  = prefilter1;
 	g_prefilter2  = prefilter2;
+	g_dangles = dangles;
 }
 
 void free_fold(int len) {
@@ -226,19 +227,18 @@ int main(int argc, char** argv) {
 		exit(-1);
 	}
 	
-	printRunConfiguration(seq);
-	
 	// Read in thermodynamic parameters. Always use Turner99 data (for now)
 	readThermodynamicParameters(paramDir.c_str(), PARAM_DIR, UNAMODE, RNAMODE, T_MISMATCH);
 
-	
 	init_fold(seq);
+	
+	printRunConfiguration(seq);
 
 	printf("\nComputing minimum free energy structure...\n");
 	fflush(stdout);
 
 	t1 = get_seconds();
-	energy = calculate(seq.length()) ; //, nThreads, UNAMODE, T_MISMATCH);
+	energy = calculate(seq.length()) ; 
 	t1 = get_seconds() - t1;
 	
 	printf("Done.\n\n");
@@ -264,7 +264,7 @@ int main(int argc, char** argv) {
 	}
 	
 	t1 = get_seconds();
-	trace(seq.length(), VERBOSE, UNAMODE, T_MISMATCH);
+	trace(seq.length()); //, VERBOSE, UNAMODE, T_MISMATCH);
 	t1 = get_seconds() - t1;
 	
 	printf("\n");

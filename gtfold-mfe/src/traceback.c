@@ -30,20 +30,16 @@
 #include "utils.h"
 #include "shapereader.h"
 
-int verbose = -1;
 int total_en = 0;
 int total_ex = 0;
-int unamode = 0;
+int length = 0;
 
-void trace(int len, int vv, int mode, int mismatch) {
+void trace(int len) { 
+	printf("traceback()\n");
 	int i;
-	verbose = vv;
-	unamode = mode;
-	if (mismatch) unamode = 1;
+	for (i = 0; i <= len; i++) structure[i] = 0;
 
-	for (i = 0; i < len+1; i++)
-		structure[i] = 0;
-
+	length = len;
 	if (W[len] >= MAXENG) {
 		printf("- No Structure \n");
 		return;
@@ -58,14 +54,11 @@ void trace(int len, int vv, int mode, int mismatch) {
 }
 
 void traceW(int j) {
-	int done, i, Wj;
-	int wim1, flag, Widjd, Wijd, Widj, Wij;
-	Wj = INFINITY_;
-	flag = 1;
-	done = 0; 
+	int done = 0, i;
+	int wim1, flag = 1 ;
 	
-	if (j == 0 || j == 1) return;
-
+	assert(!(j == 0 || j == 1)); 
+	
 	for (i = 1; i < j && !done; i++) {
 		if (j-i < TURN) continue;
 
@@ -73,74 +66,95 @@ void traceW(int j) {
 		flag = 1;
 		if ( wim1 != W[i-1] && canSSregion(0,i)) flag = 0;
 
-		Widjd = Wijd =  Widj = INFINITY_;
-		Wij = V(i,j) + auPenalty(i, j) + wim1;
-		
-		if (unamode) {
-			Widjd = V(i+1,j-1) + auPenalty(i+1, j-1) + Estacke(j-1,i+1) + wim1;
-		}
-		else {
-			Widjd = V(i+1,j-1) + auPenalty(i+1, j-1) + Ed3(j-1,i+1,i) + Ed5(j-1,i+1,j) + wim1;
-		}
-
-		Wijd = V(i,j-1) + auPenalty(i,j-1) + Ed5(j-1,i,j) + wim1;
-		Widj = V(i+1,j) + auPenalty(i+1,j) + Ed3(j,i+1,i) + wim1;
-
-		if ((W[j] == Wij && canStack(i,j)) || forcePair(i,j)) { 
-			done = 1;
-			if (verbose == 1) 
-				printf("i %5d j %5d ExtLoop   %12.2f\n", i, j, auPenalty(i, j)/100.00);
-			total_ex += auPenalty(i, j);
-			structure[i] = j;
-			structure[j] = i;
-			traceV(i, j);
-			if (flag ) traceW(i - 1);
-			break;
-		} else if ((W[j] == Widjd && unamode && canSS(i) && canSS(j) && canStack(i+1,j-1)) || forcePair(i+1,j-1)) { 
-			done = 1;
-			if (verbose == 1) 
-				printf("i %5d j %5d ExtLoop   %12.2f\n", i+1, j-1, (auPenalty(i+1, j-1) + Estacke(j-1,i+1))/100.00);
-			total_ex += (auPenalty(i+1, j-1) + Estacke(j-1,i+1));
-			structure[i + 1] = j - 1;
-			structure[j - 1] = i + 1;
-			traceV(i + 1, j - 1);
-			if (flag ) traceW(i - 1);
-			break;
-		}
-	   	else if ((W[j] == Widjd && canSS(i) && canSS(j) && canStack(i+1,j-1)) || forcePair(i+1,j-1)) { 
-			done = 1;
-			if (verbose == 1) 
-				printf("i %5d j %5d ExtLoop   %12.2f\n", i+1, j-1, (auPenalty(i+1, j-1) + Ed3(j-1,i+1,i) + Ed5(j-1,i+1,j))/100.00);
-			total_ex += (auPenalty(i+1, j-1) + Ed3(j-1,i+1,i) + Ed5(j-1,i+1,j));
-			structure[i + 1] = j - 1;
-			structure[j - 1] = i + 1;
-			traceV(i + 1, j - 1);
-			if (flag ) traceW(i - 1);
-			break;
-		} else if ((W[j] == Wijd && canSS(j) && canStack(i,j-1)) || forcePair(i, j-1)) { 	
-			done = 1;
-			if (verbose == 1) 
-				printf("i %5d j %5d ExtLoop   %12.2f\n", i, j-1, (auPenalty(i,j-1) + Ed5(j-1,i,j))/100.00);
-			total_ex += (auPenalty(i,j-1) + Ed5(j-1,i,j));
-			structure[i] = j - 1;
-			structure[j - 1] = i;
-			traceV(i, j - 1);
-			if (flag ) traceW(i - 1);
-			break;
-		} else if ((W[j] == Widj && canSS(i) && canStack(i+1,j)) || forcePair(i+1,j)){
-			done = 1;
-			if (verbose == 1) 
-				printf("i %5d j %5d ExtLoop   %12.2f\n", i+1, j, (auPenalty(i+1,j) + Ed3(j,i+1,i))/100.00);
-			total_ex += (auPenalty(i+1,j) + Ed3(j,i+1,i));
-			structure[i + 1] = j;
-			structure[j] = i + 1;
-			traceV(i + 1, j);
-			if (flag ) traceW(i - 1);
-			break;
+		if (g_unamode||g_mismatch) {
+			if ((W[j] == V(i,j) + auPenalty(i, j) + wim1 && canStack(i,j)) || forcePair(i,j)) { 
+							done = 1;
+							if (g_verbose == 1) printf("i %5d j %5d ExtLoop   %12.2f\n", i, j, auPenalty(i, j)/100.00);
+							total_ex += auPenalty(i, j);
+							traceV(i, j);
+							if (flag ) traceW(i - 1);
+							break;
+			} else if ((W[j] ==  V(i,j-1) + auPenalty(i,j-1) + Ed5(j-1,i,j) + wim1 && canSS(j) && canStack(i,j-1)) || forcePair(i, j-1)) { 	
+							done = 1;
+							if (g_verbose == 1) printf("i %5d j %5d ExtLoop   %12.2f\n", i, j-1, (auPenalty(i,j-1) + Ed5(j-1,i,j))/100.00);
+							total_ex += (auPenalty(i,j-1) + Ed5(j-1,i,j));
+							traceV(i, j - 1);
+							if (flag ) traceW(i - 1);
+							break;
+			} else if ((W[j] == V(i+1,j) + auPenalty(i+1,j) + Ed3(j,i+1,i) + wim1 && canSS(i) && canStack(i+1,j)) || forcePair(i+1,j)){
+							done = 1;
+							if (g_verbose == 1) printf("i %5d j %5d ExtLoop   %12.2f\n", i+1, j, (auPenalty(i+1,j) + Ed3(j,i+1,i))/100.00);
+							total_ex += (auPenalty(i+1,j) + Ed3(j,i+1,i));
+							traceV(i + 1, j);
+							if (flag ) traceW(i - 1);
+							break;
+			} else if ((W[j] == V(i+1,j-1) + auPenalty(i+1, j-1) + Estacke(j-1,i+1) + wim1 && canSS(i) && canSS(j) && canStack(i+1,j-1)) || forcePair(i+1,j-1)) { 
+							done = 1;
+							if (g_verbose == 1) printf("i %5d j %5d ExtLoop   %12.2f\n", i+1, j-1, (auPenalty(i+1, j-1) + Estacke(j-1,i+1))/100.00);
+							total_ex += (auPenalty(i+1, j-1) + Estacke(j-1,i+1));
+							traceV(i + 1, j - 1);
+							if (flag ) traceW(i - 1);
+							break;
+			}
+		} else if (g_dangles == 2) {
+				int e_dangles = 0;
+				if (i>1) e_dangles +=  Ed3(j,i,i-1);
+				if (j<length) e_dangles += Ed5(j,i,j+1);
+				if ((W[j] == V(i,j) + auPenalty(i, j) + e_dangles + wim1 && canSS(i) && canSS(j) && canStack(i+1,j-1)) || forcePair(i+1,j-1)) { 
+												done = 1;
+												if (g_verbose == 1) printf("i %5d j %5d ExtLoop   %12.2f\n", i+1, j-1, (auPenalty(i, j) + e_dangles)/100.00);
+												total_ex += (auPenalty(i, j) + e_dangles);
+												traceV(i, j);
+												if (flag ) traceW(i - 1);
+												break;
+				} 
+		}	else if (g_dangles == 0) {
+			if ((W[j] == V(i,j) + auPenalty(i, j) + wim1 && canStack(i,j)) || forcePair(i,j)) { 
+							done = 1;
+							if (g_verbose == 1) printf("i %5d j %5d ExtLoop   %12.2f\n", i, j, auPenalty(i, j)/100.00);
+							total_ex += auPenalty(i, j);
+							traceV(i, j);
+							if (flag ) traceW(i - 1);
+							break;
+			}
+		} else { // default
+			if ((W[j] == V(i,j) + auPenalty(i, j) + wim1 && canStack(i,j)) || forcePair(i,j)) { 
+							done = 1;
+							if (g_verbose == 1) printf("i %5d j %5d ExtLoop   %12.2f\n", i, j, auPenalty(i, j)/100.00);
+							total_ex += auPenalty(i, j);
+							traceV(i, j);
+							if (flag ) traceW(i - 1);
+							break;
+			} else if ((W[j] ==  V(i,j-1) + auPenalty(i,j-1) + Ed5(j-1,i,j) + wim1 && canSS(j) && canStack(i,j-1)) || forcePair(i, j-1)) { 	
+							done = 1;
+							if (g_verbose == 1) printf("i %5d j %5d ExtLoop   %12.2f\n", i, j-1, (auPenalty(i,j-1) + Ed5(j-1,i,j))/100.00);
+							total_ex += (auPenalty(i,j-1) + Ed5(j-1,i,j));
+							traceV(i, j - 1);
+							if (flag ) traceW(i - 1);
+							break;
+			} else if ((W[j] == V(i+1,j) + auPenalty(i+1,j) + Ed3(j,i+1,i) + wim1 && canSS(i) && canStack(i+1,j)) || forcePair(i+1,j)){
+							done = 1;
+							if (g_verbose == 1) printf("i %5d j %5d ExtLoop   %12.2f\n", i+1, j, (auPenalty(i+1,j) + Ed3(j,i+1,i))/100.00);
+							total_ex += (auPenalty(i+1,j) + Ed3(j,i+1,i));
+							traceV(i + 1, j);
+							if (flag ) traceW(i - 1);
+							break;
+			} else if ((W[j] == V(i+1,j-1) + auPenalty(i+1, j-1) + Ed3(j-1,i+1,i) + Ed5(j-1,i+1,j) + wim1 && canSS(i) && canSS(j) && canStack(i+1,j-1)) || forcePair(i+1,j-1)) { 
+							done = 1;
+							if (g_verbose == 1) printf("i %5d j %5d ExtLoop   %12.2f\n", i+1, j-1, (auPenalty(i+1, j-1) + Ed3(j-1,i+1,i) + Ed5(j-1,i+1,j))/100.00);
+							total_ex += (auPenalty(i+1, j-1) + Ed3(j-1,i+1,i) + Ed5(j-1,i+1,j));
+							traceV(i + 1, j - 1);
+							if (flag ) traceW(i - 1);
+							break;
+			} 
 		}
 	}
 		
 	if (W[j] == W[j - 1] && !done) traceW(j-1);
+ 
+	//if (!done) {
+	//	fprintf(stderr, "ERROR: W(%d) could not be traced\n", j);
+	//}
 
 	return;
 }
@@ -151,34 +165,29 @@ int traceV(int i, int j) {
 
 	a = canHairpin(i,j)?eH(i, j):INFINITY_;
 	b = canStack(i,j)?eS(i, j) + V(i + 1, j - 1):INFINITY_;
-	// if (eS(i, j) == 0) b = INFINITY_;
 	c = canStack(i,j)?VBI(i,j):INFINITY_;
 	d = canStack(i,j)?VM(i,j):INFINITY_;
 	
 	Vij = V(i,j);
+	structure[i] = j;
+	structure[j] = i;
 
 	if (Vij == a ) { 
-		if (verbose == 1) 
-			printf("i %5d j %5d Hairpin   %12.2f\n", i, j, eH(i, j)/100.00);
+		if (g_verbose == 1) printf("i %5d j %5d Hairpin   %12.2f\n", i, j, eH(i, j)/100.00);
 		total_en += eH(i,j);
 		return Vij;
 	} else if (Vij == b) { 
-		if (verbose == 1) 
-			printf("i %5d j %5d Stack     %12.2f\n", i, j, eS(i, j)/100.00);
+		if (g_verbose == 1) printf("i %5d j %5d Stack     %12.2f\n", i, j, eS(i, j)/100.00);
 		total_en += eS(i,j);
-		structure[i + 1] = j - 1;
-		structure[j - 1] = i + 1;
 		traceV(i + 1, j - 1);
 		return Vij;
 	} else if (Vij == c) { 
-		if (verbose == 1) 
-			printf("i %5d j %5d IntLoop  ", i, j);
+		if (g_verbose == 1) printf("i %5d j %5d IntLoop  ", i, j);
 		traceVBI(i, j);
 		return Vij;
 	} else if (Vij == d) { 
 		int eVM = traceVM(i, j);
-		if (verbose ==1) 
-			printf("i %5d j %5d MultiLoop %12.2f\n", i, j, (Vij-eVM)/100.0);
+		if (g_verbose ==1) printf("i %5d j %5d MultiLoop %12.2f\n", i, j, (Vij-eVM)/100.0);
 		total_en += (Vij-eVM);
 		return Vij;
 	}
@@ -187,9 +196,8 @@ int traceV(int i, int j) {
 }
 
 int traceVBI(int i, int j) {
-	
-	int VBIij_temp;
-	int ip, jp, el, v;
+	int VBIij;
+	int ip, jp;
 	int ifinal, jfinal;
 
 	ifinal = 0;
@@ -197,157 +205,155 @@ int traceVBI(int i, int j) {
 
 	for (ip = i + 1; ip < j - 1; ip++) {
 		for (jp = ip + 1; jp < j; jp++) {
-			el = eL(i, j, ip, jp);
-			v = V(ip, jp);
-			VBIij_temp = el + v;
-			if (VBIij_temp == VBI(i,j) || forcePair(ip,jp)){
+			VBIij = eL(i, j, ip, jp)+ V(ip,jp);
+			if (VBIij == VBI(i,j) || forcePair(ip,jp)){
 				ifinal = ip;
 				jfinal = jp;
 				break;
 			}
 		}
-		if (jp != j)
-			break;
+		if (jp != j) break;
 	}
 
-	structure[ifinal] = jfinal;
-	structure[jfinal] = ifinal;
-	if (verbose==1) 
-		printf(" %12.2f\n", eL(i, j, ifinal, jfinal)/100.00);
+	if (g_verbose==1) printf(" %12.2f\n", eL(i, j, ifinal, jfinal)/100.00);
 	total_en += eL(i, j, ifinal, jfinal);
 
-	int eVI = traceV(ifinal, jfinal);
-	return eVI ;
+	return traceV(ifinal, jfinal);
 }
 
 int traceVM(int i, int j) {
-	int done;
-	int h;
-	int A_temp;
+	int done = 0;
 	int eVM = 0;
 
-	done = 0;
-	int VMij = VM(i,j);
-
-	if (unamode && i<j-TURN-2) {
-		for (h = i + 3; h <= j - 2 && !done; h++) { 
-			A_temp = WM(i + 2,h - 1) + WM(h,j - 2) + Ea + Eb + auPenalty(i,j) + Estackm(i,j);
-			if (A_temp == VMij && canSS(i+1) && canSS(j-1)) {
-				done = 1;
-				eVM += traceWM(i + 2, h - 1);
-				eVM += traceWM(h, j - 2);
-				break;
-			}
-		}
-	}
-	else {
-		for (h = i + 3; h <= j - 2 && !done; h++) { 
-			A_temp = WM(i + 2,h - 1) + WM(h,j - 2) + Ea + Eb + auPenalty(i,j) + Ed5(i,j,i + 1) + Ed3(i,j,j - 1);
-			if (A_temp == VMij && canSS(i+1) && canSS(j-1)) {
-				done = 1;
-				eVM += traceWM(i + 2, h - 1);
-				eVM += traceWM(h, j - 2);
-				break;
-			}
-		}
-	}
-
-	for (h = i + 2; h <= j - 1 && !done; h++) {
-		A_temp = WM(i+1,h-1) + WM(h,j - 1) + Ea + Eb + auPenalty(i, j);
-		if (A_temp == VMij) { 
+	if (g_unamode||g_mismatch) {
+		if (VM(i,j) == WMPrime[i+1][j - 1] + Ea + Eb + auPenalty(i, j) ) {
 			done = 1;
-			eVM += traceWM(i + 1, h - 1);
-			eVM += traceWM(h, j - 1);
-			break;
-		}
-	}
-
-	for (h = i + 3; h <= j - 1 && !done; h++) {
-		A_temp = WM(i + 2,h - 1) + WM(h,j - 1) + Ea + Eb + auPenalty(i,j) + Ed5(i,j,i + 1); 
-		if (A_temp == VMij && canSS(i+1) ) {
+			eVM += traceWMPrime(i + 1, j - 1);
+		} else if (VM(i,j) == WMPrime[i + 2][j - 1] + Ea + Eb + auPenalty(i,j) + Ed5(i,j,i + 1) + Ec && canSS(i+1) ) {
 			done = 1;
-			eVM += traceWM(i + 2, h - 1);
-			eVM += traceWM(h, j - 1);
-			break;
+			eVM += traceWMPrime(i + 2, j - 1);
 		}
-	}
-
-	for (h = i + 2; h <= j - 2 && !done; h++) { 
-		A_temp = WM(i + 1,h - 1) + WM(h,j - 2) + Ea + Eb + auPenalty(i, j) + Ed3(i,j,j - 1);
-		if (A_temp == VMij && canSS(j-1)) {
+		else if ( VM(i,j) == WMPrime[i + 1][j - 2] + Ea + Eb + auPenalty(i, j) + Ed3(i,j,j - 1) + Ec && canSS(j-1)) {
 			done = 1;
-			eVM += traceWM(i + 1, h - 1);
-			eVM += traceWM(h, j - 2);
-			break;
+			eVM += traceWMPrime(i + 1, j - 2);
 		}
-	}
-
-		return eVM;
-}
-
-int traceWM(int i, int j) {
-
-	int done;
-	int h1, h;
-	int eWM = 0; 
-
-	done = 0;
-	h1 = 0;
-
-	if (i >= j)
-		return 0;
-	else {
-		for (h = i; h < j && !done; h++) {
-			int aa = WM(i,h) + WM(h + 1,j); 
-			if (aa == WM(i,j)) {
-				done = 1;
-				h1 = h;
-				break;
-			}
-		}
-		if (h1 != 0) {
-			eWM += traceWM(i, h);
-			eWM += traceWM(h + 1, j);
+		else if (V(i,j) == WMPrime[i + 2][j - 2] + Ea + Eb + auPenalty(i,j) + Estackm(i,j) + 2*Ec && canSS(i+1) && canSS(j-1) ) {
 			done = 1;
-		} else {
-			if (WM(i,j) == V(i,j) + auPenalty(i, j) + Eb && canStack(i,j)) { 
-				structure[i] = j;
-				structure[j] = i;
-				eWM += traceV(i, j);
-				done = 1;
-			} else if (WM(i,j) == V(i+1, j) + Ed3(j,i + 1,i) + auPenalty(i+1, j) + Eb + Ec && canSS(i) &&  canStack(i+1,j)) { 
-				eWM += traceV(i + 1, j);
-				structure[i + 1] = j;
-				structure[j] = i + 1;
-				done = 1;
-			} else if (WM(i,j) == V(i,j-1) + Ed5(j-1,i,j) + auPenalty(i,j-1) +  Eb + Ec && canSS(j) && canStack(i,j-1)) { 
-				done = 1;
-				eWM += traceV(i, j - 1);
-				structure[i] = j - 1;
-				structure[j - 1] = i;
-			} else if (WM(i,j) == V(i+1,j-1) + Ed3(j-1,i+1,i) + Ed5(j-1,i+1,j) + auPenalty(i+1, j-1) + Eb + 2*Ec && canSS(i) && canSS(j) && canStack(i+1,j-1)) { 
-				done = 1;
-				eWM += traceV(i + 1, j - 1);
-				structure[i + 1] = j - 1;
-				structure[j - 1] = i + 1;
-			}
-		   	else if (WM(i,j) == V(i+1,j-1) + Estackm(j-1,i+1) + auPenalty(i+1, j-1) + Eb + 2*Ec && canSS(i) && canSS(j) && canStack(i+1,j-1) && unamode) {
-				done = 1;
-				eWM += traceV(i + 1, j - 1);
-				structure[i + 1] = j - 1;
-				structure[j - 1] = i + 1;
-			}
-			else if (WM(i,j) == WM(i + 1,j) + Ec && canSS(i)) { 
-				done = 1;
-				eWM += traceWM(i + 1, j);
-			} else if (WM(i,j) == WM(i,j - 1) + Ec && canSS(j)) { 
-				done = 1;
-				eWM += traceWM(i, j - 1);
-			}
+			eVM += traceWMPrime(i + 2, j - 2);
+		}
+	} else if (g_dangles == 2) {
+		if (V(i,j) ==  WMPrime[i + 1][j - 1] + Ea + Eb + auPenalty(i,j) + Ed5(i,j,i + 1) + Ed3(i,j,j - 1) && canSS(i+1) && canSS(j-1) ) {
+			done = 1;
+			eVM += traceWMPrime(i + 1, j - 1);
+		}
+	}	else if (g_dangles == 0) {
+		if (VM(i,j) == WMPrime[i+1][j - 1] + Ea + Eb + auPenalty(i, j) ) {
+			done = 1;
+			eVM += traceWMPrime(i + 1, j - 1);
+		}
+	} else {
+		if (VM(i,j) == WMPrime[i+1][j - 1] + Ea + Eb + auPenalty(i, j) ) {
+			done = 1;
+			eVM += traceWMPrime(i + 1, j - 1);
+		} else if (VM(i,j) == WMPrime[i + 2][j - 1] + Ea + Eb + auPenalty(i,j) + Ed5(i,j,i + 1) + Ec && canSS(i+1) ) {
+			done = 1;
+			eVM += traceWMPrime(i + 2, j - 1);
+		}
+		else if ( VM(i,j) == WMPrime[i + 1][j - 2] + Ea + Eb + auPenalty(i, j) + Ed3(i,j,j - 1) + Ec && canSS(j-1)) {
+			done = 1;
+			eVM += traceWMPrime(i + 1, j - 2);
+		} else if (V(i,j) ==  WMPrime[i + 2][j - 2] + Ea + Eb + auPenalty(i,j) + Ed5(i,j,i + 1) + Ed3(i,j,j - 1) + 2*Ec && canSS(i+1) && canSS(j-1) ) {
+			done = 1;
+			eVM += traceWMPrime(i + 2, j - 2);
 		}
 	}
 	if(!done) { 
-		fprintf(stderr, "ERROR: WM(%d,%d) could not be traced!\n", i,j);
+		fprintf(stderr, "ERROR: VM(%d,%d) could not be traced\n", i,j);
+	}
+
+	return eVM;
+}
+
+int traceWMPrime(int i, int j) {
+	int done=0, h, energy=0;
+	
+	for (h = i; h < j && !done; h++) {
+			if (WM(i,h) + WM(h + 1,j) == WMPrime(i,j)) {
+				energy += traceWM(i, h);
+				energy += traceWM(h + 1, j);
+				done = 1;
+		 	  break;
+		}
+	}
+	return energy;
+}
+
+int traceWM(int i, int j) {
+	assert(i < j);
+	int done=0, eWM=0;
+
+	if (!done && WM(i,j) == WMPrime[i][j]) {
+			eWM += traceWMPrime(i,j);
+			done = 1;
+	}
+
+	if (!done){
+		if (g_unamode||g_mismatch) {
+						if (WM(i,j) == V(i,j) + auPenalty(i, j) + Eb && canStack(i,j)) { 
+										eWM += traceV(i, j);
+										done = 1;
+						} else if (WM(i,j) == V(i+1, j) + Ed3(j,i + 1,i) + auPenalty(i+1, j) + Eb + Ec && canSS(i) &&  canStack(i+1,j)) { 
+										eWM += traceV(i + 1, j);
+										done = 1;
+						} else if (WM(i,j) == V(i,j-1) + Ed5(j-1,i,j) + auPenalty(i,j-1) +  Eb + Ec && canSS(j) && canStack(i,j-1)) { 
+										done = 1;
+										eWM += traceV(i, j - 1);
+						} else if (WM(i,j) == V(i+1,j-1) + Estackm(j-1,i+1) + auPenalty(i+1, j-1) + Eb + 2*Ec && canSS(i) && canSS(j) && canStack(i+1,j-1)) {
+										done = 1;
+										eWM += traceV(i + 1, j - 1);
+						}
+		} else if (g_dangles == 2) {
+						int energy = V(i,j) + auPenalty(i, j) + Eb;				
+						energy += (i==1)?Ed3(j,i,length):Ed3(j,i,i-1);
+						/*if (j<len)*/ energy += Ed5(j,i,j+1);
+						if (WM(i,j) ==  energy && canSS(i) && canSS(j) && canStack(i+1,j-1)) { 
+										eWM += traceV(i, j);
+										done = 1;
+						}
+		} else if (g_dangles == 0) {
+						if (WM(i,j) == V(i,j) + auPenalty(i, j) + Eb && canStack(i,j)) { 
+										eWM += traceV(i, j);
+										done = 1;
+						}
+		} else  {
+						if (WM(i,j) == V(i,j) + auPenalty(i, j) + Eb && canStack(i,j)) { 
+										eWM += traceV(i, j);
+										done = 1;
+						} else if (WM(i,j) == V(i+1, j) + Ed3(j,i + 1,i) + auPenalty(i+1, j) + Eb + Ec && canSS(i) &&  canStack(i+1,j)) { 
+										eWM += traceV(i + 1, j);
+										done = 1;
+						} else if (WM(i,j) == V(i,j-1) + Ed5(j-1,i,j) + auPenalty(i,j-1) +  Eb + Ec && canSS(j) && canStack(i,j-1)) { 
+										eWM += traceV(i, j - 1);
+										done = 1;
+						} else if (WM(i,j) == V(i+1,j-1) + Ed3(j-1,i+1,i) + Ed5(j-1,i+1,j) + auPenalty(i+1, j-1) + Eb + 2*Ec && canSS(i) && canSS(j) && canStack(i+1,j-1)) { 
+										eWM += traceV(i + 1, j - 1);
+										done = 1;
+						}
+		}
+	}
+	
+	if (!done){
+		if (WM(i,j) == WM(i + 1,j) + Ec && canSS(i)) { 
+							done = 1;
+							eWM += traceWM(i + 1, j);
+		} else if (WM(i,j) == WM(i,j - 1) + Ec && canSS(j)) { 
+							done = 1;
+							eWM += traceWM(i, j - 1);
+		}
+	}
+
+	if(!done) { 
+		fprintf(stderr, "ERROR: WM(%d,%d) could not be traced\n", i,j);
 	}
 	return eWM;
 }
