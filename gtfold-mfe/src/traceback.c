@@ -35,7 +35,6 @@ int total_ex = 0;
 int length = 0;
 
 void trace(int len) { 
-	printf("traceback()\n");
 	int i;
 	for (i = 0; i <= len; i++) structure[i] = 0;
 

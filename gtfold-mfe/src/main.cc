@@ -43,6 +43,8 @@
 #include "subopt_traceback.h"
 #include "shapereader.h"
 
+//#define DEBUG 1
+
 using namespace std;
 
 double get_seconds() {
@@ -79,6 +81,16 @@ void init_fold(string seq) {
 	g_prefilter1  = prefilter1;
 	g_prefilter2  = prefilter2;
 	g_dangles = dangles;
+
+#ifdef DEBUG
+	printf("g_nthreads = %d\n", g_nthreads);
+	printf("g_unamode = %d\n", g_unamode);
+	printf("g_mismatch = %d\n", g_mismatch);
+	printf("g_prefilter_mode = %d\n", g_prefilter_mode);
+	printf("g_dangles = %d\n", g_dangles);
+
+#endif
+
 }
 
 void free_fold(int len) {

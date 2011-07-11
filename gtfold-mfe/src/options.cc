@@ -49,10 +49,10 @@ void help() {
     printf("   -c, --constraints FILE\n");
     printf("                        Load constraints from FILE.  See Constraint syntax below\n");
 
-    printf("   -d, --limitCD INT    Set a maximum base pair contact distance to INT. If no\n");
+    printf("   -l, --limitCD INT    Set a maximum base pair contact distance to INT. If no\n");
     printf("                        limit is given, base pairs can be over any distance\n");
     printf("   -p  --paramdir DIR   Path to directory from which parameters are to be read\n");
-    printf("   -m                   Enable terminal mismatch calculations\n");
+    printf("   -m  --mismatch       Enable terminal mismatch calculations\n");
     printf("   -n, --noisolate      Prevent isolated base pairs from forming\n");
     printf("   -o, --output NAME    Write output files with prefix given in NAME\n");
     printf("   -w, --workDir DIR    Path of directory where output files will be written\n");
@@ -95,7 +95,7 @@ void parse_options(int argc, char** argv) {
 				}
 				else
 					help();
-			} else if(strcmp(argv[i], "--limitCD") == 0 || strcmp(argv[i], "-d") == 0) {
+			} else if(strcmp(argv[i], "--limitCD") == 0 || strcmp(argv[i], "-l") == 0) {
 				if(i < argc){
 					contactDistance = atoi(argv[++i]);
 					stringstream ss;
@@ -126,16 +126,34 @@ void parse_options(int argc, char** argv) {
 				}
 				else
 					help();
-			} else if (strcmp(argv[i], "-m") == 0) {
-				T_MISMATCH = true;
-			} else if (strcmp(argv[i], "-d2") == 0) {
-				dangles = 2;
-			} else if (strcmp(argv[i], "-d0") == 0) {
-				dangles = 0;
+			} else if (strcmp(argv[i], "--dangles") == 0 || strcmp(argv[i], "-d") == 0) {
+											std::string cmd = argv[i];
+						if(i < argc) {
+									dangles = atoi(argv[++i]);
+									if (!(dangles == 0 || dangles == 2)) {
+																dangles = -1;
+																printf("Ignoring %s option as it accepts either 0 or 2\n", cmd.c_str());
+									} else {
+																T_MISMATCH = false;
+									}
+						} else
+								 help();
+			} else if (strcmp(argv[i], "-m") == 0 || strcmp(argv[i], "--mismatch") == 0) {
+											std::string cmd = argv[i];
+					if (!(dangles == 0 ||  dangles == 2)) 
+													T_MISMATCH = true;
+					else {
+													printf("Ignoring %s option\n", cmd.c_str());
+													T_MISMATCH = false;
+					}
 			} else if (strcmp(argv[i], "--unafold") == 0) {
 				UNAMODE = true;
+				dangles = -1;
+				T_MISMATCH = false;
 			} else if (strcmp(argv[i], "--rnafold") == 0) {
 				RNAMODE = true;
+				//dangles = 1;
+				T_MISMATCH = false;
 			} else if (strcmp(argv[i], "--prefilter") == 0) {
 				if(i < argc) {
 					int value1 = -1, value2 = -1;
@@ -233,7 +251,7 @@ void printRunConfiguration(string seq) {
 	bool standardRun = true;
 
 	printf("Run Configuration:\n");
-		if (RNAMODE == true) {
+	if (RNAMODE == true) {
 		printf("+ running in rnafold mode\n");
 		standardRun = false;
 	}
@@ -241,8 +259,8 @@ void printRunConfiguration(string seq) {
 		printf("+ running in unafold mode\n");
 		standardRun = false;
 	}
-	if (dangles == 2) {
-		printf("+ running in -d2 mode\n");
+	if (dangles >= 0 && !RNAMODE) {
+		printf("+ running in dangles %d mode\n", dangles);
 		standardRun = false;
 	}
 	if (T_MISMATCH == true) {
