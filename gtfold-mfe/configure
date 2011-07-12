@@ -5452,7 +5452,7 @@ if test "x$GXX" = "xyes"; then
 fi
 
 
-If Sun cc is present, define appropriate compiler flags
+#If Sun cc is present, define appropriate compiler flags
 { $as_echo "$as_me:$LINENO: checking for Sun C compiler" >&5
 $as_echo_n "checking for Sun C compiler... " >&6; }
 cat >conftest.$ac_ext <<_ACEOF

@@ -110,4 +110,15 @@ Version History:
 1.16 20 May 2010  Fixed another nasty bug with prohibited constraints handling.
             Earlier not used to update the WM array if a base pair is prohibited which is causing GTfold to trace partial structure.
             Some documentation added.
-                    
+2.0 11 July 2011                      
+   								 Optimized the code to enable faster multiloop calculations 
+												Added -d, --dangle to allow treatment of dangling end energies based on user input 
+												Added -m  --mismatch to enable terminal mismatch calculations
+												Added -o, --output, , -w --workDir options to allow to write output files/directories with desired name 
+												Added -p  --paramdir to allow user to provide custom parameters		
+												Added -t, --threads to limit number of threads used
+												Added --prefilter to prohibit any basepair which does not have appropriate neighboring nucleotides 
+												such that it could be part of a helix of length INT
+   									Added --rnafold to run GTfold in RNAfold default mode (ViennaPackage version 1.8.5)
+												Added --unafold to run GTfold in UNAfold default mode (version 3.8)
+												Added beta options --subopt, --bpp, --useShape

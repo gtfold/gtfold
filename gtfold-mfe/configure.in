@@ -99,7 +99,7 @@ fi
 dnl This is an example how to check for compiler characteristics that
 dnl are not a part of the standard Autoconf tests:
 
-If Sun cc is present, define appropriate compiler flags  
+#If Sun cc is present, define appropriate compiler flags  
 AC_MSG_CHECKING(for Sun C compiler)
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[#ifndef __SUNPRO_C
                     #include "error: this is not a Sun C compiler."
