@@ -72,7 +72,41 @@ void init_fold(string seq) {
 	if (SHAPE_ENABLED) {
 		readSHAPEarray(shapeFile.c_str(),len);
 	}
+
+	if (UNAMODE) {
+									if (T_MISMATCH) printf("Ignoring -m option, using --unafold\n");
+									if (PARAM_DIR) printf("Ignoring -p option, using --unafold\n");
+									if (dangles == 0 || dangles == 2) 
+																	printf("Ignoring -d option, using --unafold\n");
+									if (b_prefilter == 1) 
+																	printf("Ignoring --prefilter option, using --unafold\n");
+									T_MISMATCH = false;
+									PARAM_DIR = false;
+									dangles = -1;
+									b_prefilter = false;
+	}
 	
+	if (RNAMODE) {
+									if (T_MISMATCH) printf("Ignoring -m option, using --rnafold\n");
+									if (PARAM_DIR) printf("Ignoring -p option, using --rnafold\n");
+									if (dangles == 0 || dangles == 2) 
+																	printf("Ignoring -d option, using --rnafold\n");
+									if (b_prefilter == 1) 
+																	printf("Ignoring --prefilter option, using --rnafold\n");
+									T_MISMATCH = false;
+									PARAM_DIR = false;
+									dangles = -1;
+									b_prefilter = false;
+	}
+
+	if ((dangles == 0 || dangles == 2) && !UNAMODE && !RNAMODE) {
+									if (T_MISMATCH) printf("Ignoring -m option, using -d option\n");
+									T_MISMATCH = false;
+	} else {
+									if (dangles != -1 && !UNAMODE && !RNAMODE) printf("Ignoring -d as it accept 0 or 2 only\n");	
+									dangles = -1;
+	}
+
 	g_nthreads = nThreads;
 	g_unamode  = UNAMODE;
 	g_mismatch = T_MISMATCH;
@@ -82,7 +116,7 @@ void init_fold(string seq) {
 	g_prefilter2  = prefilter2;
 	g_dangles = dangles;
 
-#ifdef DEBUG
+	#ifdef DEBUG
 	printf("g_nthreads = %d\n", g_nthreads);
 	printf("g_unamode = %d\n", g_unamode);
 	printf("g_mismatch = %d\n", g_mismatch);
@@ -238,12 +272,11 @@ int main(int argc, char** argv) {
 		printf("Failed to open sequence file: %s.\n\n", seqfile.c_str());
 		exit(-1);
 	}
+	init_fold(seq);
 	
 	// Read in thermodynamic parameters. Always use Turner99 data (for now)
 	readThermodynamicParameters(paramDir.c_str(), PARAM_DIR, UNAMODE, RNAMODE, T_MISMATCH);
 
-	init_fold(seq);
-	
 	printRunConfiguration(seq);
 
 	printf("\nComputing minimum free energy structure...\n");
