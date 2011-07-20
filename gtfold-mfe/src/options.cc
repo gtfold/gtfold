@@ -175,6 +175,7 @@ void parse_options(int argc, char** argv) {
 																																BPP_ENABLED = true;
 																								} else if(strcmp(argv[i], "--subopt") == 0) {
 																																SUBOPT_ENABLED = true;
+																																dangles = 2;
 																																if(i < argc)
 																																								suboptDelta = atof(argv[++i]);
 																																else

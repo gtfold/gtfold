@@ -276,7 +276,10 @@ int main(int argc, char** argv) {
 	init_fold(seq);
 	
 	// Read in thermodynamic parameters. Always use Turner99 data (for now)
-	readThermodynamicParameters(paramDir.c_str(), PARAM_DIR, UNAMODE, RNAMODE, T_MISMATCH);
+	if (SUBOPT_ENABLED) 
+									readThermodynamicParameters(paramDir.c_str(), PARAM_DIR, UNAMODE, 1, T_MISMATCH);
+	else
+									readThermodynamicParameters(paramDir.c_str(), PARAM_DIR, UNAMODE, RNAMODE, T_MISMATCH);
 
 	printRunConfiguration(seq);
 

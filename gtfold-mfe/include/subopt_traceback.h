@@ -30,7 +30,7 @@
 #include <map>
 #include <vector>
 
-enum label {lW=0, lV, lVBI, lVM, lWM};
+enum label {lW=0, lV, lVBI, lVM, lWM, lWMPrime};
 extern const char* lstr[]; 
 
 struct segment 
@@ -221,6 +221,8 @@ void traceV(int i, int j, ps_t & ps, ps_stack_t & gs);
 void traceVBI(int i, int j, ps_t & ps, ps_stack_t & gs);
 void traceW(int i, int j, ps_t & ps, ps_stack_t & gs);
 void traceVM(int i, int j, ps_t & ps, ps_stack_t & gs);
-void traceWM(ps_t& ps, ps_map_t& filter);
+void traceWM(int i, int j, ps_t &  ps, ps_stack_t & gs);
+void traceWMPrime(int i, int j, ps_t &  ps, ps_stack_t & gs);
+//void traceWM(ps_t& ps, ps_map_t& filter);
 
 #endif
