@@ -37,10 +37,15 @@
 
 #define MAXLOOP 30 /* The maximum loop size. */
 #define MAXENG 1000
+#define TURN 3
 
 #define BASE_A 0
 #define BASE_C 1
 #define BASE_G 2
 #define BASE_U 3
+
+
+#define SUCCESS 1
+#define FAILURE 0
 
 #endif

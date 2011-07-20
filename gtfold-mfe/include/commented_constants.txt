@@ -1,0 +1,51 @@
+typedef struct{
+	int poppen[5];/*asymmetric internal loops
+		From miscloop.dat file:
+		the f(m) array (see Ninio for details)*/
+	int maxpen; /* From miscloop.dat file:
+		asymmetric internal loops: the ninio equation
+		the maximum correction*/
+	int eparam[11]; /* Amrita: I am not sure of what does this array contain at different values.*/
+			/*They seem to be local values used in assignments
+			Perhaps they should simply be local variables -Anderson*/
+	int mult_const[3];/*Multiloop constants
+		mult_const[0] = a, the penalty for starting a multiloop
+		mult_const[1] = c, the free base penalty for a multiloop
+		mult_const[2] = b, the helix penalty for a multiloop*/
+	int dangle[4][4][4][2]; /* Dangling energies */
+	int inter[31]; /* Size penalty for internal loops */
+	int bulge[31]; /* Size penalty for bulges*/
+	int hairpin[31]; /* Size penalty for hairpin loops */
+	int stack[256]; /* Stacking energy for stack loops */
+	int tstkh[256]; /* Terminal stacking energy for hairpin loops */
+	int tstki[256]; /* Terminal stacking energy for internal loops */
+	int tloop[MAX_T_LOOP + 1][2]; /*MAX_T_LOOP is a constants, should
+	be the number of Tetraloops we have data for*/
+	int num_of_t_loops; /*Should also be a local variable, used as a counter*/
+	int iloop22[5][5][5][5][5][5][5][5]; /* 2*1 internal loops*/
+	int iloop21[5][5][5][5][5][5][5]; /* 2*1 internal loops */
+	int iloop11[5][5][5][5][5][5]; /*1*1 internal loops */
+	int coax[6][6][6][6];/*Assumed to be coaxial stacking constants*/
+	int tstackcoax[6][6][6][6];/*They are unused by gtfold as of Jan 27 2011*/
+	int coax_stack[6][6][6][6];/*Unless functionality is added they should
+				 probably be REMOVED*/
+	int tstack[6][6][6][6];/*Unused in loader should probably be REMOVED*/
+	int tstkm[6][6][6][6];/*Same as above*/
+
+	int auend; /* For AU penalty */
+	int gubonus; /*GGG hairpin bonus*/
+	int cint; /* cint, cslope, c3 are used for poly C hairpin loops */
+	int cslope;/*c hairpin slope*/
+	int c3;/*CCC hairpin*/
+	int efn2a; /*Obsoleted constants should be REMOVED*/
+	int efn2b;
+	int efn2c;
+	int triloop[MAX_T_LOOP + 1][2];/*Unused in loader should be REMOVED*/
+	int num_of_triloops; /*Unused in loader should be REMOVED*/
+	int init;/*Intermolecular initiation free energy*/
+	bool gail;/*Grossly Asymmetric Interior Loop Rule*/
+	float prelog; /* Used for loops having size > 30 */
+}thermo_struct;
+
+
+thermo_struct* populate(char* data_dir);

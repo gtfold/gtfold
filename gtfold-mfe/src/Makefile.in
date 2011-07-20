@@ -48,9 +48,12 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
-am_gtfold_OBJECTS = main.$(OBJEXT) loader.$(OBJEXT) \
-	subopt_traceback.$(OBJEXT) algorithms.$(OBJEXT) \
-	algorithms-partition.$(OBJEXT) traceback.$(OBJEXT)
+am_gtfold_OBJECTS = main.$(OBJEXT) loader.$(OBJEXT) utils.$(OBJEXT) \
+	options.$(OBJEXT) constraints.$(OBJEXT) global.$(OBJEXT) \
+	energy.$(OBJEXT) algorithms.$(OBJEXT) traceback.$(OBJEXT) \
+	subopt_traceback.$(OBJEXT) algorithms-partition.$(OBJEXT) \
+	partition-dangle.$(OBJEXT) random-sample.$(OBJEXT) \
+	shapereader.$(OBJEXT)
 gtfold_OBJECTS = $(am_gtfold_OBJECTS)
 gtfold_DEPENDENCIES =
 gtfold_LINK = $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(gtfold_LDFLAGS) \
@@ -182,10 +185,18 @@ AM_CXXFLAGS = -DDATADIR='$(datadir)/@PACKAGE@'
 gtfold_SOURCES = \
 	main.cc\
 	loader.cc\
-	subopt_traceback.cc\
+	utils.cc\
+	options.cc\
+	constraints.cc\
+	global.c\
+	energy.c\
 	algorithms.c\
+	traceback.c\
+	subopt_traceback.cc\
 	algorithms-partition.c\
-	traceback.c
+	partition-dangle.c\
+	random-sample.cc\
+	shapereader.cc
 
 gtfold_LDFLAGS = 
 gtfold_LDADD = -lm
@@ -273,10 +284,18 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/algorithms-partition.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/algorithms.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/constraints.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/energy.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/global.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/loader.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/options.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/partition-dangle.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/random-sample.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/shapereader.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/subopt_traceback.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/traceback.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/utils.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<

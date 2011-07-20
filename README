@@ -1,14 +1,23 @@
 GTfold: A Scalable Multicore Code for RNA Secondary Structure Prediction
 
-(C) 2007-2010, David A. Bader
-               Amrita Mathuriya
+(C) 2007-2011, David A. Bader
                 College of Computing, Georgia Institute of Technology
                Christine E. Heitsch
                 School of Mathematics, Georgia Institute of Technology
                Stephen C. Harvey
                 School of Biology, Georgia Institute of Technology
-               Sainath Mallidi
-                College of Computing, Georgia Institute of Technology
+               And various contributing authors
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 The prediction of the correct secondary structures of large RNAs is
 one of the unsolved challenges of computational molecular biology.
@@ -28,8 +37,11 @@ DBI-04-20513. Additionally, the research of Christine E. Heitsch,
 Ph.D., is supported in part by a Career Award at the Scientific
 Interface (CASI) from the Burroughs Wellcome Fund (BWF). 
 
-Additional contributors to GTfold's implementation include Georgia
-Tech visiting students Gregory Nou, Sonny Hernandez, and Manoj Soni.
+Additional contributors to GTfold's implementation include 
+Georgia Tech graduate students Sainath Mallidi, Amrita Mathuriya, 
+and Prashant Gaurav, undergraduates Joshua Anderson and Andrew Ash
+and visiting students Gregory Nou, Sonny Hernandez, Manoj Soni,
+and Zsuzsanna Sukosd.
 
 INSTALLATION -
 Please execute the following commands
@@ -110,4 +122,18 @@ Version History:
 1.16 20 May 2010  Fixed another nasty bug with prohibited constraints handling.
             Earlier not used to update the WM array if a base pair is prohibited which is causing GTfold to trace partial structure.
             Some documentation added.
-                    
+2.0 11 July 2011                      
+            Optimized the code to enable faster multiloop calculations 
+            Added -d, --dangle to allow treatment of dangling end energies based on user input 
+            Added -m  --mismatch to enable terminal mismatch calculations
+            Added -o, --output, , -w --workdir options to allow to write output files/directories with desired name 
+            Added -p  --paramdir to allow user to provide custom parameters		
+            Added -t, --threads to limit number of threads used
+            Added -v, --verbose to print loop-by-loop energy decomposition and confirm that constraints are satisfied
+            Added --prefilter to prohibit any basepair which does not have appropriate neighboring nucleotides 
+                    such that it could be part of a helix of length INT
+            Added --rnafold to run GTfold in RNAfold default mode (ViennaPackage version 1.8.5)
+            Added --unafold to run GTfold in UNAfold default mode (version 3.8)
+            Added --subopt NUM (Beta only) to produce all suboptimal structures whose energies are within NUM of the MFE 
+            Added --bpp (Beta only) which outputs basepair probabilities based on the partition function 
+            Added --useShape (Beta only) which allows the user to incorporate SHAPE-type data

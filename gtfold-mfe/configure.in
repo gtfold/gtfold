@@ -1,22 +1,22 @@
 dnl Process this file with autoconf to produce a configure script.
 
-dnl AC_PREREQ(1.8)
+dnl AC_PREREQ([2.67])
 dnl AC 2.62 needed for OpenMP
-AC_PREREQ(2.62)
+AC_PREREQ([2.63])
 
 dnl AC_INIT (package, version, [bug-report-email], [tarname])
-AC_INIT([gtfold],[1.18])
+AC_INIT([gtfold],[2.0])
 
 dnl check for this file's existence to make sure that the directory
 dnl specified by --srcdir is the right one
 AC_CONFIG_SRCDIR([README])
 
 dnl Specify a header configuration file
-AM_CONFIG_HEADER(gtfold_config.h)
+AC_CONFIG_HEADERS([gtfold_config.h])
 
 dnl Compute the canonical host-system type variable, host, and its
 dnl three individual parts host_cpu, host_vendor, and host_os.
-AC_CANONICAL_SYSTEM
+AC_CANONICAL_TARGET
 
 dnl Initialize Automake
 AM_INIT_AUTOMAKE
@@ -62,7 +62,7 @@ dnl Check for libraries
 AC_CHECK_LIB(m, log2, AC_DEFINE([HAVE_LOG2],[],[log2 function is present]))
 
 dnl Check for header files
-AC_STDC_HEADERS
+AC_HEADER_STDC
 #AC_CHECK_HEADERS(sys/resource.h)
 #AC_CHECK_HEADERS(getopt.h)
 AC_CHECK_HEADERS([stdlib.h string.h sys/time.h])
@@ -99,27 +99,23 @@ fi
 dnl This is an example how to check for compiler characteristics that
 dnl are not a part of the standard Autoconf tests:
 
-If Sun cc is present, define appropriate compiler flags  
+#If Sun cc is present, define appropriate compiler flags  
 AC_MSG_CHECKING(for Sun C compiler)
-AC_TRY_COMPILE([], [#ifndef __SUNPRO_C
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[#ifndef __SUNPRO_C
                     #include "error: this is not a Sun C compiler."
                     #endif 
-                   ],
-		   [AC_MSG_RESULT(yes)
-                    gtfold_cv_check_sunpro_cc=yes],
-		   [AC_MSG_RESULT(no)
+                   ]])],[AC_MSG_RESULT(yes)
+                    gtfold_cv_check_sunpro_cc=yes],[AC_MSG_RESULT(no)
                     gtfold_cv_check_sunpro_cc=no])
 
 if test "$gtfold_cv_check_sunpro_cc" == "yes";
 then
 	AC_MSG_CHECKING(for Sun C compiler architecture target)
-	AC_TRY_COMPILE([], [#ifndef __sparc
+	AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[#ifndef __sparc
                     #include "error: this is not a Sun Sparc processor."
                     #endif 
-                   ],
-		   [AC_MSG_RESULT(yes)
-                    gtfold_cv_check_sun_sparc=yes],
-		   [AC_MSG_RESULT(no)
+                   ]])],[AC_MSG_RESULT(yes)
+                    gtfold_cv_check_sun_sparc=yes],[AC_MSG_RESULT(no)
                     gtfold_cv_check_sun_sparc=no])
 fi
 
@@ -128,13 +124,11 @@ then
 	if test "$gtfold_cv_check_sun_sparc" == "yes";
 	then	
 		AC_MSG_CHECKING(for Sun sparc v9 architecture)
-		AC_TRY_COMPILE([], [#ifndef __sparcv9
+		AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[#ifndef __sparcv9
 				    #include "error: this is not a Sun Sparc V9 processor."
 				    #endif 
-				    ],		    
-				    [AC_MSG_RESULT(yes)
-				    gtfold_cv_check_sun_sparcv9=yes],
-				    [AC_MSG_RESULT(no)
+				    ]])],[AC_MSG_RESULT(yes)
+				    gtfold_cv_check_sun_sparcv9=yes],[AC_MSG_RESULT(no)
 				    gtfold_cv_check_sun_sparcv9=no])
         fi				    
 fi
@@ -184,7 +178,7 @@ AM_CONDITIONAL(GTFOLD_DEBUG, test x$debug = xtrue)
 
 dnl Create makefiles and other configuration files
 AC_CONFIG_FILES([Makefile src/Makefile data/Makefile include/Makefile])
-AC_CONFIG_FILES([data/Turner99/Makefile data/Turner04/Makefile data/Andronescu/Makefile])
+AC_CONFIG_FILES([data/Turner99/Makefile data/Turner04/Makefile data/Andronescu/Makefile data/UNAParams/Makefile data/RNAParams/Makefile])
 
 dnl Generate `config.status' and launch it
 AC_OUTPUT

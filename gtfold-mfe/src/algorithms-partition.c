@@ -4,9 +4,18 @@
 #include <stdlib.h>
 
 #include "algorithms.h"
+#include "utils.h"
+#include "energy.h"
+#include "global.h"
 #include "algorithms-partition.h"
 #include "data.h"
 
+#ifdef _OPENMP   
+#include "omp.h"
+#endif
+
+
+#define MAX_LOOP 30
 
 // double[][] QB;
 // double[][] Q;
@@ -14,7 +23,6 @@
 
 
 // Boltzmann constant (R) * Standard 37C temperature (T in Kelvin)
-double RT = 0.00198721 * 310.15;
 
 // Based on pseudocode in figure 6 in 
 //
@@ -29,7 +37,9 @@ double RT = 0.00198721 * 310.15;
  * @param QM Matrix
  *
  */
-void fill_partition_fn_arrays(int len, double** QB, double** Q, double** QM) {
+
+
+void fill_partition_fn_arrays(int len, double** Q, double** QB, double** QM) {
 
     // multiConst[3] is a global variable with 3 values: a, b, c for the
     // experimental constants
@@ -55,28 +65,45 @@ void fill_partition_fn_arrays(int len, double** QB, double** Q, double** QM) {
 
     // fill in values in the array
     for(l=1; l<=len; ++l) {
-        for(i=1; i<= len-l+1; ++i) {
+		//Parrallelize
+		//#ifdef _OPENMP
+		//#pragma omp parallel for private (i,j) schedule(guided)
+		//#endif
+        for(i=1; i<= len - l + 1; i++) {
 
-            int j = i+l-1;
+            int j = i + l - 1;
 
             // QB recursion
             // Only calculate if i and j actually pair
-            if(checkPair(i,j)) {
+            if(canPair(RNA[i],RNA[j])) {
 
                 // NOTE: eH returns an integer encoded as fixed point.  So a
                 // return value of 115 represents raw value 115/100 = 1.15
-                QB[i][j] = exp(-eH(i,j)/100.0/RT);
-
+                QB[i][j] = exp(-eH(i,j)/RT);
+				
                 for(d=i+1; d<=j-4; ++d) {
+					//if(d - i - 1 > MAX_LOOP)
+					//	break;
                     for(e=d+4; e<=j-1; ++e) {
-                        
-                if(d == i + 1 && e == j -1)
-                    QB[i][j] += exp(-eS(i,j)/100.0/RT)*QB[d][e];
-                else 
-                    QB[i][j] += exp(-eL(i,j,d,e)/100.0/RT)*QB[d][e];
 
-                        QB[i][j] += QM[i+1][d-1]*QB[d][e] *
-                            exp(-(a + b + c*(j-e-1))/100.0/RT);
+                      // if(d - i - 1 + j - e - 1 > MAX_LOOP)
+						//	break;
+
+						if(QB[d][e] != 0){ 
+							//more general than chkpair 
+							//if we cant pair, move on
+
+							if(d == i + 1 && e == j -1){
+								QB[i][j] += exp(-eS(i,j)/RT)*QB[d][e];
+							}
+							else{
+								//printf("i: %d j: %d d: %d e: %d\n", i,j,d,e);
+								QB[i][j] += exp(-eL(i,j,d,e)/RT)*QB[d][e];
+							}
+
+							QB[i][j] += QM[i+1][d-1]*QB[d][e] *
+										exp(-(a + b + c*(j-e-1))/RT);
+						}
                     }
                 }
             }
@@ -86,12 +113,13 @@ void fill_partition_fn_arrays(int len, double** QB, double** Q, double** QM) {
             for(d=i; d<=j-4; ++d) {
                 for(e=d+4; e<=j; ++e) {
                     Q[i][j] += Q[i][d-1]*QB[d][e];
-                    QM[i][j] += exp(-(b+c*(d-i)+c*(j-e))/100.0) * QB[d][e];
-                    QM[i][j] += QM[i][d-1] * QB[d][e] * exp(-(b+c*(j-e))/100.0/RT);
+                    QM[i][j] += exp(-(b+c*(d-i)+c*(j-e))/RT) * QB[d][e];
+                    QM[i][j] += QM[i][d-1] * QB[d][e] * exp(-(b+c*(j-e))/RT);
                 }
             }
         }
     }
+	printf("Total partition number: %f\n", Q[1][len]);
 }
 
 /**
@@ -101,7 +129,7 @@ void fill_partition_fn_arrays(int len, double** QB, double** Q, double** QM) {
  *                  index j. structure[i] = 0 means the nucleotide is
  *                  unpaired.
  */
-void fillBasePairProbabilities(int length, int *structure, double **Q, double **QB, double **QM, double**P) {
+void fillBasePairProbabilities(int length, double **Q, double **QB, double **QM, double**P) {
 
 	int d, l, h, i, j;
 	double tempBuffer;
@@ -135,22 +163,22 @@ void fillBasePairProbabilities(int length, int *structure, double **Q, double **
                     tempBuffer = P[i][j]*QB[h][l]/QB[i][j];
 
                     if(i == h-1 && j == l+1) //of which stacked pairs are a special case
-                        tempBuffer *= exp(-eS(i,j)/100.0/RT);
+                        tempBuffer *= exp(-eS(i,j)/RT);
                     else
-                        tempBuffer *= exp(-eL(i,j,h,l)/100.0/RT);
+                        tempBuffer *= exp(-eL(i,j,h,l)/RT);
 
                     P[h][l] += tempBuffer;
 
                     // third term
                     tempBuffer = 0; // Start over for multiloops
                     if(j - l > 3)
-                        tempBuffer += exp(-((h-i-1)*c/100.0/RT)) * QM[l+1][j-1];
+                        tempBuffer += exp(-((h-i-1)*c/RT)) * QM[l+1][j-1];
                     if(h - i > 3)
-                        tempBuffer += exp(-((j-l-1)*c/100.0/RT)) * QM[i+1][h-1];
+                        tempBuffer += exp(-((j-l-1)*c/RT)) * QM[i+1][h-1];
                     if(j - l > 3 && h - i > 3)
                         tempBuffer += QM[i+1][h-1] * QM[l+1][j-1];
 
-                    tempBuffer *= P[i][j] * QB[h][l] / QB[i][j] * exp(-(a+b)/100.0/RT);
+                    tempBuffer *= P[i][j] * QB[h][l] / QB[i][j] * exp(-(a+b)/RT);
 
                     P[h][l] += tempBuffer;
                 }
@@ -171,16 +199,21 @@ void fillBasePairProbabilities(int length, int *structure, double **Q, double **
  *                  unpaired.
  * @param P Partition function array
  */
-void printBasePairProbabilities(int n, int *structure, double **P) {
+void printBasePairProbabilities(int n, int *structure, double **P, const char* outfile) {
+    FILE* outp = fopen(outfile,"w");
+	if (outp == NULL) {
+		fprintf(stderr, "printBasePairProbabilities() : Cannot open %s",outfile);	
+	}	
 
     int i;
     for(i=1; i<=n; ++i) {
         int j = structure[i];
         if(j)
-            printf("%d-%d pair\tPr: %f\n", i, j, P[MIN(i,j)][MAX(i,j)]);
+            fprintf(outp, "%d-%d pair\tPr: %f\n", i, j, P[MIN(i,j)][MAX(i,j)]);
         else
-            printf("%d unpaired\tPr: %f\n", i, probabilityUnpaired(n, i, P));
+            fprintf(outp, "%d unpaired\tPr: %f\n", i, probabilityUnpaired(n, i, P));
     }
+	fclose(outp);
 }
 
 /**
@@ -215,7 +248,6 @@ double **mallocTwoD(int r, int c) {
             return NULL;
         }
     }
-
     return arr;
 }
 

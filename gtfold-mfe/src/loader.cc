@@ -17,54 +17,56 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* Modified by Amrita Mathuriya August 2007 - January 2009. 1) Functions are rewritten, removing calls of boost library functions and corrected bugs.
- * This file defines various functions to read the thermodynamic parameters from files in the data directory.
- * */
-/* Modified by Sonny Hernandez May 2007 - Aug 2007. All comments added marked by "SH: "*/
-/* Modified by Sainath Mallidi August 2009 -  "*/
+#include <iostream>
+#include <fstream>
+#include <istream>
+#include <sstream>
+#include <math.h>
 
-#include <string.h>
+#include <cstring>
 #include <stdlib.h>
+
+#include "data.h"
+#include "utils.h"
+#include "constants.h"
+#include "global.h"
 #include "loader.h"
-#include "main-c.h"
 
 #define xstr(s) str(s)
 #define str(s) #s
 
-//#define GENBIN
-
 using namespace std;
 
-//Global Variables
+std::string EN_DATADIR;
+
 int poppen[5];
 int maxpen;
-int eparam[11]; /* Amrita: I am not sure of what does this array contain at different values.*/
-int multConst[3]; /* Amrita: I have copied multiloop penalties into this array */
-int dangle[4][4][4][2]; /* Dangling energies */
-int inter[31]; /* Size penalty for internal loops */
-int bulge[31]; /* Size penalty for bulges*/
-int hairpin[31]; /* Size penalty for hairpin loops */
-#if 0
-int stack[4][4][4][4];
-int tstkh[4][4][4][4];
-int tstki[4][4][4][4];
-#else
-int stack[256]; /* Stacking energy for stack loops */
-int tstkh[256]; /* Terminal stacking energy for hairpin loops */
-int tstki[256]; /* Terminal stacking energy for internal loops */
-#endif
+int eparam[11];
+int multConst[3]; /* for multiloop penalties. */
+int dangle[4][4][4][2]; /* Contain dangling energy values */
+int inter[31]; /* Contains size penalty for internal loops */
+int bulge[31]; /* Contain the size penalty for bulges */
+int hairpin[31]; /* Contains the size penalty for hairpin loops */
+int stack[256]; /* Stacking energy used to calculate energy of stack loops */
+int tstkh[256]; /* Terminal mismatch energy used in the calculations of hairpin loops */
+int tstki[256]; /* Terminal mismatch energy used in the calculations of internal loops */
 int tloop[maxtloop + 1][2];
 int numoftloops;
-int iloop22[5][5][5][5][5][5][5][5]; /* 2*1 internal loops*/
 int iloop21[5][5][5][5][5][5][5]; /* 2*1 internal loops */
-int iloop11[5][5][5][5][5][5]; /*1*1 internal loops */
-int coax[6][6][6][6];
-int tstackcoax[6][6][6][6];
-int coaxstack[6][6][6][6];
-int tstack[6][6][6][6];
-int tstkm[6][6][6][6];
+int iloop22[5][5][5][5][5][5][5][5]; /* 2*2 internal looops */
+int iloop11[5][5][5][5][5][5]; /* 1*1 internal loops */
 
-int auend; /* For AU penalty */
+//int coax[6][6][6][6];
+//int tstackcoax[6][6][6][6];
+//int coaxstack[6][6][6][6];
+//int tstack[6][6][6][6];
+//int tstkm[6][6][6][6];
+
+int tstackm[5][5][6][6];
+int tstacke[5][5][6][6];
+int tstacki23[5][5][5][5];
+
+int auend;
 int gubonus;
 int cint; /* cint, cslope, c3 are used for poly C hairpin loops */
 int cslope;
@@ -75,276 +77,135 @@ int efn2c;
 int triloop[maxtloop + 1][2];
 int numoftriloops;
 int init;
-int gail;
-float prelog; /* Used for loops having size > 30 */
+int gail; /* It is either 0 or 1. It is used for grosely asymmetric internal loops */
+float prelog;
 
-string EN_DATADIR;
-
-void populate(const char *userdatadir,bool userdatalogic) {
-
-	cout << "Thermodynamic parameters: ";
-
-#ifndef GENBIN
-	if (!userdatalogic) {
+void readThermodynamicParameters(const char *userdatadir,bool userdatalogic, 
+				int unamode = 0, int rnamode = 0, int mismatch = 0) {
+	
+	if (!userdatalogic && unamode) {
 		EN_DATADIR.assign(xstr(DATADIR));
 		EN_DATADIR += "/";
-		EN_DATADIR += userdatadir;
+		EN_DATADIR += "UNAParams";
+	}else if (!userdatalogic && rnamode) {
+		EN_DATADIR.assign(xstr(DATADIR));
+		EN_DATADIR += "/";
+		EN_DATADIR += "RNAParams";
+	}
+    	else if (!userdatalogic) {
+		EN_DATADIR.assign(xstr(DATADIR));
+		EN_DATADIR += "/";
+		EN_DATADIR += "Turner99";
 	} else {
 		EN_DATADIR.assign(userdatadir);
 	}
-#else
-	EN_DATADIR = "data";
-#endif
 
 	//Handle the ending forward slash case
 	if (EN_DATADIR[EN_DATADIR.length() - 1] != '/') {
 		EN_DATADIR += "/";
 	}
 
+	initMiscloopValues("miscloop.DAT", EN_DATADIR);
+	initDangleValues("dangle.DAT", EN_DATADIR);
+	initStackValues("stack.DAT", EN_DATADIR);
+	initLoopValues("loop.DAT", EN_DATADIR);
+	initTstkhValues("tstackh.DAT", EN_DATADIR);
+	initTstkiValues("tstacki.DAT", EN_DATADIR);
+	initTloopValues("tloop.DAT", EN_DATADIR);
 
-	cout << EN_DATADIR << endl << endl;
-
-	initMiscloopValues("miscloop.dat");
-	// miscloop.dat - Miscellaneous loop file
-	initStackValues("stack.dat");
-	// stack.dat - free energies for base pair stacking
-	initDangleValues("dangle.dat");
-	// dangle.dat - single base stacking free energies
-	initLoopValues("loop.dat");
-	// loop.dat - entropic component for internal, bulge and hairpin loops.
-	initTstkhValues("tstackh.dat");
-	// tstackh.dat - free energies for terminal mismatch stacking in hairpin loops
-	initTstkiValues("tstacki.dat");
-	// tstacki.dat - free energies for terminal mismatch stacking in internal loops
-	initTloopValues("tloop.dat");
-	// tloop.dat - free energies for distinguished tetraloops
-	initInt21Values("int21.dat");
-	// int21.dat - free energies for 2 x 1 interior loops
-	initInt22Values("int22.dat");
-	// int22.dat - free energies for 2 x 2 interior loops
-	initInt11Values("int11.dat");
-	// int11.dat - free energies for 1 x 1 interior loops
+	if (unamode) {
+		initInt21Values("asint1x2.DAT", EN_DATADIR);
+		initInt22Values("sint4.DAT", EN_DATADIR);
+		initInt11Values("sint2.DAT", EN_DATADIR);
+		initTstkmValues("tstackm.DAT", EN_DATADIR);
+		initTstkeValues("tstacke.DAT", EN_DATADIR);
+		initTstk23Values("tstacki23.DAT", EN_DATADIR);
+	} else if (mismatch) {
+		initTstkmValues("tstackm.DAT", EN_DATADIR);
+		initTstkeValues("tstacke.DAT", EN_DATADIR);
+		initInt21Values("int21.DAT", EN_DATADIR);
+		initInt22Values("int22.DAT", EN_DATADIR);
+		initInt11Values("int11.DAT", EN_DATADIR);
+		
+	}	
+	else {
+		initInt21Values("int21.DAT", EN_DATADIR);
+		initInt22Values("int22.DAT", EN_DATADIR);
+		initInt11Values("int11.DAT", EN_DATADIR);
+	}
 }
 
-char baseToDigit(std::string base) {
-	if (!strcmp(base.c_str(), "A")) {
-		return '1';
-	}
-	if (!strcmp(base.c_str(), "C")) {
-		return '2';
-	}
-	if (!strcmp(base.c_str(), "G")) {
-		return '3';
-	}
-	if (!strcmp(base.c_str(), "U")) {
-		return '4';
-	}
-	if (!strcmp(base.c_str(), "N")) {
-		return '5';
-	}
-	return (char) NULL;
-}
+int initStackValues(const string& fileName, const string& dirPath)  { 
+	std::string filePath;
+	std::ifstream cf;
 
-unsigned char getBase(std::string base) {
-	//cout << base;
-	if (!strcmp(base.c_str(), "A") || !strcmp(base.c_str(), "a")) {
-		//cout << "1";
-		return BASE_A;
-	}
-	if (!strcmp(base.c_str(), "C") || !strcmp(base.c_str(), "c")) {
-		//cout << "2";
-		return BASE_C;
-	}
-	if (!strcmp(base.c_str(), "G") || !strcmp(base.c_str(), "g")) {
-		//cout << "3";
-		return BASE_G;
-	}
-	if (!strcmp(base.c_str(), "U") || !strcmp(base.c_str(), "u") || !strcmp(
-			base.c_str(), "T") || !strcmp(base.c_str(), "t")) {
-		//cout << "4";
-		return BASE_U;
-	}
-	if (!strcmp(base.c_str(), "N") || !strcmp(base.c_str(), "n")||!strcmp(base.c_str(), "R")|| !strcmp(base.c_str(), "r")|| !strcmp(base.c_str(), "Y")|| !strcmp(base.c_str(), "y")|| !strcmp(base.c_str(), "M")|| !strcmp(base.c_str(), "m")|| !strcmp(base.c_str(), "K")|| !strcmp(base.c_str(), "k")|| !strcmp(base.c_str(), "S")|| !strcmp(base.c_str(), "s")|| !strcmp(base.c_str(), "W")|| !strcmp(base.c_str(), "w")|| !strcmp(base.c_str(), "B")|| !strcmp(base.c_str(), "b")|| !strcmp(base.c_str(), "D")|| !strcmp(base.c_str(), "d")|| !strcmp(base.c_str(), "H")|| !strcmp(base.c_str(), "h")|| !strcmp(base.c_str(), "V")|| !strcmp(base.c_str(), "v")) {
-		//cout << "4";
-		return BASE_A;
-	}
-	return 'X';
-}
-unsigned char getBase1(std::string base) {
-	//cout << base;
-	if (!strcmp(base.c_str(), "A") || !strcmp(base.c_str(), "a")) {
-		//cout << "1";
-		return BASE_A;
-	}
-	if (!strcmp(base.c_str(), "C") || !strcmp(base.c_str(), "c")) {
-		//cout << "2";
-		return BASE_C;
-	}
-	if (!strcmp(base.c_str(), "G") || !strcmp(base.c_str(), "g")) {
-		//cout << "3";
-		return BASE_G;
-	}
-	if (!strcmp(base.c_str(), "U") || !strcmp(base.c_str(), "u") || !strcmp(
-			base.c_str(), "T") || !strcmp(base.c_str(), "t")) {
-		//cout << "4";
-		return BASE_U;
-	}
-	if (!strcmp(base.c_str(), "N") || !strcmp(base.c_str(), "n")|| !strcmp(base.c_str(), "R")|| !strcmp(base.c_str(), "r")|| !strcmp(base.c_str(), "Y")|| !strcmp(base.c_str(), "y")|| !strcmp(base.c_str(), "M")|| !strcmp(base.c_str(), "m")|| !strcmp(base.c_str(), "K")|| !strcmp(base.c_str(), "k")|| !strcmp(base.c_str(), "S")|| !strcmp(base.c_str(), "s")|| !strcmp(base.c_str(), "W")|| !strcmp(base.c_str(), "w")|| !strcmp(base.c_str(), "B")|| !strcmp(base.c_str(), "b")|| !strcmp(base.c_str(), "D")|| !strcmp(base.c_str(), "d")|| !strcmp(base.c_str(), "H")|| !strcmp(base.c_str(), "h")|| !strcmp(base.c_str(), "V")|| !strcmp(base.c_str(), "v")) {
-		//cout << "4";
-		return 'N';
-	}
-	return 'X';
-}
+	filePath = dirPath + fileName;
+	cf.open(filePath.c_str(), ios::in);
 
-int initStackValues(string fileName) {
-
-	ifstream cf; //cf = current file
-	int i, j, k, l;
-	int ii, jj, kk, ll;
-	int index;
-	char currentLine[256];
-	string currentString;
-	string s;
-
-	// Initialize the array with INFINITY
-	for (i = 0; i < 4; i++) {
-		for (j = 0; j < 4; j++) {
-			for (k = 0; k < 4; k++) {
-				for (l = 0; l < 4; l++) {
+	for (int i = 0; i < 4; i++) {
+		for (int j = 0; j < 4; j++) {
+			for (int k = 0; k < 4; k++) {
+				for (int l = 0; l < 4; l++) {
 					stack[fourBaseIndex(i,j,k,l)] = INFINITY_;
 				}
 			}
 		}
 	}
+	
+	int count = 0;
 
-	fileName = EN_DATADIR + fileName;
-	cf.open(fileName.c_str(), ios::in);
-	if (cf.fail()) {
-		cerr << "File open failed" << endl;
-		exit(-1);
-	}
+	while (cf.good()) {
+		int i, j, k, l;
+		
+		std::string line;
+		std::stringstream ss;
 
-	// Read the thermodynamic parameters.
-	// The 24 first lines are junk we don't need
-	for (index = 1; index <= 15; index++) {
-		cf.getline(currentLine, 256);
-	}
+		getline(cf, line);
+		ss << line;
+		if (line.empty()) continue;
 
-	i = 0;
-	kk = 0;
-	ii = 0;
-	jj = 0;
-	ll = 0;
-
-	while (i < 16) {
-
-		if (i % 4 == 0)
-			for (index = 1; index < 9; index++)
-				cf.getline(currentLine, 256);
-
-		cf.getline(currentLine, 256);
-		s = currentLine;
-		j = 0;
-
-		ll = 0;
-		jj = 0;
-
-		int z = 0;
-		int r = 0;
-
-		while (s[z] != '\0') {
-
-			if (s[z] == ' ')
-				z++;
-
-			else if (s[z] == '.') {
-				z++;
-				ll++;
-				if (ll == 4)
-					ll = 0;
-				r++;
-				if (r % 4 == 0)
-					jj++;
-			} else {
-				char value[10];
-				int x = 0;
-
-				while (s[z] != ' ' && s[z] != '\0') {
-					value[x++] = s[z++];
-				}
-
-				value[x] = '\0';
-
-				int temp = (int) floor(100.0 * atof(value) + .5);
-				stack[fourBaseIndex(ii,jj,kk,ll)] = temp;
-				r++;
-				z++;
-				if (r % 4 == 0)
-					jj++;
-				ll++;
-				if (ll == 4)
-					ll = 0;
+		i = count/4;
+		k = count%4;
+		
+		for (int cols = 0; cols < 16; cols++) {
+			std::string val;
+			ss >> val;
+			j = cols/4;
+			l = cols%4; 		
+			if (!(val == "inf")) {
+				stack[fourBaseIndex(i,j,k,l)]  = (int) floor(100.0 * atof(val.c_str()) + .5);
 			}
-		}
-		i++;
-		if (!(i % 4))
-			ii++;
-
-		/*    jj = 1; */
-		kk = (i % 4);
-
+		}	
+		++count;
 	}
-	cf.close();
-#if 0
-	cout << " Done!" << endl;
-#endif
+	
 	return 0;
 }
 
-int initMiscloopValues(string fileName) {
-	/*
-	 miscloop.dat - Miscellaneous loop file. Contains :
-	 1. Extrapolation for large loops based on polymer theory
-	 2. Asymmetric internal loop correction parameters.
-	 3. the f(m) array (see Ninio for details)
-	 4. Paremeters for multibranch loops
-	 5. Paremeters for multibranch loops (for efn2 only)
-	 6. Terminal AU or GU penalty
-	 7. Bonus for GGG hairpin
-	 8,9,10. C hairpin rules: a) slope  b) intercept c) value for size 3
-	 11. Intermolecular initiation free energy
-	 12. GAIL Rule (Grossly Asymmetric Interior Loop Rule) (on or off)
-	 */
+int initMiscloopValues(const string& fileName, const string& dirpath) {
+	std::string filePath;
+	std::ifstream cf;
+
+	filePath = dirpath + fileName;
+	cf.open(filePath.c_str(), ios::in);
+
+	if (!cf.good()) {
+		std::cerr << "File open failed - " << filePath << std::endl;
+		cf.close();
+		exit(-1);		
+	}
 
 	char currentWord[256];
-	string s;
-	ifstream cf; //cf = current file
+	std::string s;
 
-	fileName = EN_DATADIR + fileName;
-#if 0
-	cout << "Getting miscloop values from " << fileName << endl;
-#endif
-	cf.open(fileName.c_str(), ios::in);
-	if (cf.fail()) {
-		cerr << "File open failed" << endl;
-		exit(-1);
-	}
-	s = "";
-
-	cf >> currentWord;
 	for (int index = 1; index < 13; index++) { // There are total 12 values to read in.
-		while (strcmp(currentWord, "-->")) {
-			cf >> currentWord;
-		}
 		if (index == 1) {
 			cf >> currentWord;
 			prelog = 100 * atof(currentWord);
-			//cout << "prelog = " << prelog << endl;
 		}
 		if (index == 2) {
 			cf >> currentWord;
 			maxpen = int(atof(currentWord) * 100.0 + .5);
-			//cout << "maxpen = " << maxpen << endl;
 		}
 		if (index == 3) {
 			for (int count = 1; count <= 4; count++) {
@@ -370,7 +231,6 @@ int initMiscloopValues(string fileName) {
 				s = currentWord;
 				multConst[count - 1] = (int) (atof(s.c_str()) * 100 + 0.5);
 				eparam[table[count]] = (int) (atof(s.c_str()) * 100 + 0.5);
-				//cout << "\n multi " << multConst[count-1];
 			}
 		}
 		if (index == 5) {
@@ -414,279 +274,86 @@ int initMiscloopValues(string fileName) {
 		}
 	}
 
-	cf.close();
+	cf.close();	 
+
 	return 0;
 }
 
-int initMiscloopValuesOLD(string fileName) {
-	/*
-	 miscloop.dat - Miscellaneous loop file. Contains :
-	 1. Extrapolation for large loops based on polymer theory
-	 2. Asymmetric internal loop correction parameters.
-	 3. the f(m) array (see Ninio for details)
-	 4. Paremeters for multibranch loops
-	 5. Paremeters for multibranch loops (for efn2 only)
-	 6. Terminal AU or GU penalty
-	 7. Bonus for GGG hairpin
-	 8,9,10. C hairpin rules: a) slope  b) intercept c) value for size 3
-	 11. Intermolecular initiation free energy
-	 12. GAIL Rule (Grossly Asymmetric Interior Loop Rule) (on or off)
-	 */
+int initDangleValues(const std::string& fileName, 
+					  const std::string& dirPath) { 
+	std::string filePath;
+	std::ifstream cf;
 
-	char currentWord[256];
-	string s;
-	ifstream cf; //cf = current file
+	filePath = dirPath + fileName;
+	cf.open(filePath.c_str(), ios::in);
 
-	fileName = EN_DATADIR + fileName;
-#if 0
-	cout << "Getting miscloop values from " << fileName << endl;
-#endif
-	cf.open(fileName.c_str(), ios::in);
-	if (cf.fail()) {
-		cerr << "File open failed" << endl;
-		exit(-1);
-	}
-	s = "";
-
-	cf >> currentWord;
-	for (int index = 1; index < 13; index++) { // There are total 12 values to read in.
-		while (strcmp(currentWord, "-->")) {
-			cf >> currentWord;
-		}
-		if (index == 1) {
-			cf >> currentWord;
-			prelog = 100 * atof(currentWord);
-			cout << "prelog = " << prelog << endl;
-		}
-		if (index == 2) {
-			cf >> currentWord;
-			maxpen = int(atof(currentWord) * 100.0 + .5);
-			cout << "maxpen = " << maxpen << endl;
-		}
-		if (index == 3) {
-			for (int count = 1; count <= 4; count++) {
-				cf >> currentWord;
-				s = currentWord;
-				poppen[count] = (int) (atof(s.c_str()) * 100 + 0.5);
-				//cout << "poppen[" << count << "] = "<< poppen[count] << endl;
-			}
-		}
-		if (index == 4) {
-			eparam[1] = 0;
-			eparam[2] = 0;
-			eparam[3] = 0;
-			eparam[4] = 0;
-			eparam[7] = 30;
-			eparam[8] = 30;
-			eparam[9] = -500;
-			int table[4];
-			table[1] = 5;
-			table[2] = 6;
-			table[3] = 10;
-			for (int count = 1; count <= 3; count++) {
-				cf >> currentWord;
-				s = currentWord;
-				eparam[table[count]] = (int) (atof(s.c_str()) * 100 + 0.5);
-				//printf(" %d  ", eparam[table[count]]);
-				//cout << "eparam[" << table[count] << "] = "<< eparam[table[count]] << endl;
-			}
-		}
-		if (index == 5) {
-			int table[4];
-			for (int count = 1; count <= 3; count++) {
-				cf >> currentWord;
-				s = currentWord;
-				table[count] = (int) (atof(s.c_str()) * 100 + 0.5);
-				//cout << "efn2[" << count << "] = "<< table[count] << endl;
-			}
-			efn2a = table[1];
-			efn2b = table[2] - 1;
-			efn2c = table[3] - 1;
-		}
-		if (index == 6) {
-			cf >> currentWord;
-			auend = (int) (100 * atof(currentWord));
-			//cout << "auend = " << auend << endl;
-		}
-		if (index == 7) {
-			cf >> currentWord;
-			gubonus = (int) (100 * atof(currentWord));
-			//cout << "gubonus = " << gubonus << endl;
-		}
-		if (index == 8) {
-			cf >> currentWord;
-			cslope = (int) (100 * atof(currentWord)) + 1;
-			//cout << "cslope = " << cslope << endl;
-		}
-		if (index == 9) {
-			cf >> currentWord;
-			cint = (int) (100 * atof(currentWord));
-			//cout << "cint = " << cint << endl;
-		}
-		if (index == 10) {
-			cf >> currentWord;
-			c3 = (int) (100 * atof(currentWord)) + 1;
-			//cout << "c3 = " << c3 << endl;
-		}
-		if (index == 11) {
-			cf >> currentWord;
-			init = (int) (100 * atof(currentWord)) + 1;
-			//cout << "init = " << init << endl;
-		}
-		if (index == 12) {
-			cf >> currentWord;
-			gail = (int) floor(.5 + atof(currentWord));
-			//cout << "gail = " << gail << endl;
-		}
-	}
-
-	cf.close();
-#if 0
-	cout << " Done!" << endl;
-#endif
-	return 0;
-}
-
-int initDangleValues(string fileName) {
-	ifstream cf; //cf = current file
-	char currentLine[256];
-	string currentString;
-	string s;
-	int index;
-	int i, j, k, l;
-	int ii, jj, kk, ll; // ii = 1st base, jj = 2nd base, kk = 3rd base, ll = 1 up or 2 low
-
-	for (i = 0; i < 4; i++) {
-		for (j = 0; j < 4; j++) {
-			for (k = 0; k < 4; k++) {
-				for (l = 0; l < 2; l++) {
+	for (int i = 0; i < 4; i++) {
+		for (int j = 0; j < 4; j++) {
+			for (int k = 0; k < 4; k++) {
+				for (int l = 0; l < 2; l++) {
 					dangle[i][j][k][l] = INFINITY_;
 				}
 			}
 		}
 	}
+	
+	int count = 0;
 
-	fileName = EN_DATADIR + fileName;
-	cf.open(fileName.c_str(), ios::in);
-	if (cf.fail()) {
-		cerr << "File open failed" << endl;
-		exit(-1);
-	}
+	while (cf.good()) {
+		int i, j, k, l;
+		
+		std::string line;
+		std::stringstream ss;
 
-	// The 8 first lines are junk
-	for (index = 1; index <= 8; index++) {
-		cf.getline(currentLine, 256);
-	}
+		getline(cf, line);
+		ss << line;
+		if (line.empty()) continue;
 
-	// 8 lines of useful data
-	i = 0;
-	ii = 0;
-	jj = 0;
-	kk = 0;
-	ll = 0;
+		i = count%4;
+		l = count/4;
+		
+		for (int cols = 0; cols < 16; cols++) {
+			std::string val;
 
-	while (i < 8) {
-
-		if (i != 0)
-			for (index = 1; index < 9; index++)
-				cf.getline(currentLine, 256);
-
-		cf.getline(currentLine, 256);
-		s = currentLine;
-		j = 0;
-
-		jj = 0;
-
-		int z = 0;
-		int r = 0;
-
-		while (s[z] != '\0') {
-
-			if (s[z] == ' ')
-				z++;
-
-			else if (s[z] == '.') {
-				z++;
-				kk++;
-				if (kk == 4)
-					kk = 0;
-				r++;
-				if (r % 4 == 0)
-					jj++;
-			} else {
-				char value[10];
-				int x = 0;
-
-				while (s[z] != ' ' && s[z] != '\0') {
-					value[x++] = s[z++];
-				}
-
-				value[x] = '\0';
-
-				int temp = (int) floor(100.0 * atof(value) + .5);
-				//if ( temp == 0 )	temp = -1;
-				dangle[ii][jj][kk][ll] = temp;
-				//cout<< "\n " << temp << "  "<< ii <<" "<< jj << " "<< kk << " " << ll ;
-				r++;
-				z++;
-				if (r % 4 == 0)
-					jj++;
-				kk++;
-				if (kk == 4)
-					kk = 0;
-
+			j = cols/4;
+			ss >> val;
+			k = cols%4; 		
+			if (!(val == "inf")) {
+				dangle[i][j][k][l] = (int) floor(100.0 * atof(val.c_str()) + .5);
 			}
-
-		}
-
-		i++;
-		ii++;
-		if (ii == 4)
-			ii = 0;
-
-		if (i == 4)
-			ll = 1;
-
+		}	
+		++count;
 	}
-	cf.close();
-
-#if 0
-	cout << " Done!" << endl;
-#endif
+	
 	return 0;
 }
 
-int initLoopValues(string fileName) {
+int initLoopValues( const string& fileName, const string& dirPath) {
 	// algorithm.c, line 2996
 	ifstream cf; // current file
-	char currentLine[256];
+	std::string filePath;
+
+	filePath = dirPath + fileName;
+	cf.open(filePath.c_str(), ios::in);
+	
+	//char currentLine[256];
 	char currentWord[256];
 	string s;
-	int index;
+	int index= 0;
 	int tempValue = 0;
 
-#if 0
-	cout << "Getting loop values...";
-#endif
-	fileName = EN_DATADIR + fileName;
-	cf.open(fileName.c_str(), ios::in);
 	if (cf.fail()) {
-		cerr << "File open failed" << endl;
+		cerr << "File open failed " << filePath << endl;
 		exit(-1);
 	}
-	// The 4 first lines are junk we don't need
-	for (index = 1; index <= 4; index++) {
-		cf.getline(currentLine, 256);
-		//s = currentLine;
-		//cout << s << endl;
-	}
+
 	while (index < 30) {
 		for (int j = 1; j <= 4; j++) {
 			cf >> currentWord;
 			if (j == 1)
 				index = atoi(currentWord);
 			if (j > 1) {
-				if (strcmp(currentWord, ".")) {
+				if (strcmp(currentWord, "inf")) {
 					tempValue = (int) (100 * atof(currentWord) + 0.5);
 				} else {
 					tempValue = INFINITY_;
@@ -707,228 +374,224 @@ int initLoopValues(string fileName) {
 	}
 	cf.close();
 
-#if 0
-	cout << " Done!" << endl;
-#endif
 	return 0;
 }
 
-int initTstkhValues(string fileName) {
-	ifstream cf; //cf = current file
-	int i, j, k, l;
-	int ii, jj, kk, ll;
-	int index;
-	char currentLine[256];
-	string currentString;
-	string s;
+int initTstk23Values(const std::string& fileName, const std::string& dirPath) {
+	int i1, j1, i2, j2;                                                              
+	std::string filePath;
+	std::ifstream cf;
+	std::string val;						
 
-	for (i = 0; i < 4; i++) {
-		for (j = 0; j < 4; j++) {
-			for (k = 0; k < 4; k++) {
-				for (l = 0; l < 4; l++) {
+	filePath = dirPath + fileName;
+	cf.open(filePath.c_str(), ios::in);
+
+	if (cf.fail()) {
+		cerr << "File open failed " << filePath << endl;
+		exit(-1);
+	}
+
+	for (i1 = 0; i1 < 5; ++i1)
+		for (i2 = 0; i2 < 5; ++i2)
+			for (j1 = 0; j1 < 5; ++j1)
+				for (j2 = 0; j2 < 5; ++j2)
+					if (i1 == 4 || j1 == 4)
+						tstacki23[i1][j1][i2][j2] = INFINITY_;
+					else if (i2 == 4 || j2 == 4)
+						tstacki23[i1][j1][i2][j2] = 0;
+					else {
+						cf >> val;
+						tstacki23[i1][j1][i2][j2] = (val == "inf")? (INFINITY_): 
+							((int) floor(100.0 * atof(val.c_str()) + .5));
+					}
+	cf.close();
+
+	return 0;
+}
+
+
+
+
+int initTstkeValues(const std::string& fileName, const std::string& dirPath) {
+	int i1, j1, i2, j2;                                                              
+	std::string filePath;
+	std::ifstream cf;
+	std::string val;						
+
+	filePath = dirPath + fileName;
+	cf.open(filePath.c_str(), ios::in);
+
+	if (cf.fail()) {
+		cerr << "File open failed " << filePath << endl;
+		exit(-1);
+	}
+
+	for (i1 = 0; i1 < 5; ++i1) {                                    
+		for (i2 = 0; i2 < 6; ++i2) {                                                     
+			for (j1 = 0; j1 < 5; ++j1) {                                                   
+				for (j2 = 0; j2 < 6; ++j2) {                                                      
+					if (i1 == 4 || j1 == 4)                                                       
+						tstacke[i1][j1][i2][j2] = INFINITY_;                                         
+					else if (i2 == 5 || j2 == 5)                                                  
+						tstacke[i1][j1][i2][j2] = INFINITY_;                                         
+					else if (i2 == 4 || j2 == 4)                                                  
+						tstacke[i1][j1][i2][j2] = 0;                                                
+					else { 
+						cf >> val;
+						tstacke[i1][j1][i2][j2] = (val == "inf")? (INFINITY_): 
+							((int) floor(100.0 * atof(val.c_str()) + .5));
+					}
+				}
+			}
+		}			
+	}
+
+	cf.close();
+
+	return 0;
+}
+
+int initTstkmValues(const std::string& fileName, const std::string& dirPath) {
+	int i1, j1, i2, j2;                                                              
+	std::string filePath;
+	std::ifstream cf;
+	std::string val;						
+
+	filePath = dirPath + fileName;
+	cf.open(filePath.c_str(), ios::in);
+	
+	if (cf.fail()) {
+		cerr << "File open failed " << filePath << endl;
+		exit(-1);
+	}
+
+	for (i1 = 0; i1 < 5; ++i1) {                                    
+		for (i2 = 0; i2 < 6; ++i2) {                                                     
+			for (j1 = 0; j1 < 5; ++j1) {                                                   
+				for (j2 = 0; j2 < 6; ++j2) {                                                      
+					if (i1 == 4 || j1 == 4)                                                       
+						tstackm[i1][j1][i2][j2] = INFINITY_;                                         
+					else if (i2 == 5 || j2 == 5)                                                  
+						tstackm[i1][j1][i2][j2] = INFINITY_;                                         
+					else if (i2 == 4 || j2 == 4)                                                  
+						tstackm[i1][j1][i2][j2] = 0;                                                
+					else { 
+						cf >> val;
+						tstackm[i1][j1][i2][j2] = (val == "inf")? (INFINITY_): 
+							((int) floor(100.0 * atof(val.c_str()) + .5));
+					}
+				}
+			}
+		}			
+	}
+
+	cf.close();
+
+	return 0;
+}
+
+int initTstkhValues(const std::string& fileName, const std::string& dirPath) {
+	std::string filePath;
+	std::ifstream cf;
+
+	filePath = dirPath + fileName;
+	cf.open(filePath.c_str(), ios::in);
+
+	for (int i = 0; i < 4; i++) {
+		for (int j = 0; j < 4; j++) {
+			for (int k = 0; k < 4; k++) {
+				for (int l = 0; l < 2; l++) {
 					tstkh[fourBaseIndex(i,j,k,l)] = INFINITY_;
 				}
 			}
 		}
 	}
+	
+	int count = 0;
 
-	fileName = EN_DATADIR + fileName;
-	cf.open(fileName.c_str(), ios::in);
-	if (cf.fail()) {
-		cerr << "File open failed" << endl;
-		exit(-1);
-	}
+	while (cf.good()) {
+		int i, j, k, l;
+		
+		std::string line;
+		std::stringstream ss;
 
-	// The 27 first lines are junk we don't need
-	for (index = 1; index <= 15; index++) {
-		cf.getline(currentLine, 256);
-	}
+		getline(cf, line);
+		ss << line;
+		if (line.empty()) continue;
 
-	i = 0;
-	kk = 0;
-	ii = 0;
-	jj = 0;
-	ll = 0;
-
-	while (i < 16) {
-
-		if (i % 4 == 0)
-			for (index = 1; index < 9; index++)
-				cf.getline(currentLine, 256);
-
-		cf.getline(currentLine, 256);
-		s = currentLine;
-		j = 0;
-
-		ll = 0;
-		jj = 0;
-
-		int z = 0;
-		int r = 0;
-
-		while (s[z] != '\0') {
-
-			if (s[z] == ' ')
-				z++;
-
-			else if (s[z] == '.') {
-				z++;
-				ll++;
-				if (ll == 4)
-					ll = 0;
-				r++;
-				if (r % 4 == 0)
-					jj++;
+		i = count/4;
+		k = count%4;
+		
+		for (int cols = 0; cols < 16; cols++) {
+			std::string val;
+			ss >> val;
+			j = cols/4;
+			l = cols%4; 		
+			if (!(val == "inf")) {
+				tstkh[fourBaseIndex(i,j,k,l)]= (int) floor(100.0 * atof(val.c_str()) + .5);
 			}
-
-			else {
-				char value[10];
-				int x = 0;
-
-				while (s[z] != ' ' && s[z] != '\0') {
-					value[x++] = s[z++];
-				}
-
-				value[x] = '\0';
-
-				int temp = (int) floor(100.0 * atof(value) + .5);
-				tstkh[fourBaseIndex(ii,jj,kk,ll)] = temp;
-
-				r++;
-				z++;
-				if (r % 4 == 0)
-					jj++;
-				ll++;
-				if (ll == 4)
-					ll = 0;
-			}
-		}
-		i++;
-		if (!(i % 4))
-			ii++;
-
-		jj = 0;
-		kk = (i % 4);
-
+		}	
+		++count;
 	}
-
-	cf.close();
-#if 0
-	cout << " Done!" << endl;
-#endif
+	
 	return 0;
 }
 
-int initTstkiValues(string fileName) {
-	ifstream cf; //cf = current file
-	int i, j, k, l;
-	int ii, jj, kk, ll;
-	int index;
-	char currentLine[256];
-	string currentString;
-	string s;
 
-	for (i = 0; i < 4; i++) {
-		for (j = 0; j < 4; j++) {
-			for (k = 0; k < 4; k++) {
-				for (l = 0; l < 4; l++) {
+int initTstkiValues(const std::string& fileName, const std::string& dirPath) {
+	std::string filePath;
+	std::ifstream cf;
+
+	filePath = dirPath + fileName;
+	cf.open(filePath.c_str(), ios::in);
+
+	for (int i = 0; i < 4; i++) {
+		for (int j = 0; j < 4; j++) {
+			for (int k = 0; k < 4; k++) {
+				for (int l = 0; l < 2; l++) {
 					tstki[fourBaseIndex(i,j,k,l)] = INFINITY_;
 				}
 			}
 		}
 	}
 
-	fileName = EN_DATADIR + fileName;
-	cf.open(fileName.c_str(), ios::in);
-	if (cf.fail()) {
-		cerr << "File open failed" << endl;
-		exit(-1);
-	}
+	int count = 0;
 
-	// The 27 first lines are junk we don't need
-	for (index = 1; index <= 15; index++) {
-		cf.getline(currentLine, 256);
-	}
+	while (cf.good()) {
+		int i, j, k, l;
 
-	i = 0;
-	kk = 0;
-	ii = 0;
-	jj = 0;
-	ll = 0;
+		std::string line;
+		std::stringstream ss;
 
-	while (i < 16) {
+		getline(cf, line);
+		ss << line;
+		if (line.empty()) continue;
 
-		if (i % 4 == 0)
-			for (index = 1; index < 9; index++)
-				cf.getline(currentLine, 256);
+		i = count/4;
+		k = count%4;
 
-		cf.getline(currentLine, 256);
-		s = currentLine;
-		j = 0;
-
-		ll = 0;
-		jj = 0;
-
-		int z = 0;
-		int r = 0;
-
-		while (s[z] != '\0') {
-
-			if (s[z] == ' ')
-				z++;
-
-			else if (s[z] == '.') {
-				z++;
-				ll++;
-				if (ll == 4)
-					ll = 0;
-				r++;
-				if (r % 4 == 0)
-					jj++;
+		for (int cols = 0; cols < 16; cols++) {
+			std::string val;
+			ss >> val;
+			j = cols/4;
+			l = cols%4; 		
+			if (!(val == "inf")) {
+				tstki[fourBaseIndex(i,j,k,l)]= (int) floor(100.0 * atof(val.c_str()) + .5);
 			}
-
-			else {
-				char value[10];
-				int x = 0;
-
-				while (s[z] != ' ' && s[z] != '\0') {
-					value[x++] = s[z++];
-				}
-
-				value[x] = '\0';
-
-				int temp = (int) floor(100.0 * atof(value) + .5);
-				tstki[fourBaseIndex(ii,jj,kk,ll)] = temp;
-
-				//cout << "\n temp " << temp << " " <<ii << " "<< jj << " "<< kk << " " << ll;
-				r++;
-				z++;
-				if (r % 4 == 0)
-					jj++;
-				ll++;
-				if (ll == 4)
-					ll = 0;
-			}
-		}
-		i++;
-		if (!(i % 4))
-			ii++;
-
-		jj = 0;
-		kk = (i % 4);
-
+		}	
+		++count;
 	}
 
-	cf.close();
-#if 0
-	cout << " Done!" << endl;
-#endif
 	return 0;
 }
 
-//SH: Rewritten as an error was being generated by this function.
-int initTloopValues(string fileName) {
-	ifstream cf;
+int initTloopValues(const std::string& fileName, const std::string& dirPath) {
+	std::string filePath;
+	std::ifstream cf;
+
+	filePath = dirPath + fileName;
+	cf.open(filePath.c_str(), ios::in);
+
 	int count;
 	char currentLine[256];
 	char currentSeqNumbers[7];
@@ -938,20 +601,6 @@ int initTloopValues(string fileName) {
 	currentValue[5] = '\0';
 
 	string s, temp;
-
-#if 0
-	cout << "Getting tloop values...";
-#endif
-
-	fileName = EN_DATADIR + fileName;
-	cf.open(fileName.c_str(), ios::in);
-	if (cf.fail()) {
-		cerr << "File open failed" << endl;
-		exit(-1);
-	}
-	// skip 2 lines
-	cf.getline(currentLine, 256);
-	cf.getline(currentLine, 256);
 
 	numoftloops = 0;
 
@@ -965,34 +614,26 @@ int initTloopValues(string fileName) {
 		while(currentLine[clindex]== ' ') clindex++;
 		for (count = 0; count < 6; count++) {
 			temp = currentLine[count + clindex];
-			currentSeqNumbers[count] = baseToDigit(temp);
-			//cout << currentSeqNumbers[count];
-			//cout << currentLine[count+1];
+			currentSeqNumbers[count] = baseToDigit(temp.c_str());
 		}
-		//cout << endl;
 		clindex=clindex+7;
 		while(currentLine[clindex]== ' ') clindex++;
 		count = 0;
 		while(currentLine[clindex+count]!=' '&&currentLine[clindex+count]!='\0') {
 			currentValue[count] = currentLine[count + clindex];
 			count++;
-			//cout << currentValue[count];
 		}
-		//cout << endl;
-
+		
 		tloop[numoftloops][0] = (int) atoi(currentSeqNumbers);
-		tloop[numoftloops][1] = (int) floor(100.0 * atof(currentValue) + 0.5);
-		//cout << " --  "<< tloop[numoftloops][0] << " | " << tloop[numoftloops][1] << endl;
+		
+		if (!(strcmp(currentValue,"inf")==0)) 
+			tloop[numoftloops][1] = (int) floor(100.0 * atof(currentValue) + 0.5);
 	}
 	cf.close();
-#if 0
-	cout << " Done!" << endl;
-#endif
 	return 0;
 }
 
-int initInt22Values(string fileName) {
-
+int initInt22Values(const std::string& fileName, const std::string& dirPath) {
 	//Read the 2x2 internal loops
 	//key iloop22[a][b][c][d][j][l][k][m] =
 	//a j l b
@@ -1010,66 +651,36 @@ int initInt22Values(string fileName) {
 									iloop22[i][j][k][r][q][t][y][z] = INFINITY_;
 
 	ifstream cf;
-	int index, flag;
 	char currentLine[256], currentValue[6];
-	string s, s1, s2, temp;
-	string sre;
 
 	int base[4];
 	int l, m;
 
-#if 0
-	cout << "Getting Int22 values...";
-#endif
-	fileName = EN_DATADIR + fileName;
-	cf.open(fileName.c_str(), ios::in);
-	if (cf.fail()) {
-		cerr << "File open failed" << endl;
+	string filePath = dirPath + fileName;
+	cf.open(filePath.c_str(), ios::in);
+	if (!cf.good()) {
+		cerr << "File open failed " << filePath << endl;
 		exit(-1);
 	}
 
-	// Get rid of the 38 1st lines
-	for (index = 1; index < 28; index++) {
-		cf.getline(currentLine, 256);
-	}
+	const char* str[] = {"A-U","C-G","G-C","U-A","G-U","U-G"};
+	
 
-	sre = "Y";
-	flag = 0;
+	int outer, inner;
 
-	for (index = 1; index <= 36; index++) { // 36 tables 16x16
-		// Go to the beginning of the tables
-		while (!flag) {
-			cf.getline(currentLine, 256);
+	for (int index = 1; index <= 36; index++) { // 36 tables 16x16
+		std::stringstream ss1;
+		std::string s ;
 
-			s = currentLine;
-
-			int z = 0;
-			while (s[z] != '\0') {
-
-				if (s[z] == 'Y')
-					flag = 1;
-
-				z++;
-			}
-		}
-		flag = 0;
-
-		// We skip 5 lines
-		for (i = 0; i < 5; ++i) {
-			cf.getline(currentLine, 256);
-		}
- 
-		// get the closing bases
-		cf.getline(currentLine, 256);
-		s1 = currentLine;
-		cf.getline(currentLine, 256);
-		s2 = currentLine;
-		s = s1 + s2;
-
-		int z = 0;
+		outer = (index-1)/6;
+		inner = (index-1)%6;
+		ss1 << str[outer][0] << '-' << str[inner][0] << '-' << str[outer][2] << '-' <<
+			str[inner][2];
+	    ss1 >> s;	
+		
 		int k = 0;
+		int z = 0;
 		while (s[z] != '\0') {
-
 			if (s[z] == 'A')
 				base[k++] = BASE_A;
 			else if (s[z] == 'C')
@@ -1078,22 +689,15 @@ int initInt22Values(string fileName) {
 				base[k++] = BASE_G;
 			else if (s[z] == 'U')
 				base[k++] = BASE_U;
-
 			z++;
 		}
 
-		cf.getline(currentLine, 256);
-
-		//key iloop22[a][b][c][d][j][l][k][m] =
-		//a j l b
-		//c k m d
-
-
 		for (int rowIndex = 1; rowIndex <= 16; rowIndex++) {
+			cf.getline(currentLine, 256);
+			std::stringstream ss;
+			ss << currentLine;
 			for (int colIndex = 1; colIndex <= 16; colIndex++) {
-				cf >> currentValue;
-				// rowIndex = j*4+k
-				// colIndex = l*4+m
+				ss >> currentValue;	
 
 				j = ((rowIndex - 1) - (rowIndex - 1) % 4) / 4;
 				k = (rowIndex - 1) % 4;
@@ -1101,23 +705,18 @@ int initInt22Values(string fileName) {
 				l = ((colIndex - 1) - (colIndex - 1) % 4) / 4;
 				m = (colIndex - 1) % 4;
 
-				iloop22[base[0]][base[1]][base[2]][base[3]][j][l][k][m]
-				                                                     = (int) floor(100.0 * atof(currentValue) + 0.5);
-				//int temp = (int) floor(100.0*atof(currentValue)+0.5);
-				//printf("\n temp is : %d    %d %d %d %d   %d  %d   %d %d", temp, base[0], base[2], base[1], base[3], j, k, l, m );
+				if (!(strcmp(currentValue,"inf")==0)) 
+					iloop22[base[0]][base[1]][base[2]][base[3]][j][l][k][m] 
+						= (int) floor(100.0 * atof(currentValue) + 0.5);
 			}
 		}
 	}
 
 	cf.close();
-#if 0
-	cout << " Done!" << endl;
-#endif
 	return 0;
 }
 
-int initInt21Values(string fileName) {
-
+int initInt21Values(const std::string& fileName, const std::string& dirPath) {
 	// 24x6 arrays of 4x4 values
 	//      c
 	//   a     f
@@ -1128,7 +727,7 @@ int initInt21Values(string fileName) {
 	char currentLine[256];
 	string sre;
 	string s, s1, s2;
-	int a, b, c, d, e, f, g, index;
+	int a, b, c, d, e, f, g;
 	int i, j, k, r, q, t, y;
 	int z;
 
@@ -1165,87 +764,44 @@ int initInt21Values(string fileName) {
 	base1[6] = BASE_U + 1;
 	base2[6] = BASE_G + 1;
 
-	fileName = EN_DATADIR + fileName;
-	cf.open(fileName.c_str(), ios::in);
+	std::string filePath = dirPath + fileName;
+	cf.open(filePath.c_str(), ios::in);
 	if (cf.fail()) {
-		cerr << "File open failed" << endl;
+		cerr << "File open failed" << filePath << endl;
 		exit(-1);
 	}
 
-	// Get rid of the 18 1st lines
-	for (index = 1; index <= 17; index++) {
-		cf.getline(currentLine, 256);
-	}
-
 	i = 1;
-
 	while (i <= 6) {
-
 		j = 1;
-
 		while (j <= 4) {
-
 			k = 1;
-
-			for (index = 1; index <= 10; index++)
-				cf.getline(currentLine, 256);
-
-			s = currentLine;
-
 			while (k <= 4) {
-
 				cf.getline(currentLine, 256);
-
-				s = currentLine;
-
 				r = 0;
-				z = 0;
 				int jj = 1;
 				d = 1;
-				while (s[z] != '\0') {
 
-					if (s[z] == ' ')
-						z++;
+				std::stringstream ss;
+				ss << currentLine;
 
-					else if (s[z] == '.') {
-						z++;
-						d++;
-						if (d == 5)
-							d = 1;
-						r++;
-						if (r % 4 == 0)
-							jj++;
-					}
+				for (z = 1; z <=24 ; z++) {
+					char value[32];
+					ss >> value;
+					int temp = (int) floor(100.0 * atof(value) + .5);
+					a = base1[i];
+					b = base2[i];
+					f = base1[jj];
+					g = base2[jj];
+					c = k;
+					e = j;
 
-					else {
-						char value[10];
-						int x = 0;
-
-						while (s[z] != ' ' && s[z] != '\0') {
-							value[x++] = s[z++];
-						}
-
-						value[x] = '\0';
-
-						int temp = (int) floor(100.0 * atof(value) + .5);
-						a = base1[i];
-						b = base2[i];
-						f = base1[jj];
-						g = base2[jj];
-						c = k;
-						e = j;
-
-						iloop21[a - 1][b - 1][c - 1][d - 1][e - 1][f - 1][g - 1]
-						                                                  = temp;
-						//printf("\n temp %d, a %d , b %d, c %d, d %d, e %d, f %d, g %d", temp, a, b, c, d, e, f, g);
-						r++;
-						z++;
-						if (r % 4 == 0)
-							jj++;
-						d++;
-						if (d == 5)
-							d = 1;
-					}
+					if (!(strcmp(value,"inf")==0)) 
+						iloop21[a - 1][b - 1][c - 1][d - 1][e - 1][f - 1][g - 1] = temp;
+					r++;
+					if (r % 4 == 0) jj++;
+					d++;
+					if (d == 5) d = 1;
 				}
 				k++;
 			}
@@ -1257,13 +813,8 @@ int initInt21Values(string fileName) {
 	return 0;
 }
 
-int initInt11Values(string fileName) {
 
-	//Read the 1x1 internal loops
-	//key iloop11[a][b][c][d][j][l][k][m] =
-	//a b c
-	//d e f
-
+int initInt11Values(const std::string& fileName, const std::string& dirPath) {
 	int i, j, k, r, q, t;
 
 	for (i = 0; i < 4; i++)
@@ -1275,36 +826,19 @@ int initInt11Values(string fileName) {
 							iloop11[i][j][k][r][q][t] = INFINITY_;
 
 	ifstream cf;
-	int index;
 	char currentLine[256];
 	string s;
 	int base1[7];
 	int base2[7];
 
-	//int j, k, l, m;
 	int a, b, c, d, f;
 
-#if 0
-	cout << "Getting Int11 values...";
-#endif
-	fileName = EN_DATADIR + fileName;
-	cf.open(fileName.c_str(), ios::in);
+	std::string filePath = dirPath + fileName;
+	cf.open(filePath.c_str(), ios::in);
 	if (cf.fail()) {
-		cerr << "File open failed" << endl;
+		cerr << "File open failed " << filePath << endl;
 		exit(-1);
 	}
-
-	// Get rid of the 19 1st lines
-	for (index = 1; index <= 17; index++) {
-		cf.getline(currentLine, 256);
-	}
-
-	/*
-	 Structure of the file:
-	 array of 6x6 arrays
-	 Order:
-	 AU CG GC UA GU UG
-	 */
 
 	base1[1] = BASE_A + 1;
 	base2[1] = BASE_U + 1;
@@ -1324,73 +858,42 @@ int initInt11Values(string fileName) {
 
 	while (k < 6) {
 		k++;
-		index = 0;
-		for (index = 1; index <= 10; index++) {
-			cf.getline(currentLine, 256);
-		}
-
 		i = 0;
 		b = 1;
 
 		while (i < 4) {
-
 			int jj = 1;
 			++i;
 			cf.getline(currentLine, 256);
-			s = currentLine;
-
 			j = 0;
 
 			int r = 0;
-			int z = 0;
 			int e = 1;
-			while (s[z] != '\0') {
+			std::stringstream ss;
+			ss << currentLine;
 
-				if (s[z] == ' ')
-					z++;
-
-				else if (s[z] == '.') {
-					z++;
-					e++;
-					if (e == 5)
-						e = 1;
-					r++;
-					if (r % 4 == 0)
-						jj++;
-				}
-
-				else {
-					char value[10];
-					int x = 0;
-
-					while (s[z] != ' ' && s[z] != '\0') {
-						value[x++] = s[z++];
-					}
-
-					value[x] = '\0';
-
-					int temp = (int) floor(100.0 * atof(value) + .5);
-					a = base1[k];
-					d = base2[k];
-					c = base1[jj];
-					f = base2[jj];
+			for (int z=1; z <= 24; ++z) {
+				char value[32];
+				ss >> value;	
+				int temp = (int) floor(100.0 * atof(value) + .5);
+				a = base1[k];
+				d = base2[k];
+				c = base1[jj];
+				f = base2[jj];
+				
+				if (!(strcmp(value,"inf")==0)) 
 					iloop11[a - 1][b - 1][c - 1][d - 1][e - 1][f - 1] = temp;
-					r++;
-					z++;
-					if (r % 4 == 0)
-						jj++;
-					e++;
-					if (e == 5)
-						e = 1;
-				}
+				
+				r++;
+				if (r % 4 == 0) jj++;
+				e++;
+				if (e == 5) e = 1;
 			}
 			b++;
 		}
 	}
 
 	cf.close();
-#if 0
-	cout << " Done!" << endl;
-#endif
+	
 	return 0;
 }

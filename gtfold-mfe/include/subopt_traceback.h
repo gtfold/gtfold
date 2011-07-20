@@ -30,18 +30,7 @@
 #include <map>
 #include <vector>
 
-
-#define Ed3(x, y, z)  dangle[RNA[x]][RNA[y]][RNA[z]][1]
-#define Ed5(x, y, z)  dangle[RNA[x]][RNA[y]][RNA[z]][0]
-#define auPenalty(x, y) auPen(RNA[x], RNA[y]) 
-#define Ea multConst[0]
-#define Eb multConst[2]
-#define Ec multConst[1] 
-
-#define V(x,y)	V[indx[x]+y]
-#define TURN 3
-
-enum label {lW=0, lV, lVBI, lVM, lWM};
+enum label {lW=0, lV, lVBI, lVM, lWM, lWMPrime};
 extern const char* lstr[]; 
 
 struct segment 
@@ -228,10 +217,12 @@ void push_to_gstack(ps_stack_t & gs, const ps_t& v);
 
 ss_map_t subopt_traceback(int len, int gap);
 
-void traceV(int i, int j, ps_t & ps, ps_stack_t & gs, int energy); 
-void traceVBI(int i, int j, ps_t & ps, ps_stack_t & gs, int energy);
-void traceW(int i, int j, ps_t & ps, ps_stack_t & gs, int energy);
-void traceVM(int i, int j, ps_t & ps, ps_stack_t & gs, int energy);
-void traceWM(ps_t& ps, ps_map_t& filter);
+void traceV(int i, int j, ps_t & ps, ps_stack_t & gs); 
+void traceVBI(int i, int j, ps_t & ps, ps_stack_t & gs);
+void traceW(int i, int j, ps_t & ps, ps_stack_t & gs);
+void traceVM(int i, int j, ps_t & ps, ps_stack_t & gs);
+void traceWM(int i, int j, ps_t &  ps, ps_stack_t & gs);
+void traceWMPrime(int i, int j, ps_t &  ps, ps_stack_t & gs);
+//void traceWM(ps_t& ps, ps_map_t& filter);
 
 #endif

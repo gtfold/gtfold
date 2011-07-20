@@ -32,15 +32,9 @@ extern int dangle[4][4][4][2]; /* Contain dangling energy values */
 extern int inter[31]; /* Contains size penalty for internal loops */
 extern int bulge[31]; /* Contain the size penalty for bulges */
 extern int hairpin[31]; /* Contains the size penalty for hairpin loops */
-#if 0
-extern int stack[4][4][4][4];
-extern int tstkh[4][4][4][4];
-extern int tstki[4][4][4][4];
-#else
 extern int stack[256]; /* Stacking energy used to calculate energy of stack loops */
 extern int tstkh[256]; /* Terminal mismatch energy used in the calculations of hairpin loops */
 extern int tstki[256]; /* Terminal mismatch energy used in the calculations of internal loops */
-#endif
 extern int tloop[maxtloop + 1][2];
 extern int numoftloops;
 extern int iloop22[5][5][5][5][5][5][5][5]; /* 2*2 internal looops */
@@ -64,6 +58,13 @@ extern int numoftriloops;
 extern int init;
 extern int gail; /* It is either 0 or 1. It is used for grosely asymmetric internal loops */
 extern float prelog;
+
+extern int tstackm[5][5][6][6];
+extern int tstacke[5][5][6][6];
+extern int tstacki23[5][5][5][5];
+
+
+#define fourBaseIndex(a, b, c, d) (((a) << 6) + ((b) << 4) + ((c) << 2) + (d))
 
 #endif
 

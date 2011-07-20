@@ -1,7 +1,0 @@
-Make single-letter options work
-
-Partition Function
-==================
-
- - fast inner loops optimization
- - factor in dangling energies
