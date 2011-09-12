@@ -5,6 +5,8 @@
 #include <fstream>
 #include <vector>
 #include <algorithm>
+#include <map>
+#include <iterator>
 
 #include "global.h"
 #include "options.h"
@@ -12,6 +14,8 @@
 
 int* BP;
 int* ind;
+
+typedef pair<int,int> basepair_t;
 
 /*
 ZS: Explanation to BP array. 
@@ -37,13 +41,7 @@ int** FBP;
 int nPBP;
 int nFBP;
 
-bool compare_bp(const std::pair<int,int>& o1, 
-			   	const std::pair<int,int>& o2) {
-	return o1.first < o2.first;
-}
-
-
-static int load_constraints(const char* constr_file, int verbose=0) {
+static int load_constraints(const char* constr_file, int seq_length, int verbose=0) {
 	
 
 	fprintf(stdout, "- Running with constraints\n");
@@ -107,30 +105,66 @@ static int load_constraints(const char* constr_file, int verbose=0) {
         }
     }
 
-	std::vector<std::pair<int,int> > v_fbp;
+	map<int, basepair_t > all_bases;
 	for(it=0; it< nFBP; it++) {
-		for(int k=1;k<= FBP[it][2];k++)
-			v_fbp.push_back(std::pair<int,int>(FBP[it][0]+k-1, FBP[it][1]-k+1));
-	}
-	
-	if(v_fbp.size()>1){
-		std::sort(v_fbp.begin(), v_fbp.end(), compare_bp);
-		for (size_t ii = 0; ii < v_fbp.size() -1 ; ++ii) {
-			if (v_fbp[ii].second!=0&&v_fbp[ii].second <= v_fbp[ii+1].second
-				&& v_fbp[ii].second >= v_fbp[ii+1].first) {
-				fprintf(stderr, "\nConstraints create pseudoknots, exiting !!!\n");
-				exit(-1);
+		for(int k=1;k<= FBP[it][2];k++) {
+			basepair_t base_pair(FBP[it][0]+k-1, FBP[it][1]-k+1);
+			pair<map<int,basepair_t>::iterator, bool> retVal;
+			retVal = all_bases.insert(pair<int, basepair_t>(base_pair.first, base_pair));
+			if (base_pair.first < 1 || base_pair.first > seq_length) {
+				fprintf(stderr, "\nBase %d from constraint (%d,%d) is out of bounds of the sequence which has length %d \n",
+					base_pair.first, base_pair.first, base_pair.second, seq_length);
+				exit(1);
 			}
-			
+			if (base_pair.second < 1 || base_pair.second > seq_length) {
+				fprintf(stderr, "\nBase %d from constraint (%d,%d) is out of bounds of the sequence which has length %d \n",
+					base_pair.second, base_pair.first, base_pair.second, seq_length);
+				exit(1);
+			}
+			if (base_pair.first >= base_pair.second - TURN) {
+				fprintf(stderr, "\nDistance between bases of base pair (%d,%d) is too small\n",
+					base_pair.first, base_pair.second);
+				exit(1);
+			}
+			if (retVal.second == false) {
+				fprintf(stderr, "\nDuplicate base %d encountered in Constraints. Base Pair %d,%d\n",
+					 base_pair.first, base_pair.first, base_pair.second);
+				exit(1);
+			}
+			retVal = all_bases.insert(pair<int,basepair_t>(base_pair.second, base_pair) );
+			if (retVal.second == false) {
+				fprintf(stderr, "\nDuplicate base %d encountered in Constraints. Base Pair %d,%d\n",
+					 base_pair.first, base_pair.first, base_pair.second);
+				exit(1);
+			}
 		}
 	}
 
-  
+	vector<basepair_t> verify_stack;
+	for (map<int,basepair_t>::iterator it = all_bases.begin(); it != all_bases.end(); ++it) {
+
+		pair<int,basepair_t> map_element = (*it);
+		int base = map_element.first;
+		basepair_t base_pair = map_element.second;
+		if (base_pair.first == base) {
+			verify_stack.push_back(base_pair);
+		} else {
+        		basepair_t last_base_pair = verify_stack.back();
+			if (last_base_pair.second == base) {
+				verify_stack.pop_back();
+			}
+			else {
+				fprintf(stderr, "\nConstraints create pseudoknots, exiting !!!\n");
+				exit(1);
+			}
+		}
+	}
+
     return 0;
 }
 
 int init_constraints(const char* constr_file,int length) {
-	load_constraints(constr_file);
+	load_constraints(constr_file, length);
 
 
 	int i,j,it,k;
@@ -177,7 +211,7 @@ int init_constraints(const char* constr_file,int length) {
 		int temp;
 		//Make sure smallest one is first 
 		for(it = 0; it < nPBP; it++){
-			if(PBP[it][0] > PBP[it][1]){
+			if(PBP[it][0] > PBP[it][1] && PBP[it][1] != 0){
 				temp = PBP[it][0];	
 				PBP[it][0] = PBP[it][1];
 				PBP[it][1] = temp;
