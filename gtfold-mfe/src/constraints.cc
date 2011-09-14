@@ -211,7 +211,7 @@ int init_constraints(const char* constr_file,int length) {
 		int temp;
 		//Make sure smallest one is first 
 		for(it = 0; it < nPBP; it++){
-			if(PBP[it][0] > PBP[it][1] && PBP[it][1] != 0){
+			if(PBP[it][0] > PBP[it][1] && PBP[it][1]!=0){
 				temp = PBP[it][0];	
 				PBP[it][0] = PBP[it][1];
 				PBP[it][1] = temp;
@@ -219,18 +219,33 @@ int init_constraints(const char* constr_file,int length) {
 		}
 
 		for(it = 0; it < nPBP; it++){
-			if(PBP[it][2] < 1 || PBP[it][1] == 0){
+			if(PBP[it][2] < 1){
 				printf("Invalid entry (P: %d %d %d)\n", PBP[it][0], PBP[it][1], PBP[it][2]);
 				continue;
 			}
 		
 			for(k = 1; k <= PBP[it][2]; k++){
 				
-				BP(PBP[it][0]+k-1, PBP[it][1]-(k-1)) = 2;
+				 if(PBP[it][1] == 0){
+                                        //force single-stranded
+                                        BP(PBP[it][0]+k-1, PBP[it][0]+k-1) = 3;
+                                        //prohibit all pairs with that base
+                                        for(i = 1; i<=length; i++){
+                                                if(i<PBP[it][0]+k-1){
+                                                        BP(i, PBP[it][0]+k-1) = 2;
+                                                }
+                                                if(PBP[it][0]+k-1<i){
+                                                        BP(PBP[it][0]+k-1, i) = 2;
+                                                }
+                                        }
+                                }
+				else{
+					BP(PBP[it][0]+k-1, PBP[it][1]-(k-1)) = 2;
 
-				//Mark that these two nucleotides are involved in a prohibited pair (only used for for printing out)
-				BP(PBP[it][0]+k-1,PBP[it][0]+k-1) = 5;
-				BP(PBP[it][1]-(k-1),PBP[it][1]-(k-1)) = 5;
+					//Mark that these two nucleotides are involved in a prohibited pair (only used for for printing out)
+					BP(PBP[it][0]+k-1,PBP[it][0]+k-1) = 5;
+					BP(PBP[it][1]-(k-1),PBP[it][1]-(k-1)) = 5;
+				}
 			}
 		}	
 	}
@@ -241,14 +256,14 @@ int init_constraints(const char* constr_file,int length) {
 		int temp; 
 		//Make sure smallest one is first, UNLESS forcing single-stranded 
 		for(it  = 0; it < nFBP; it++){
-			if(FBP[it][0] > FBP[it][1] && FBP[it][1]!=0){
+			if(FBP[it][0] > FBP[it][1]){
 				temp = FBP[it][0];
 				FBP[it][0] = FBP[it][1];
 				FBP[it][1] = temp; 
 			}
 		}
 		for(it = 0; it<nFBP; it++){
-			if(FBP[it][2] < 1){
+			if(FBP[it][2] < 1 || FBP[it][1] == 0){
 				printf("Invalid entry (F: %d %d %d)\n", FBP[it][0], FBP[it][1], FBP[it][2]);
 				continue;
 			}
@@ -257,58 +272,43 @@ int init_constraints(const char* constr_file,int length) {
 			for(k = 1; k<=FBP[it][2]; k++){
 				int i1 = FBP[it][0]+k-1;
 				int j1 = FBP[it][1]-k+1;
-				if(FBP[it][1]!=0&&!canPair(RNA[FBP[it][0]+k-1], RNA[FBP[it][1]-k+1])){
+				if(!canPair(RNA[FBP[it][0]+k-1], RNA[FBP[it][1]-k+1])){
 					fprintf(stderr,"Can't force (%d, %d) to pair (non-canonical) \n", FBP[it][0]+k-1, FBP[it][1]-k+1);
 					continue;			
 				}
-				if(FBP[it][1]!=0&&(j1-i1 < TURN)){
+				if((j1-i1 < TURN)){
 					fprintf(stderr,"Can't force (%d, %d) to pair (turn too tight) \n", FBP[it][0]+k-1, FBP[it][1]-k+1);
 					continue;
 				}
-				if(FBP[it][1] == 0){
-					//force single-stranded
-					BP(FBP[it][0]+k-1, FBP[it][0]+k-1) = 3;
-					//prohibit all pairs with that base
-					for(i = 1; i<=length; i++){
-						if(i<FBP[it][0]+k-1){
-							BP(i, FBP[it][0]+k-1) = 2;
-						}
-						if(FBP[it][0]+k-1<i){
-							BP(FBP[it][0]+k-1, i) = 2;
-						}
+				
+				//force pairing
+				BP(FBP[it][0]+k-1, FBP[it][1]-(k-1)) = 1;
+				//prohibit all pairs not-nested with respect to this one 
+				//(including the ones which include either of the bases)
+				for(i = 1; i<FBP[it][0]+k-1; i++){
+					for(j = FBP[it][0]+k-1; j<=FBP[it][1]-(k-1); j++){
+						BP(i,j)=2;
 					}
 				}
-				else{
-					//force pairing
-					BP(FBP[it][0]+k-1, FBP[it][1]-(k-1)) = 1;
-					//prohibit all pairs not-nested with respect to this one 
-					//(including the ones which include either of the bases)
-					for(i = 1; i<FBP[it][0]+k-1; i++){
-						for(j = FBP[it][0]+k-1; j<=FBP[it][1]-(k-1); j++){
-							BP(i,j)=2;
-						}
+				for(i = FBP[it][0]+k-1; i<=FBP[it][1]-(k-1); i++){
+					for(j = FBP[it][1]-(k-1)+1; j<=length; j++){
+						BP(i,j)=2;
 					}
-					for(i = FBP[it][0]+k-1; i<=FBP[it][1]-(k-1); i++){
-						for(j = FBP[it][1]-(k-1)+1; j<=length; j++){
-							BP(i,j)=2;
-						}
-					}
-					//prohibit all remaining pairs with the pairing bases 
-					//(inside enclosed region)
-					for(i = FBP[it][0]+k; i<FBP[it][1]-(k-1); i++){
-						BP(FBP[it][0]+k-1,i) = 2;
-						BP(i,FBP[it][1]-(k-1)) = 2;
-					}
-					
+				}
+				//prohibit all remaining pairs with the pairing bases 
+				//(inside enclosed region)
+				for(i = FBP[it][0]+k; i<FBP[it][1]-(k-1); i++){
+					BP(FBP[it][0]+k-1,i) = 2;
+					BP(i,FBP[it][1]-(k-1)) = 2;
+				}
+				
 
-					//mark that these two nucleotides are involved in a constrained pair
-					//to avoid searching in O(N^2) time
-					BP(FBP[it][0]+k-1, FBP[it][0]+k-1) = 4;
-					BP(FBP[it][1]-(k-1), FBP[it][1]-(k-1))=4;
-					//force pairing 
-					BP(FBP[it][0]+k-1, FBP[it][1]-(k-1)) = 1;
-					
-				}
+				//mark that these two nucleotides are involved in a constrained pair
+				//to avoid searching in O(N^2) time
+				BP(FBP[it][0]+k-1, FBP[it][0]+k-1) = 4;
+				BP(FBP[it][1]-(k-1), FBP[it][1]-(k-1))=4;
+				//force pairing 
+				BP(FBP[it][0]+k-1, FBP[it][1]-(k-1)) = 1;
 			}
 		}
 	}
