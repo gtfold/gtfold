@@ -18,6 +18,10 @@ bool T_MISMATCH = false;
 bool UNAMODE = false;
 bool RNAMODE = false;
 bool b_prefilter = false;
+bool CALC_PART_FUNC = false;
+bool RND_SAMPLE = false;
+bool PF_COUNT_MODE = false;
+bool NO_DANGLE_MODE = false;
 
 string seqfile = "";
 string constraintsFile = "";
@@ -29,6 +33,7 @@ string outputDir = "";
 string shapeFile = "";
 string paramDir; // default value
 
+int num_rnd = 0;
 int dangles=-1;
 int prefilter1=2;
 int prefilter2=2;
@@ -70,6 +75,9 @@ void help() {
 
     printf("\nBETA OPTIONS\n");
     printf("   --bpp                Calculate base pair probabilities.\n");
+    printf("   --partition          Calculate the partition function.\n");
+    printf("   --pf_count          Calculate the structure count using partition function and zero energy value.\n");
+    printf("   --no_dangle          Used with --partition or --sample options, use zero dangling energies\n");
     printf("   --subopt NUM         Calculate suboptimal structures within NUM kcal/mol\n");
     printf("                        of the MFE. (Uses -d 2 treatment of dangling energies.)\n");
     printf("   -s, --useSHAPE FILE  Use SHAPE constraints from FILE.\n");      
@@ -91,149 +99,174 @@ void help() {
  * Parse the options from argc and argv and save them into global state.
  */
 void parse_options(int argc, char** argv) {
-								int i;
+  int i;
 
-								for(i=1; i<argc; i++) {
-																if(argv[i][0] == '-') {
-																								if(strcmp(argv[i], "--help") == 0 || strcmp(argv[i], "-h") == 0) {
-																																help();
-																								} else if(strcmp(argv[i], "--constraints") == 0 || strcmp(argv[i], "-c") == 0) {
-																																if(i < argc) {
-																																								constraintsFile = argv[++i];
-																																								CONS_ENABLED = true;
-																																}
-																																else
-																																								help();
-																								} else if(strcmp(argv[i], "--limitCD") == 0 || strcmp(argv[i], "-l") == 0) {
-																																if(i < argc){
-																																								contactDistance = atoi(argv[++i]);
-																																								stringstream ss;
-																																								ss << contactDistance;
-																																								if (contactDistance >= 0 && !strcmp(ss.str().c_str(),argv[i]))
-																																																LIMIT_DISTANCE = true;
-																																								else
-																																																help();
-																																}
-																																else
-																																								help();
-																								} else if(strcmp(argv[i], "--noisolate") == 0 || strcmp(argv[i], "-n") == 0) {
-																																NOISOLATE = true;
-																								} else if(strcmp(argv[i], "--prefix") == 0 || strcmp(argv[i], "-o") == 0) {
-																																if(i < argc)
-																																								outputPrefix = argv[++i];
-																																else
-																																								help();
-																								} else if (strcmp(argv[i], "--workdir") == 0 || strcmp(argv[i], "-w") == 0) {
-																																if(i < argc)
-																																								outputDir = argv[++i];
-																																else
-																																								help();
-																								} else if (strcmp(argv[i], "--paramdir") == 0 || strcmp(argv[i], "-p") == 0) {
-																																if(i < argc) {
-																																								paramDir = argv[++i];
-																																								PARAM_DIR = true;
-																																}
-																																else
-																																								help();
-																								} else if (strcmp(argv[i], "--dangle") == 0 || strcmp(argv[i], "-d") == 0) {
-																																std::string cmd = argv[i];
-																																if(i < argc) {
-																																								dangles = atoi(argv[++i]);
-																																								if (!(dangles == 0 || dangles == 2)) {
-																																																dangles = -1;
-																																																printf("Ignoring %s option as it accepts either 0 or 2\n", cmd.c_str());
-																																								} 
-																																} else
-																																								help();
-																								} else if (strcmp(argv[i], "-m") == 0 || strcmp(argv[i], "--mismatch") == 0) {
-																																T_MISMATCH = true;
-																								} else if (strcmp(argv[i], "--unafold") == 0) {
-																																UNAMODE = true;
-																								} else if (strcmp(argv[i], "--rnafold") == 0) {
-																																RNAMODE = true;
-																								} else if (strcmp(argv[i], "--prefilter") == 0) {
-																																if(i < argc) {
-																																								prefilter1 = atoi(argv[++i]);
-																																								if (prefilter1 <= 0 ) {
-																																																printf("INVALID ARGUMENTS: --prefilter accepts positive integers\n\n");
-																																																help();
-																																								}
-																																								b_prefilter = true;
-																																								prefilter2 = prefilter1;
-																																} else 
-																																								help();
-																								}
-																								else if(strcmp(argv[i], "--threads") == 0 || strcmp(argv[i], "-t") == 0) {
-																																if(i < argc)
-																																								nThreads = atoi(argv[++i]);
-																																else
-																																								help();	
-																								} else if (strcmp(argv[i], "--verbose") == 0 || strcmp(argv[i], "-v") == 0) {
-																																VERBOSE = true;
-																								}
-																								else if(strcmp(argv[i], "--bpp") == 0) {
-																																BPP_ENABLED = true;
-																								} else if(strcmp(argv[i], "--subopt") == 0) {
-																																SUBOPT_ENABLED = true;
-																																dangles = 2;
-																																if(i < argc)
-																																								suboptDelta = atof(argv[++i]);
-																																else
-																																								help();
-																								}
-																								else if (strcmp(argv[i], "--useSHAPE") == 0){
-																																if( i < argc){
-																																								shapeFile = argv[++i];
-																																								SHAPE_ENABLED = true;
-																																}
-																																else
-																																								help();
-																								}				
-																} else {
-																								seqfile = argv[i];
-																}
-								}
+  for(i=1; i<argc; i++) {
+    if(argv[i][0] == '-') {
+      if(strcmp(argv[i], "--help") == 0 || strcmp(argv[i], "-h") == 0) {
+        help();
+      } else if(strcmp(argv[i], "--constraints") == 0 || strcmp(argv[i], "-c") == 0) {
+        if(i < argc) {
+          constraintsFile = argv[++i];
+          CONS_ENABLED = true;
+        }
+        else
+          help();
+      } else if(strcmp(argv[i], "--limitCD") == 0 || strcmp(argv[i], "-l") == 0) {
+        if(i < argc){
+          contactDistance = atoi(argv[++i]);
+          stringstream ss;
+          ss << contactDistance;
+          if (contactDistance >= 0 && !strcmp(ss.str().c_str(),argv[i]))
+            LIMIT_DISTANCE = true;
+          else
+            help();
+        }
+        else
+          help();
+      } else if(strcmp(argv[i], "--noisolate") == 0 || strcmp(argv[i], "-n") == 0) {
+        NOISOLATE = true;
+      } else if(strcmp(argv[i], "--prefix") == 0 || strcmp(argv[i], "-o") == 0) {
+        if(i < argc)
+          outputPrefix = argv[++i];
+        else
+          help();
+      } else if (strcmp(argv[i], "--workdir") == 0 || strcmp(argv[i], "-w") == 0) {
+        if(i < argc)
+          outputDir = argv[++i];
+        else
+          help();
+      } else if (strcmp(argv[i], "--paramdir") == 0 || strcmp(argv[i], "-p") == 0) {
+        if(i < argc) {
+          paramDir = argv[++i];
+          PARAM_DIR = true;
+        }
+        else
+          help();
+      } else if (strcmp(argv[i], "--dangle") == 0 || strcmp(argv[i], "-d") == 0) {
+        std::string cmd = argv[i];
+        if(i < argc) {
+          dangles = atoi(argv[++i]);
+          if (!(dangles == 0 || dangles == 2)) {
+            dangles = -1;
+            printf("Ignoring %s option as it accepts either 0 or 2\n", cmd.c_str());
+          } 
+        } else
+          help();
+      } else if (strcmp(argv[i], "-m") == 0 || strcmp(argv[i], "--mismatch") == 0) {
+        T_MISMATCH = true;
+      } else if (strcmp(argv[i], "--unafold") == 0) {
+        UNAMODE = true;
+      } else if (strcmp(argv[i], "--rnafold") == 0) {
+        RNAMODE = true;
+      } else if (strcmp(argv[i], "--prefilter") == 0) {
+        if(i < argc) {
+          prefilter1 = atoi(argv[++i]);
+          if (prefilter1 <= 0 ) {
+            printf("INVALID ARGUMENTS: --prefilter accepts positive integers\n\n");
+            help();
+          }
+          b_prefilter = true;
+          prefilter2 = prefilter1;
+        } else 
+          help();
+      }
+      else if(strcmp(argv[i], "--threads") == 0 || strcmp(argv[i], "-t") == 0) {
+        if(i < argc)
+          nThreads = atoi(argv[++i]);
+        else
+          help();	
+      } else if (strcmp(argv[i], "--verbose") == 0 || strcmp(argv[i], "-v") == 0) {
+        VERBOSE = true;
+      }
+      else if(strcmp(argv[i], "--bpp") == 0) {
+        BPP_ENABLED = true;
+      } else if(strcmp(argv[i], "--subopt") == 0) {
+        SUBOPT_ENABLED = true;
+        dangles = 2;
+        if(i < argc)
+          suboptDelta = atof(argv[++i]);
+        else
+          help();
+      } else if (strcmp(argv[i],"--partition") == 0) {
+        CALC_PART_FUNC = true;
+	/*if (i<argc){
+                 if(strcmp(argv[i],"--no_dangle") == 0){
+                        NO_DANGLE_MODE = true;
+                        printf("setting no dangle mode to true\n");
+                }
+        }*/
+      } else if (strcmp(argv[i],"--pf_count") == 0) {
+        CALC_PART_FUNC = true;
+	PF_COUNT_MODE = true;
+      }  else if (strcmp(argv[i],"--sample") == 0) {printf("setting sample parameter to true\n");
+        RND_SAMPLE = true;
+        if(i < argc)
+          num_rnd = atoi(argv[++i]);
+        else
+          help();
+	/*if (i<argc){
+		if(strcmp(argv[i],"--no_dangle") == 0){
+           		NO_DANGLE_MODE = true;
+        		printf("setting no dangle mode to true\n");
+      		}
+	}*/
+      } else  if(strcmp(argv[i],"--no_dangle") == 0){
+                        NO_DANGLE_MODE = true;
+                        printf("setting no dangle mode to true\n");
+      } else if (strcmp(argv[i], "--useSHAPE") == 0){
+        if( i < argc){
+          shapeFile = argv[++i];
+          SHAPE_ENABLED = true;
+        }
+        else
+          help();
+      }				
+    } else {
+      seqfile = argv[i];
+    }
+  }
 
-								// Must have an input file specified
-								if(seqfile.empty()) {
-																help();
-																printf("Missing input file.\n");
-								}
+  // Must have an input file specified
+  if(seqfile.empty()) {
+    help();
+    printf("Missing input file.\n");
+  }
 
-								// If no output file specified, create one
-								if(outputPrefix.empty()) {
-																// base it off the input file
-																outputPrefix += seqfile;
+  // If no output file specified, create one
+  if(outputPrefix.empty()) {
+    // base it off the input file
+    outputPrefix += seqfile;
 
-																size_t pos;
-																// extract file name from the path
-																if ((pos=outputPrefix.find_last_of('/')) > 0) {
-																								outputPrefix = outputPrefix.substr(pos+1);
-																}
+    size_t pos;
+    // extract file name from the path
+    if ((pos=outputPrefix.find_last_of('/')) > 0) {
+      outputPrefix = outputPrefix.substr(pos+1);
+    }
 
-																// and if an extension exists, remove it ...
-																if(outputPrefix.find(".") != string::npos)
-																								outputPrefix.erase(outputPrefix.rfind("."));
-								}
+    // and if an extension exists, remove it ...
+    if(outputPrefix.find(".") != string::npos)
+      outputPrefix.erase(outputPrefix.rfind("."));
+  }
 
-								// If output dir specified
-								if (!outputDir.empty()) {
-																outputFile += outputDir;
-																outputFile += "/";
-																suboptFile += outputDir;
-																suboptFile += "/";
-																bppOutFile += outputDir;
-																bppOutFile += "/";
-								}
-								// ... and append the .ct
-								outputFile += outputPrefix;
-								outputFile += ".ct";
+  // If output dir specified
+  if (!outputDir.empty()) {
+    outputFile += outputDir;
+    outputFile += "/";
+    suboptFile += outputDir;
+    suboptFile += "/";
+    bppOutFile += outputDir;
+    bppOutFile += "/";
+  }
+  // ... and append the .ct
+  outputFile += outputPrefix;
+  outputFile += ".ct";
 
-								suboptFile += outputPrefix;	
-								suboptFile += "_ss.txt";	
+  suboptFile += outputPrefix;	
+  suboptFile += "_ss.txt";	
 
-								bppOutFile += outputPrefix;	
-								bppOutFile += "_bpp.txt";	
+  bppOutFile += outputPrefix;	
+  bppOutFile += "_bpp.txt";	
 }
 
 /**

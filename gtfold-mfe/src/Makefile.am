@@ -16,9 +16,10 @@ gtfold_SOURCES = \
 	algorithms.c\
 	traceback.c\
 	subopt_traceback.cc\
-	algorithms-partition.c\
+	stochastic-sampling.cc\
+  algorithms-partition.c\
 	partition-dangle.c\
-	random-sample.cc\
+	partition-func.c\
 	shapereader.cc
 
 gtfold_LDFLAGS = 

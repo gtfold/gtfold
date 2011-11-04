@@ -18,6 +18,7 @@ int *indx;
 int **PP; 
 
 int alloc_flag = 0;
+const float RT = ((0.00198721 * 310.15)*100); //* 100.00);
 
 void create_tables(int len) {	
 	V = (int *) malloc(((len+1)*len/2 + 1) * sizeof(int));
