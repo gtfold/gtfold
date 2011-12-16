@@ -27,20 +27,13 @@
 
 using namespace std;
 
-void init_fold(string seq);
-void free_fold(int len);
+//void init_fold(string seq);
+//void free_fold(int len);
 
-bool encodeSequence(string seq);
+//bool encodeSequence(string seq);
 void limit_contact_distance(int lCD, int length);
 
-bool is_valid_base(char c)
-{	
-	return ( (c-'A' == 0) || (c-'a' == 0) || 
-			 (c-'C' == 0) || (c-'c' == 0) ||
-			 (c-'G' == 0) || (c-'g' == 0) ||
-			 (c-'U' == 0) || (c-'u' == 0));
-}
-
+/*
 void trim_spaces(std::string& str)
 {
 	// Trim Both leading and trailing spaces
@@ -73,5 +66,5 @@ void tokenize(const std::string& str, std::vector<std::string>& tokens, const st
 		pos = str.find_first_of(delimiters, lastPos);
 	}
 }
-	
+	*/
 #endif

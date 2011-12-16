@@ -13,10 +13,10 @@ extern int nFBP;
 
 #define BP(i,j) BP[ind[j]+i]
 
+
 int init_constraints(const char* constr_file, int length) ;
 void free_constraints(int length) ;
 void print_constraints(int length) ;
-
 
 #ifdef __cplusplus
 extern "C" {
@@ -34,6 +34,11 @@ int forcePair(int i, int j);
 
 int withinCD(int i, int j);
 int verify_structure();
+
+void enable_constraints(int b);
+void enable_limit_distance(int b);
+void set_contact_distance(int dist);
+
 #ifdef __cplusplus
 }
 #endif

@@ -47,16 +47,19 @@ void trace(int len) {
 	printf("\n");
 	
 	traceW(len);
-	printf("- sum of energy of Loops:   	  %12.2f kcal/mol\n", total_en/100.0);
-	printf("- sum of energy of External Loop: %12.2f kcal/mol\n", total_ex/100.0);
-	return;
+  if (g_verbose == 1) {
+    printf("- sum of energy of Loops:   	  %12.2f kcal/mol\n", total_en/100.0);
+    printf("- sum of energy of External Loop: %12.2f kcal/mol\n", total_ex/100.0);
+  }
+  return;
 }
 
 void traceW(int j) {
 	int done = 0, i;
 	int wim1, flag = 1 ;
 	
-	assert(!(j == 0 || j == 1)); 
+  if (j == 0 || j == 1)
+    return;
 	
 	for (i = 1; i < j && !done; i++) {
 		if (j-i < TURN) continue;

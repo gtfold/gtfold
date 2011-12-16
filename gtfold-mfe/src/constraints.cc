@@ -41,11 +41,17 @@ int** FBP;
 int nPBP;
 int nFBP;
 
+static bool CONS_ENABLED = false;
+static bool LIMIT_DISTANCE = false;
+static int contactDistance = -1;
+
+void enable_constraints(int b) {CONS_ENABLED = b;}
+void enable_limit_distance(int b) {LIMIT_DISTANCE = b;}
+void set_contact_distance(int dist) {contactDistance = dist;}
+
 static int load_constraints(const char* constr_file, int seq_length, int verbose=0) {
 	
-
 	fprintf(stdout, "- Running with constraints\n");
-
 
 	std::ifstream cfcons;
 	cfcons.open(constr_file, std::ios::in);
@@ -164,8 +170,9 @@ static int load_constraints(const char* constr_file, int seq_length, int verbose
 }
 
 int init_constraints(const char* constr_file,int length) {
-	load_constraints(constr_file, length);
-
+  enable_constraints(true);
+  load_constraints(constr_file, length);
+  
 
 	int i,j,it,k;
 	ind = (int*) malloc((length+1) * sizeof(int));

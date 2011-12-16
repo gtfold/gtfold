@@ -3,6 +3,11 @@
 
 #include "constants.h"
 
+#ifdef __cplusplus
+#include <string>
+using namespace std;
+#endif
+
 extern unsigned char *RNA; 
 extern int *structure; 
 extern int* constraints;
@@ -18,9 +23,9 @@ extern int g_prefilter2;
 
 extern unsigned int chPairKey;
 
-// The possible base pairs are (A,U), (U,A), (C,G), (G,C), (G,U) and (U,G). 
+// The possible base pairs are (A,U), (U,A), (C,G), (G,C), (G,U) 
+//  and (U,G). 
 #define checkPair(i, j) (((((i)-(j)) % 2) == 1 || (((i)-(j)) % 2)== -1) && (!( ((i)==BASE_A && (j)==BASE_C) || ((i)==BASE_C && (j)==BASE_A) )))
-
 
 #ifdef __cplusplus
 extern "C" {
@@ -30,8 +35,15 @@ void init_global_params(int len);
 void free_global_params();
 void print_sequence(int len); 
 void print_structure(int len); 
+void print_header() ;
 #ifdef __cplusplus
 }
+#endif
+
+#ifdef __cplusplus
+int read_sequence_file(const char* filename, std::string& seq);
+bool encodeSequence(string seq);
+void save_ct_file(string outputFile, string seq, int energy) ;
 #endif
 
 void init_checkPair(); 
