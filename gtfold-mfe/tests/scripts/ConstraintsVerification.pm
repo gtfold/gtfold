@@ -32,10 +32,13 @@ sub test()
     my $constraint_file = "$workdir/$seqname.constraint";
 	  my $gtout  = "$workdir$seqname-gt";
 	  my $gtoutfilename  = $workdir."$seqname-gt.ct";
-
 	  my $gtcmd;
-    $gtcmd  = "$gtdir/gtfold $seqfile -o $gtout > /dev/null 2>&1";
-	  system("$gtcmd");
+    $gtcmd  = "$gtdir/gtmfe $seqfile -o $gtout > /dev/null 2>&1";
+	my $exitcode = system("$gtcmd") >> 8;
+	if ($exitcode != 0) {
+      $logger->error("TEST FAILED: $seqname : Assertion Failed, Exit Code incorrect: $exitcode.Could not execute MFE Calculation");
+      next;	
+	}
     my $len = get_seq_len_from_ctfile($gtoutfilename);
     my $CONSFILE;
     open($CONSFILE, '>', $constraint_file) or die "Couldn't open $_";
@@ -44,8 +47,8 @@ sub test()
 
     my $gtout_constraints = $gtout."_constraints";
     my $gtout_constraints_filename = "$gtout_constraints.ct";
-    $gtcmd  = "$gtdir/gtfold -c $constraint_file $seqfile -o $gtout_constraints > /dev/null 2>&1";
-	  my $exitcode = system("$gtcmd") >> 8;
+    $gtcmd  = "$gtdir/gtmfe -c $constraint_file $seqfile -o $gtout_constraints > /dev/null 2>&1";
+	$exitcode = system("$gtcmd") >> 8;
 
     if ($exitcode != 0) {
       $logger->error("TEST FAILED: $seqname : Assertion Failed, Exit Code incorrect: $exitcode. Constraint File: $constraint_file");
@@ -55,7 +58,7 @@ sub test()
     my @violated_constraints = verify_constraints($gtout_constraints_filename, $constraint_file);
     if (@violated_constraints) {
       my @vc = join(',', @violated_constraints);
-      print scalar(@violated_constraints);
+#      print scalar(@violated_constraints);
       $logger->error("TEST FAILED: $seqname : Constraints Violated: Input Constraint File $constraint_file. Violated Constraints:\n @vc");
     }
     else {
@@ -89,7 +92,7 @@ sub generate_constraints
 sub get_seq_len_from_ctfile
 {
   my $filename = shift;
-  open(IN, "<$filename");
+  open(IN, "<$filename") || die ("Could not open $filename");
   my $header  = <IN>; # ignore first line
   close IN;
   my ($len, $dG) = split(' ', $header);
@@ -101,13 +104,12 @@ sub verify_constraints {
   my $ctfilename = shift;
   my $cffilename = shift;
 
-  open CT, $ctfilename;
-  open CF, $cffilename;
+  open CT, $ctfilename || die("Could not open $ctfilename");
+  open CF, $cffilename || die("Could not open $cffilename");
 
   my %ct_hash = ();
   my @rna;
   my $count=1;
-
   my $header  = <CT>; # ignore first line
   while (<CT>)
   {

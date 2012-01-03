@@ -249,7 +249,7 @@ $compatable = $old_false_pos - $false_pos;
 #$seq\n";
 #print "$dotb\n";
 
-my $comparison_result = "
+my $comparison_result = sprintf("
 seq length =         %6d
 num of bps in ref =  %6d 
 num of bps in sub =  %6d
@@ -267,12 +267,12 @@ Approximate correlation = %1.3f
 Correlation Coefficient = %1.3f 
 Matthews Corr. Coeff.   = %1.3f 
 
-\n\n", $rlen, $rcount, $scount, $false_pos+$false_neg+$compatable, $true_pos, $true_neg, $false_pos, $false_neg, $sensitivity, $selectivity, $approx_corr, $corr_coeff, $MCC;
+\n\n", $rlen, $rcount, $scount, $false_pos+$false_neg+$compatable, $true_pos, $true_neg, $false_pos, $false_neg, $sensitivity, $selectivity, $approx_corr, $corr_coeff, $MCC);
 
-my $latex_comparison_result = "LaTeX:
+my $latex_comparison_result = sprintf("LaTeX:
 Subj. File & BPs in Ref. & BPs in Subj. & TPs (sens.)& FPs (select.) & Matthews Corr. Coeff. (approx. corr.) & \\\\
 $filename & %d & %d & %d (%2.1f) & %d (%2.1f) & %1.3f (%2.1f) \\\\ \n\n", 
-$rcount, $scount, $true_pos,  $sensitivity*100, $false_pos, $selectivity*100, $MCC, $approx_corr*100;
+$rcount, $scount, $true_pos,  $sensitivity*100, $false_pos, $selectivity*100, $MCC, $approx_corr*100);
 
 #printf "%1.4f\t%1.4f\n",
 #$sensitivity, $selectivity;

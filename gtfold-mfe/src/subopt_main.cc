@@ -69,7 +69,10 @@ void parse_options(int argc, char** argv) {
           suboptDelta = atof(argv[++i]);
         else
           help();
-      } 
+      }
+      else if(strcmp(argv[i], "-o") == 0) {
+		outputPrefix.assign(argv[++i]);
+	  }
     } else {
       seqfile = argv[i];
     }
@@ -109,7 +112,7 @@ void parse_options(int argc, char** argv) {
   suboptFile += outputPrefix;	
   suboptFile += "_ss.txt";	
 
-
+	printf("Output: %s %s %s\n", outputPrefix.c_str(), outputFile.c_str(), suboptFile.c_str());
 }
 
 static void help() {
@@ -138,7 +141,7 @@ void subopt_main(int argc, char** argv) {
     exit(-1);
   }
   init_fold(seq.c_str());
-  
+  g_dangles = 2;  
   readThermodynamicParameters(paramDir.c_str(), PARAM_DIR, 0, 1, 0);
 
 	int energy = calculate(seq.length()) ; 

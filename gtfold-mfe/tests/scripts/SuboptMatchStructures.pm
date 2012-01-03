@@ -54,7 +54,7 @@ sub test()
       my $rnafile = $rnaout.$energy."_ss.txt";
   	  my $gtcmd;
       my $rnacmd;
-      $gtcmd  = "$gtdir/gtfold --subopt $energy $seqfile -o $gtfile > /dev/null 2>&1";
+      $gtcmd  = "$gtdir/gtsubopt --subopt $energy -o $gtfile $seqfile > /dev/null 2>&1";
       $rnacmd  = "$rnadir/RNAsubopt -s DAT -e $energy < $seqfile > $rnafile";
 
 	    system("$gtcmd");
@@ -63,13 +63,19 @@ sub test()
       my $gtsubopt_file = $gtfile."_ss.txt";
       my $rnasubopt_file = $rnafile;
 
-      my $gtsorted = $gtsubopt_file."_sorted";
-      my $rnasubopt_sorted = $rnafile."_sorted";
-      my $gtstructs = `cat $gtsubopt_file | sed '/[A-Z]/d' | sed '/^\$/d'`;
-      my $rnastructs = `cat $rnasubopt_file | sed '/[A-Z]/d' | sed '/^\$/d'`;
+      my @gtstructs = split( '[ \n][ \n]*', `cat $gtsubopt_file | sed '/[A-Z]/d' | sed '/*\$/d'`);
+      my @rnastructs = split( '[ \n][ \n]*', `cat $rnasubopt_file | sed '/[A-Z]/d' | sed '/*\$/d'`);
 
-      %gtstruct_hash = split('[ \n]',$gtstructs);
-      %rnastruct_hash = split('[ \n]',$rnastructs);
+	  my $num_elements = scalar(@gtstructs);
+      if ( $num_elements % 2  == 1) {
+		@gtstructs = @gtstructs[1,$num_elements-1];
+	  }
+   	  $num_elements = scalar(@rnastructs);
+      if ( $num_elements % 2  == 1) {
+		@rnastructs = @rnastructs[1,$num_elements-1];
+	  }
+      %gtstruct_hash = @gtstructs;
+      %rnastruct_hash = @rnastructs;
 
       my $diff_file_name = "$workdir$seqname\_$energy.diff"; 
 
@@ -82,7 +88,7 @@ sub test()
         unless ( (exists $rnastruct_hash{$key}) && $gtstruct_hash{$key} eq $rnastruct_hash{$key} );
         # gotta check for existence to quiet warnings.
         if(defined($change) && $change ne "") {
-          print DIFF_FILE $key. "\nGTFOLD Energy: ". $gtstruct_hash{$key};
+          print DIFF_FILE "Key is ".$key. "\nGTFOLD Energy: ". $gtstruct_hash{$key};
           if (exists $rnastruct_hash{$key}) {
             print DIFF_FILE "\nRNASubopt Energy: ". $rnastruct_hash{$key};
           }

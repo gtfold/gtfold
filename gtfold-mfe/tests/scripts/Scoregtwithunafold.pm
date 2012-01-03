@@ -29,7 +29,7 @@ sub test()
 	  my $gtoutfilename  = $workdir."$seqname-gt.ct";
 	  my $unaoutfilename = $workdir."$seqname-una.ct";
 
-	  my $gtcmd = "$gtdir/gtfold -m $seqfile --unafold -o $gtout > /dev/null";
+	  my $gtcmd = "$gtdir/gtmfe -m $seqfile --unafold -o $gtout > /dev/null";
 	  my $unacmd = "$unadir/hybrid-ss-min -s DAT $seqfile -o $unaout > /dev/null";
 	
 	  system("$gtcmd");

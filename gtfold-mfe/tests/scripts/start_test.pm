@@ -90,18 +90,30 @@ open(TESTLISTFILE, $test_list_file) || die("Could not open file: $test_list_file
 sub find_sequences_from_dir
 {
 
-my %args = @_;
+#print @_[1]."\n";
+#print @_[3];
+#print $_[5i]."\n";
+#my %args = @_;
 
 my %seq_hash;
-my $include_regex = $args{seq_include_regex};
-my $exclude_regex = $args{seq_exclude_regex};
-my @seqdirs = $args{seq_dirs};
 
-if (scalar(@seqdirs) eq 0) {
-  return %seq_hash;
-}
+#if (defined $_[1]) {
+	my $include_regex = $_[1];
+#}
+#if (defined $_[3]) {
+	my $exclude_regex = $_[3];
+#}
+#if not(defined $_[5]) {
+#	return %seq_hash;
+#}
 
-foreach (@seqdirs) {
+shift @_;
+shift @_;
+shift @_;
+shift @_;
+shift @_;
+
+foreach (@_) {
 
   opendir(DIR, $_) || die $!;
   while (my $seqfile = readdir(DIR)) {
