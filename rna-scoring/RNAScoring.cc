@@ -20,6 +20,7 @@ extern "C" {
 #include "PFtest.h"
 
 using namespace std;
+extern char* paramDir;
 
 int main(int argc, char* argv[])
 {
@@ -34,6 +35,7 @@ int main(int argc, char* argv[])
 		return 0;
 	}
 
+
 	parse_options(argc, argv);
 	
 	//printf("hi");
@@ -46,7 +48,7 @@ int main(int argc, char* argv[])
     int* RNA = resultBundle->RNA_seq;
     
    // PrintTree(tree, 0);
-	 nndb_constants* param = populate("data/Turner99", 1);
+	 nndb_constants* param = populate(strcat(paramDir, "data/Turner99"), 1);
 	
 	int one; int two; int three; int four; int score; 
 	
