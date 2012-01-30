@@ -75,7 +75,13 @@ int main(int argc, char** argv) {
     printf("\nComputing partition function...\n");
     int pf_count_mode = 0;
     if(PF_COUNT_MODE) pf_count_mode=1;
-    calculate_partition(seq.length(),pf_count_mode);
+    int no_dangle_mode=0;
+    if(NO_DANGLE_MODE) no_dangle_mode=1;
+	t1 = get_seconds();
+	calculate_partition(seq.length(),pf_count_mode,no_dangle_mode);
+	t1 = get_seconds() - t1;
+	printf("partition function computation running time: %9.6f seconds\n", t1);
+
     free_partition();
     //free_fold(seq.length());
     exit(0);

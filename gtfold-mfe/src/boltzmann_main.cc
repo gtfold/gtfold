@@ -3,6 +3,8 @@
 #include <cstdlib>
 #include <string>
 #include <cstring>
+//#include <sys/time.h>
+//#include <time.h>
 
 #include "global.h"
 #include "loader.h"
@@ -13,6 +15,7 @@
 #include "stochastic-sampling.h"
 #include "algorithms.h"
 #include "traceback.h"
+#include "utils.h"
 
 using namespace std;
 
@@ -21,6 +24,7 @@ static bool PF_COUNT_MODE = false;
 static bool BPP_ENABLED = false;
 static bool PARAM_DIR = false;
 static bool RND_SAMPLE = false;
+static bool DUMP_CT_FILE = false;
 static bool CALC_PF_DO = false;
 static bool CALC_PF_DS = false;
 
@@ -30,6 +34,9 @@ static string outputDir = "";
 static string outputFile = "";
 static string paramDir; // default value
 static string bppOutFile = "";
+static string ctFileDumpDir = "";
+static string stochastic_summery_file_name = "stochaSampleSummary.txt";
+
 static int num_rnd = 0;
 
 static void help() {
@@ -45,6 +52,7 @@ static void help() {
     printf("   --partition -d2      Calculate the partition function using -d2 reccurences (Under implementation).\n");
 
     printf("   --sample   INT       Sample number of structures equal to INT\n");
+    printf("   --sample   INT  --dump [--dump_dir dump_dir_path] [--dump_summary dump_summery_file_name]       Sample number of structures equal to INT and dump each structure to a ct file in dump_dir_path directory (if no value provided then use current directory value for this purpose) and also create a summary file with name stochastic_summery_file_name in dump_dir_path directory (if no value provided, use stochaSampleSummary.txt value for this purpose)\n");
     printf("   --pfcount           Calculate the structure count using partition function and zero energy value.\n");
     printf("   --bpp                Calculate base pair probabilities.\n");
     printf("\n");
@@ -102,6 +110,26 @@ static void parse_options(int argc, char** argv) {
           num_rnd = atoi(argv[++i]);
         else
           help();
+	if(i < argc){//--dump [--dump_dir dump_dir_name] [--dump_summary dump_summery_file_name]
+	  if (strcmp(argv[i+1],"--dump") == 0){
+	   i=i+1;
+	   DUMP_CT_FILE = true;
+	   if (i < argc && strcmp(argv[i+1],"--dump_dir") == 0){
+            i=i+1;
+	    if(i < argc)
+             ctFileDumpDir = argv[++i];
+            else
+             help();
+	   }
+	   if (i < argc && strcmp(argv[i+1],"--dump_summary") == 0){
+            i=i+1;
+            if(i < argc)
+             stochastic_summery_file_name = argv[++i];
+            else
+             help();
+           }
+	  }
+	}
       }
 
     } else {
@@ -144,11 +172,16 @@ static void parse_options(int argc, char** argv) {
   bppOutFile += outputPrefix;	
   bppOutFile += "_bpp.txt";	
 }
-
+/*
+double get_seconds() {
+        struct timeval tv;
+        gettimeofday(&tv, NULL);
+        return (double) tv.tv_sec + (double) tv.tv_usec / 1000000.0;
+}*/
 
 int boltzmann_main(int argc, char** argv) {
   std::string seq;
-
+  double t1;
   parse_options(argc, argv);
 
   if (read_sequence_file(seqfile.c_str(), seq) == FAILURE) {
@@ -162,11 +195,17 @@ int boltzmann_main(int argc, char** argv) {
 
   if (CALC_PART_FUNC == true && CALC_PF_DS == true) {
     printf("\nComputing partition function in -dS mode ...\n");
-    calculate_partition(seq.length(),0);
+    t1 = get_seconds();
+    calculate_partition(seq.length(),0,0);
+    t1 = get_seconds() - t1;
+    printf("partition function computation running time: %9.6f seconds\n", t1);
+    //calculate_partition(seq.length(),0,0);
     free_partition();
   } 
   else if (CALC_PART_FUNC == true && CALC_PF_DO == true) {
     printf("\nCalculating partition function in -d0 mode ...\n");
+    /*
+    //Below method is not correct method for d0 mdoe partition function computation as discussed by Shel
     double ** Q,  **QM, **QB, **P;
     Q = mallocTwoD(seq.length() + 1, seq.length() + 1);
     QM = mallocTwoD(seq.length() + 1, seq.length() + 1);
@@ -179,21 +218,32 @@ int boltzmann_main(int argc, char** argv) {
     freeTwoD(QM, seq.length() + 1, seq.length() + 1);
     freeTwoD(QB, seq.length() + 1, seq.length() + 1);
     freeTwoD(P, seq.length() + 1, seq.length() + 1);
+*/
+     t1 = get_seconds();
+    calculate_partition(seq.length(),0,1);
+    t1 = get_seconds() - t1;
+    printf("partition function computation running time: %9.6f seconds\n", t1);
+    //calculate_partition(seq.length(),0,0);
+    free_partition();
+
   }
   else if (CALC_PART_FUNC == true) {
     printf("\nComputing partition function...\n");
     int pf_count_mode = 0;
     if(PF_COUNT_MODE) pf_count_mode=1;
-
-    calculate_partition(seq.length(),pf_count_mode);
+    t1 = get_seconds();
+    calculate_partition(seq.length(),pf_count_mode, 0);
+    t1 = get_seconds() - t1;
+    printf("partition function computation running time: %9.6f seconds\n", t1);
     free_partition();
   } else if (RND_SAMPLE == true) {
     printf("\nComputing partition function...\n");
 	  int pf_count_mode = 0;
 	  if(PF_COUNT_MODE) pf_count_mode=1;
-	  double U = calculate_partition(seq.length(),pf_count_mode);
+	  double U = calculate_partition(seq.length(),pf_count_mode,0);
  
-    batch_sample(num_rnd, seq.length(), U); 
+    if(DUMP_CT_FILE==false) batch_sample(num_rnd, seq.length(), U);
+    else batch_sample_and_dump(num_rnd, seq.length(), U, ctFileDumpDir, stochastic_summery_file_name, seq, seqfile); 
 
     free_partition();
   } else if(BPP_ENABLED) {

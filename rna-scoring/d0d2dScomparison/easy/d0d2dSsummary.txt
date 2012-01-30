@@ -1,0 +1,31 @@
+eq1=$seqDir."/easy/biloba.ct";
+$easyseq1=$seqDir."/easy/mobilis.ct";
+$easyseq1=$seqDir."/easy/phytomonas.ct";
+$easyseq1=$seqDir."/easy/spombe.ct";
+$easyseq1=$seqDir."/easy/thermophila.ct";
+
+default,
+d0
+dS
+d2
+
+./d0d2dScomparison/easy/d0d2dScomparison.txt:51:Tree score is 599955.04
+./d0d2dScomparison/easy/d0d2dScomparison.txt:102:Tree score is 599955.04
+./d0d2dScomparison/easy/d0d2dScomparison.txt:153:Tree score is 599955.04
+./d0d2dScomparison/easy/d0d2dScomparison.txt:204:Tree score is 599955.04
+./d0d2dScomparison/easy/d0d2dScomparison.txt:265:Tree score is 399924.56
+./d0d2dScomparison/easy/d0d2dScomparison.txt:326:Tree score is 399924.56
+./d0d2dScomparison/easy/d0d2dScomparison.txt:387:Tree score is 399924.56
+./d0d2dScomparison/easy/d0d2dScomparison.txt:448:Tree score is 399924.56
+./d0d2dScomparison/easy/d0d2dScomparison.txt:498:Tree score is 399962.26
+./d0d2dScomparison/easy/d0d2dScomparison.txt:548:Tree score is 399962.26
+./d0d2dScomparison/easy/d0d2dScomparison.txt:598:Tree score is 399962.26
+./d0d2dScomparison/easy/d0d2dScomparison.txt:648:Tree score is 399962.26
+./d0d2dScomparison/easy/d0d2dScomparison.txt:698:Tree score is 199960.18
+./d0d2dScomparison/easy/d0d2dScomparison.txt:748:Tree score is 199960.18
+./d0d2dScomparison/easy/d0d2dScomparison.txt:798:Tree score is 199960.18
+./d0d2dScomparison/easy/d0d2dScomparison.txt:848:Tree score is 199960.18
+./d0d2dScomparison/easy/d0d2dScomparison.txt:898:Tree score is 199958.18
+./d0d2dScomparison/easy/d0d2dScomparison.txt:948:Tree score is 199958.18
+./d0d2dScomparison/easy/d0d2dScomparison.txt:998:Tree score is 199958.18
+./d0d2dScomparison/easy/d0d2dScomparison.txt:1048:Tree score is 199958.18

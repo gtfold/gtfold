@@ -1,0 +1,4 @@
+d0d2dScomparison_mfe_23S.txt:77:Tree score is -568.40
+d0d2dScomparison_mfe_23S.txt:154:Tree score is -700.60
+d0d2dScomparison_mfe_23S.txt:231:Tree score is -700.60
+d0d2dScomparison_mfe_23S.txt:308:Tree score is -712.90

@@ -1,0 +1,46 @@
+$easyseq1=$seqDir."/hard/arboreum.ct";
+generateResult($easyseq1,$easyoutfilepath);
+
+$easyseq1=$seqDir."/hard/canicula.ct";
+generateResult($easyseq1,$easyoutfilepath);
+
+$easyseq1=$seqDir."/hard/ecoli.ct";
+generateResult($easyseq1,$easyoutfilepath);
+
+$easyseq1=$seqDir."/hard/hsapiens.ct";
+generateResult($easyseq1,$easyoutfilepath);
+
+$easyseq1=$seqDir."/hard/volcanii.ct";
+generateResult($easyseq1,$easyoutfilepath);
+
+sub generateResult{
+ my($seq,$out)=@_;
+ #my $str="Score is\n";
+ #`echo $str`;
+ `$scoreCalcPrg -d0 $seq >> $out`;
+ `$scoreCalcPrg $seq >> $out`;
+ `$scoreCalcPrg -dS $seq >> $out`;
+ `$scoreCalcPrg -d2 $seq >> $out`;
+}
+~
+
+d0d2dScomparison_mfe_hard.txt:10:Tree score is -39.40
+d0d2dScomparison_mfe_hard.txt:20:Tree score is -44.40
+d0d2dScomparison_mfe_hard.txt:30:Tree score is -44.40
+d0d2dScomparison_mfe_hard.txt:40:Tree score is -44.40
+d0d2dScomparison_mfe_hard.txt:49:Tree score is -41.30
+d0d2dScomparison_mfe_hard.txt:58:Tree score is -45.50
+d0d2dScomparison_mfe_hard.txt:67:Tree score is -45.50
+d0d2dScomparison_mfe_hard.txt:76:Tree score is -45.70
+d0d2dScomparison_mfe_hard.txt:87:Tree score is -48.00
+d0d2dScomparison_mfe_hard.txt:98:Tree score is -55.70
+d0d2dScomparison_mfe_hard.txt:109:Tree score is -55.70
+d0d2dScomparison_mfe_hard.txt:120:Tree score is -56.80
+d0d2dScomparison_mfe_hard.txt:131:Tree score is -25.50
+d0d2dScomparison_mfe_hard.txt:142:Tree score is -32.80
+d0d2dScomparison_mfe_hard.txt:153:Tree score is -32.80
+d0d2dScomparison_mfe_hard.txt:164:Tree score is -32.80
+d0d2dScomparison_mfe_hard.txt:173:Tree score is -41.20
+d0d2dScomparison_mfe_hard.txt:182:Tree score is -44.40
+d0d2dScomparison_mfe_hard.txt:191:Tree score is -44.40
+d0d2dScomparison_mfe_hard.txt:200:Tree score is -44.40

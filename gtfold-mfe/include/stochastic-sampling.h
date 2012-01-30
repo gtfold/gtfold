@@ -84,5 +84,6 @@ void   rnd_u(int i, int j, int* structure);
 
 double rnd_structure(int* structure, int len);
 void batch_sample(int num_rnd, int length, double U);
+void batch_sample_and_dump(int num_rnd, int length, double U, std::string ctFileDumpDir, std::string stochastic_summery_file_name, std::string seq, std::string seqfile);
 
 #endif

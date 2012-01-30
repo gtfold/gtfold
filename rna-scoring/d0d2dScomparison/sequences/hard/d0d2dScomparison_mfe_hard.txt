@@ -1,0 +1,200 @@
+The number read was 121 
+Length of sequence: 121
+Loading in GTfold data files from data/Turner99/
+Getting miscloop values from data/Turner99/miscloop.dat
+prelog = 107.9
+maxpen = 300
+Done loading data files.
+
+AU penalty awarded for branch nr. 0 (3, 0%): 50  
+Tree score is -39.40
+The number read was 121 
+Length of sequence: 121
+Loading in GTfold data files from data/Turner99/
+Getting miscloop values from data/Turner99/miscloop.dat
+prelog = 107.9
+maxpen = 300
+Done loading data files.
+
+AU penalty awarded for branch nr. 0 (3, 0%): 50  
+Tree score is -44.40
+The number read was 121 
+Length of sequence: 121
+Loading in GTfold data files from data/Turner99/
+Getting miscloop values from data/Turner99/miscloop.dat
+prelog = 107.9
+maxpen = 300
+Done loading data files.
+
+AU penalty awarded for branch nr. 0 (3, 0%): 50  
+Tree score is -44.40
+The number read was 121 
+Length of sequence: 121
+Loading in GTfold data files from data/Turner99/
+Getting miscloop values from data/Turner99/miscloop.dat
+prelog = 107.9
+maxpen = 300
+Done loading data files.
+
+AU penalty awarded for branch nr. 0 (3, 0%): 50  
+Tree score is -44.40
+The number read was 121 
+Length of sequence: 121
+Loading in GTfold data files from data/Turner99/
+Getting miscloop values from data/Turner99/miscloop.dat
+prelog = 107.9
+maxpen = 300
+Done loading data files.
+
+Tree score is -41.30
+The number read was 121 
+Length of sequence: 121
+Loading in GTfold data files from data/Turner99/
+Getting miscloop values from data/Turner99/miscloop.dat
+prelog = 107.9
+maxpen = 300
+Done loading data files.
+
+Tree score is -45.50
+The number read was 121 
+Length of sequence: 121
+Loading in GTfold data files from data/Turner99/
+Getting miscloop values from data/Turner99/miscloop.dat
+prelog = 107.9
+maxpen = 300
+Done loading data files.
+
+Tree score is -45.50
+The number read was 121 
+Length of sequence: 121
+Loading in GTfold data files from data/Turner99/
+Getting miscloop values from data/Turner99/miscloop.dat
+prelog = 107.9
+maxpen = 300
+Done loading data files.
+
+Tree score is -45.70
+The number read was 121 
+Length of sequence: 121
+Loading in GTfold data files from data/Turner99/
+Getting miscloop values from data/Turner99/miscloop.dat
+prelog = 107.9
+maxpen = 300
+Done loading data files.
+
+AU penalty awarded for branch nr. 0 (3, 0%): 50  
+AU penalty awarded for branch nr. 1 (2, 3%): 50  
+Tree score is -48.00
+The number read was 121 
+Length of sequence: 121
+Loading in GTfold data files from data/Turner99/
+Getting miscloop values from data/Turner99/miscloop.dat
+prelog = 107.9
+maxpen = 300
+Done loading data files.
+
+AU penalty awarded for branch nr. 0 (3, 0%): 50  
+AU penalty awarded for branch nr. 1 (2, 3%): 50  
+Tree score is -55.70
+The number read was 121 
+Length of sequence: 121
+Loading in GTfold data files from data/Turner99/
+Getting miscloop values from data/Turner99/miscloop.dat
+prelog = 107.9
+maxpen = 300
+Done loading data files.
+
+AU penalty awarded for branch nr. 0 (3, 0%): 50  
+AU penalty awarded for branch nr. 1 (2, 3%): 50  
+Tree score is -55.70
+The number read was 121 
+Length of sequence: 121
+Loading in GTfold data files from data/Turner99/
+Getting miscloop values from data/Turner99/miscloop.dat
+prelog = 107.9
+maxpen = 300
+Done loading data files.
+
+AU penalty awarded for branch nr. 0 (3, 0%): 50  
+AU penalty awarded for branch nr. 1 (2, 3%): 50  
+Tree score is -56.80
+The number read was 120 
+Length of sequence: 120
+Loading in GTfold data files from data/Turner99/
+Getting miscloop values from data/Turner99/miscloop.dat
+prelog = 107.9
+maxpen = 300
+Done loading data files.
+
+AU penalty awarded for branch nr. 0 (2, 3%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+Tree score is -25.50
+The number read was 120 
+Length of sequence: 120
+Loading in GTfold data files from data/Turner99/
+Getting miscloop values from data/Turner99/miscloop.dat
+prelog = 107.9
+maxpen = 300
+Done loading data files.
+
+AU penalty awarded for branch nr. 0 (2, 3%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+Tree score is -32.80
+The number read was 120 
+Length of sequence: 120
+Loading in GTfold data files from data/Turner99/
+Getting miscloop values from data/Turner99/miscloop.dat
+prelog = 107.9
+maxpen = 300
+Done loading data files.
+
+AU penalty awarded for branch nr. 0 (2, 3%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+Tree score is -32.80
+The number read was 120 
+Length of sequence: 120
+Loading in GTfold data files from data/Turner99/
+Getting miscloop values from data/Turner99/miscloop.dat
+prelog = 107.9
+maxpen = 300
+Done loading data files.
+
+AU penalty awarded for branch nr. 0 (2, 3%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+Tree score is -32.80
+The number read was 123 
+Length of sequence: 123
+Loading in GTfold data files from data/Turner99/
+Getting miscloop values from data/Turner99/miscloop.dat
+prelog = 107.9
+maxpen = 300
+Done loading data files.
+
+Tree score is -41.20
+The number read was 123 
+Length of sequence: 123
+Loading in GTfold data files from data/Turner99/
+Getting miscloop values from data/Turner99/miscloop.dat
+prelog = 107.9
+maxpen = 300
+Done loading data files.
+
+Tree score is -44.40
+The number read was 123 
+Length of sequence: 123
+Loading in GTfold data files from data/Turner99/
+Getting miscloop values from data/Turner99/miscloop.dat
+prelog = 107.9
+maxpen = 300
+Done loading data files.
+
+Tree score is -44.40
+The number read was 123 
+Length of sequence: 123
+Loading in GTfold data files from data/Turner99/
+Getting miscloop values from data/Turner99/miscloop.dat
+prelog = 107.9
+maxpen = 300
+Done loading data files.
+
+Tree score is -44.40

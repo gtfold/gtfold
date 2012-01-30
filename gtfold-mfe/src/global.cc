@@ -152,6 +152,20 @@ void save_ct_file(string outputFile, string seq, int energy) {
 	outfile.close();
 }
 
+void save_ct_file(string outputFile, string seq, int energy, int *structure1) {
+        ofstream outfile;
+        outfile.open(outputFile.c_str());
+
+        outfile << seq.length() << "\t  dG = " << energy/100.0 << endl;
+        //outfile << seq.length() << "\tdG = " << energy/100.0 << "\t" << seqfile << endl;
+
+        unsigned int i = 1;
+        for(i=1; i <= seq.length(); i++)
+                outfile << i << "\t" << seq[i-1] << "\t" << i-1 << "\t" << (i+1)%(seq.length()+1) << "\t" << structure1[i] << "\t" << i << endl;
+
+        outfile.close();
+}
+
 void init_checkPair() {
 	int i, j;
 	chPairKey = 0;

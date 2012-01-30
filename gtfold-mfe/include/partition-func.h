@@ -30,7 +30,7 @@ double eL_new(int i, int j, int p, int q);
 double eH_new(int i, int j);
 double auPenalty_new(int i, int j);
 double f(int j, int h, int l);
-double  calculate_partition(int len, int pf_count_mode);
+double calculate_partition(int len, int pf_count_mode, int no_dangle_mode);
 void free_partition();
 
 #ifdef __cplusplus

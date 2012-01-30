@@ -1,0 +1,308 @@
+The number read was 3273 
+Length of sequence: 3273
+Loading in GTfold data files from data/Turner99/
+Getting miscloop values from data/Turner99/miscloop.dat
+prelog = 107.9
+maxpen = 300
+Done loading data files.
+
+AU penalty awarded for branch nr. 0 (3, 0%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (0, 3%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (3, 2%): 50  
+AU penalty awarded for branch nr. 1 (2, 3%): 50  
+AU penalty awarded for branch nr. 0 (0, 3%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (3, 0%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (3, 0%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (2, 3%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (0, 3%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (3, 0%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (2, 3%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (0, 3%): 50  
+AU penalty awarded for branch nr. 1 (0, 3%): 50  
+AU penalty awarded for branch nr. 0 (3, 0%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (3, 0%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (0, 3%): 50  
+AU penalty awarded for branch nr. 2 (0, 3%): 50  
+AU penalty awarded for branch nr. 0 (3, 0%): 50  
+AU penalty awarded for branch nr. 1 (0, 3%): 50  
+AU penalty awarded for branch nr. 0 (3, 0%): 50  
+AU penalty awarded for branch nr. 1 (0, 3%): 50  
+AU penalty awarded for branch nr. 2 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (0, 3%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (0, 3%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (3, 0%): 50  
+AU penalty awarded for branch nr. 1 (3, 2%): 50  
+AU penalty awarded for branch nr. 2 (0, 3%): 50  
+AU penalty awarded for branch nr. 0 (3, 0%): 50  
+AU penalty awarded for branch nr. 1 (0, 3%): 50  
+AU penalty awarded for branch nr. 0 (2, 3%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 1 (3, 2%): 50  
+AU penalty awarded for branch nr. 2 (0, 3%): 50  
+AU penalty awarded for branch nr. 0 (3, 2%): 50  
+AU penalty awarded for branch nr. 2 (0, 3%): 50  
+AU penalty awarded for branch nr. 0 (3, 0%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (0, 3%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (0, 3%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (3, 0%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (2, 3%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (3, 0%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (0, 3%): 50  
+AU penalty awarded for branch nr. 1 (0, 3%): 50  
+AU penalty awarded for branch nr. 0 (0, 3%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+Tree score is -568.40
+The number read was 3273 
+Length of sequence: 3273
+Loading in GTfold data files from data/Turner99/
+Getting miscloop values from data/Turner99/miscloop.dat
+prelog = 107.9
+maxpen = 300
+Done loading data files.
+
+AU penalty awarded for branch nr. 0 (3, 0%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (0, 3%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (3, 2%): 50  
+AU penalty awarded for branch nr. 1 (2, 3%): 50  
+AU penalty awarded for branch nr. 0 (0, 3%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (3, 0%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (3, 0%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (2, 3%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (0, 3%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (3, 0%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (2, 3%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (0, 3%): 50  
+AU penalty awarded for branch nr. 1 (0, 3%): 50  
+AU penalty awarded for branch nr. 0 (3, 0%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (3, 0%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (0, 3%): 50  
+AU penalty awarded for branch nr. 2 (0, 3%): 50  
+AU penalty awarded for branch nr. 0 (3, 0%): 50  
+AU penalty awarded for branch nr. 1 (0, 3%): 50  
+AU penalty awarded for branch nr. 0 (3, 0%): 50  
+AU penalty awarded for branch nr. 1 (0, 3%): 50  
+AU penalty awarded for branch nr. 2 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (0, 3%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (0, 3%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (3, 0%): 50  
+AU penalty awarded for branch nr. 1 (3, 2%): 50  
+AU penalty awarded for branch nr. 2 (0, 3%): 50  
+AU penalty awarded for branch nr. 0 (3, 0%): 50  
+AU penalty awarded for branch nr. 1 (0, 3%): 50  
+AU penalty awarded for branch nr. 0 (2, 3%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 1 (3, 2%): 50  
+AU penalty awarded for branch nr. 2 (0, 3%): 50  
+AU penalty awarded for branch nr. 0 (3, 2%): 50  
+AU penalty awarded for branch nr. 2 (0, 3%): 50  
+AU penalty awarded for branch nr. 0 (3, 0%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (0, 3%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (0, 3%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (3, 0%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (2, 3%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (3, 0%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (0, 3%): 50  
+AU penalty awarded for branch nr. 1 (0, 3%): 50  
+AU penalty awarded for branch nr. 0 (0, 3%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+Tree score is -700.60
+The number read was 3273 
+Length of sequence: 3273
+Loading in GTfold data files from data/Turner99/
+Getting miscloop values from data/Turner99/miscloop.dat
+prelog = 107.9
+maxpen = 300
+Done loading data files.
+
+AU penalty awarded for branch nr. 0 (3, 0%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (0, 3%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (3, 2%): 50  
+AU penalty awarded for branch nr. 1 (2, 3%): 50  
+AU penalty awarded for branch nr. 0 (0, 3%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (3, 0%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (3, 0%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (2, 3%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (0, 3%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (3, 0%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (2, 3%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (0, 3%): 50  
+AU penalty awarded for branch nr. 1 (0, 3%): 50  
+AU penalty awarded for branch nr. 0 (3, 0%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (3, 0%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (0, 3%): 50  
+AU penalty awarded for branch nr. 2 (0, 3%): 50  
+AU penalty awarded for branch nr. 0 (3, 0%): 50  
+AU penalty awarded for branch nr. 1 (0, 3%): 50  
+AU penalty awarded for branch nr. 0 (3, 0%): 50  
+AU penalty awarded for branch nr. 1 (0, 3%): 50  
+AU penalty awarded for branch nr. 2 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (0, 3%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (0, 3%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (3, 0%): 50  
+AU penalty awarded for branch nr. 1 (3, 2%): 50  
+AU penalty awarded for branch nr. 2 (0, 3%): 50  
+AU penalty awarded for branch nr. 0 (3, 0%): 50  
+AU penalty awarded for branch nr. 1 (0, 3%): 50  
+AU penalty awarded for branch nr. 0 (2, 3%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 1 (3, 2%): 50  
+AU penalty awarded for branch nr. 2 (0, 3%): 50  
+AU penalty awarded for branch nr. 0 (3, 2%): 50  
+AU penalty awarded for branch nr. 2 (0, 3%): 50  
+AU penalty awarded for branch nr. 0 (3, 0%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (0, 3%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (0, 3%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (3, 0%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (2, 3%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (3, 0%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (0, 3%): 50  
+AU penalty awarded for branch nr. 1 (0, 3%): 50  
+AU penalty awarded for branch nr. 0 (0, 3%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+Tree score is -700.60
+The number read was 3273 
+Length of sequence: 3273
+Loading in GTfold data files from data/Turner99/
+Getting miscloop values from data/Turner99/miscloop.dat
+prelog = 107.9
+maxpen = 300
+Done loading data files.
+
+AU penalty awarded for branch nr. 0 (3, 0%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (0, 3%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (3, 2%): 50  
+AU penalty awarded for branch nr. 1 (2, 3%): 50  
+AU penalty awarded for branch nr. 0 (0, 3%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (3, 0%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (3, 0%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (2, 3%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (0, 3%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (3, 0%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (2, 3%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (0, 3%): 50  
+AU penalty awarded for branch nr. 1 (0, 3%): 50  
+AU penalty awarded for branch nr. 0 (3, 0%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (3, 0%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (0, 3%): 50  
+AU penalty awarded for branch nr. 2 (0, 3%): 50  
+AU penalty awarded for branch nr. 0 (3, 0%): 50  
+AU penalty awarded for branch nr. 1 (0, 3%): 50  
+AU penalty awarded for branch nr. 0 (3, 0%): 50  
+AU penalty awarded for branch nr. 1 (0, 3%): 50  
+AU penalty awarded for branch nr. 2 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (0, 3%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (0, 3%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (3, 0%): 50  
+AU penalty awarded for branch nr. 1 (3, 2%): 50  
+AU penalty awarded for branch nr. 2 (0, 3%): 50  
+AU penalty awarded for branch nr. 0 (3, 0%): 50  
+AU penalty awarded for branch nr. 1 (0, 3%): 50  
+AU penalty awarded for branch nr. 0 (2, 3%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 1 (3, 2%): 50  
+AU penalty awarded for branch nr. 2 (0, 3%): 50  
+AU penalty awarded for branch nr. 0 (3, 2%): 50  
+AU penalty awarded for branch nr. 2 (0, 3%): 50  
+AU penalty awarded for branch nr. 0 (3, 0%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (0, 3%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (0, 3%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (3, 0%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (2, 3%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (3, 0%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+AU penalty awarded for branch nr. 0 (0, 3%): 50  
+AU penalty awarded for branch nr. 1 (0, 3%): 50  
+AU penalty awarded for branch nr. 0 (0, 3%): 50  
+AU penalty awarded for branch nr. 1 (3, 0%): 50  
+Tree score is -712.90

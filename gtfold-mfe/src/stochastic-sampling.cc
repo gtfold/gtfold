@@ -7,6 +7,8 @@
 #include <string.h>
 #include <stack>
 #include <map>
+#include<sstream>
+#include<fstream>
 
 int ss_verbose = 0; 
 
@@ -740,6 +742,100 @@ void batch_sample(int num_rnd, int length, double U)
       printf("\nMax frequency structure : \n%s e=%lf freq=%d p=%lf\n",bestStruct.c_str(),bestE,maxCount,(double)maxCount/(double)num_rnd);
       
     }
+
+	  delete [] structure;
+}
+
+void batch_sample_and_dump(int num_rnd, int length, double U, std::string ctFileDumpDir, std::string stochastic_summery_file_name, std::string seq, std::string seqfile)
+{
+	//data dump preparation code starts here
+	if(ctFileDumpDir.compare("")==0){
+          char abspath[1000];
+          getcwd(abspath, 1000);
+          ctFileDumpDir = abspath;
+        }
+        cout<<"Using ctFileDumpDir = "<<ctFileDumpDir<<endl;
+        std::stringstream ss;
+        ss<<ctFileDumpDir<<"/"<<stochastic_summery_file_name;
+        stochastic_summery_file_name = ss.str();
+        cout<<"Using stochastic_summary_file_name = "<<stochastic_summery_file_name<<endl;
+	std::ofstream summaryoutfile;
+        summaryoutfile.open(stochastic_summery_file_name.c_str());
+	std::string seqname = seqfile.substr(seqfile.find_last_of("/\\") + 1, seqfile.length() - 1);
+	cout<<"Sequence Name = "<<seqname<<endl;
+	//data dump preparation code ends here
+
+	  int* structure = new int[length+1];
+	  srand(time(NULL));
+    std::map<std::string,std::pair<int,double> >  uniq_structs;
+	  
+    if (num_rnd > 0 ) {
+      printf("\nSampling structures...\n");
+      int count; //nsamples =0;
+      for (count = 1; count <= num_rnd; ++count) 
+      {
+        memset(structure, 0, (length+1)*sizeof(int));
+        double energy = rnd_structure(structure, length);
+
+        std::string ensemble(length+1,'.');
+        for (int i = 1; i <= (int)length; ++ i) {
+          if (structure[i] > 0 && ensemble[i] == '.')
+          {
+            ensemble[i] = '(';
+            ensemble[structure[i]] = ')';
+          }
+        }
+        //double myEnegry = -88.4;
+        //++nsamples;
+        //if (fabs(energy-myEnegry)>0.0001) continue; //TODO: debug
+        //++count;
+
+        std::map<std::string,std::pair<int,double> >::iterator iter ;
+        if ((iter =uniq_structs.find(ensemble.substr(1))) != uniq_structs.end())
+        {
+          std::pair<int,double>& pp = iter->second;
+          pp.first++;
+        }
+        else {
+          uniq_structs.insert(make_pair(ensemble.substr(1),std::pair<int,double>(1,energy))); 
+        }
+        
+        // std::cout << ensemble.substr(1) << ' ' << energy << std::endl;
+	//data dump code starts here
+        std::stringstream ss;
+        ss<<ctFileDumpDir<<"/"<<seqname<<"_"<<count<<".ct";
+        save_ct_file(ss.str(), seq, energy, structure);
+        summaryoutfile<<ss.str()<<" "<<ensemble.substr(1)<<" "<<energy<< std::endl;
+	//data dump code ends here
+      }
+      //std::cout << nsamples << std::endl;
+      int pcount = 0;
+      int maxCount = 0; std::string bestStruct;
+      double bestE = INFINITY;
+
+      std::map<std::string,std::pair<int,double> >::iterator iter ;
+      for (iter = uniq_structs.begin(); iter != uniq_structs.end();  ++iter)
+      {
+        const std::string& ss = iter->first;
+        const std::pair<int,double>& pp = iter->second;
+        const double& estimated_p =  (double)pp.first/(double)num_rnd;
+        const double& energy = pp.second;
+        double actual_p = pow(2.718281,-1.0*energy/RT_)/U;
+
+        printf("%s %lf %lf %lf %d\n",ss.c_str(),energy,actual_p,estimated_p,pp.first);
+        pcount += pp.first;
+        if (pp.first > maxCount)
+        {
+          maxCount = pp.first;
+          bestStruct  = ss;
+          bestE = pp.second;
+        }
+      }
+      assert(num_rnd == pcount);
+      printf("\nMax frequency structure : \n%s e=%lf freq=%d p=%lf\n",bestStruct.c_str(),bestE,maxCount,(double)maxCount/(double)num_rnd);
+      
+    }
+	summaryoutfile.close();
 
 	  delete [] structure;
 }

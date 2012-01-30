@@ -44,6 +44,7 @@ void print_header() ;
 int read_sequence_file(const char* filename, std::string& seq);
 bool encodeSequence(string seq);
 void save_ct_file(string outputFile, string seq, int energy) ;
+void save_ct_file(string outputFile, string seq, int energy, int *structure1); 
 #endif
 
 void init_checkPair(); 

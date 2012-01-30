@@ -1,0 +1,13 @@
+my $easyseq1=$seqDir."/16S/K00421.ct";
+generateResult($easyseq1,$easyoutfilepath);
+
+sub generateResult{
+ my($seq,$out)=@_;
+ #my $str="Score is\n";
+ #`echo $str`;
+ `$scoreCalcPrg -d0 $seq >> $out`;
+ `$scoreCalcPrg $seq >> $out`;
+ `$scoreCalcPrg -dS $seq >> $out`;
+ `$scoreCalcPrg -d2 $seq >> $out`;
+}
+
