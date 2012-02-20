@@ -36,11 +36,11 @@ if test "$gtfold_cv_enable_64bit" == "yes" ;
 then 
    if test "$gtfold_cv_check_sunpro_cc" == "yes" ; then
       CFLAGS=$(echo $CFLAGS | sed -e 's/-fast\|-xarch=.*//g') 
-      CFLAGS="$CFLAGS -fast -xarch=v9" 
+      CFLAGS="$CFLAGS -fast -xarch=v9 -lgmp" 
    else
       if test "$GCC" == "yes"; then
          CFLAGS=$(echo $CFLAGS | sed -e 's/-m32\|-m64//g') 
-         CFLAGS="$CFLAGS -m64" 
+         CFLAGS="$CFLAGS -m64 -lgmp" 
       fi
    fi
 fi
@@ -92,7 +92,7 @@ fi
 dnl If g++ is present, use -Wall
 if test "x$GXX" = "xyes"; then
   if test -z "`echo "$CXXFLAGS" | grep "\-Wall" 2> /dev/null`" ; then
-    CXXFLAGS="$CXXFLAGS -Wall"
+    CXXFLAGS="$CXXFLAGS -Wall -lgmp"
   fi
 fi
 

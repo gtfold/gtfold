@@ -5441,13 +5441,13 @@ fi
 
 if test "x$GCC" = "xyes"; then
   if test -z "`echo "$CFLAGS" | grep "\-Wall" 2> /dev/null`" ; then
-    CFLAGS="$CFLAGS -Wall"
+    CFLAGS="$CFLAGS -Wall -lgmp"
   fi
 fi
 
 if test "x$GXX" = "xyes"; then
   if test -z "`echo "$CXXFLAGS" | grep "\-Wall" 2> /dev/null`" ; then
-    CXXFLAGS="$CXXFLAGS -Wall"
+    CXXFLAGS="$CXXFLAGS -Wall -lgmp"
   fi
 fi
 

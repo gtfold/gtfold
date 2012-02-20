@@ -24,20 +24,24 @@ double getScore(string seqfilepath, int mode);
 string summary_file_path;
 string output_file_path;
 string error_file_path;
+bool is_dS=true;
 
 int PFtest(int argc, char* argv[])
 {
     if (argc < 5)
     {
-		fprintf(stderr, "USAGE: RNAScore --pf_test <summary_file_path> <output_file_path> <error_file_path>\n");
+		fprintf(stderr, "USAGE: RNAScore --pf_test <summary_file_path> <output_file_path> <error_file_path> [-dS|-d2]\n");
 		exit(-1);
 		//help();
 		//return 1;
     }
+    
     summary_file_path = argv[2];
     output_file_path = argv[3];
     error_file_path = argv[4];
-
+if(argc==6) {string dangle = argv[5];
+	if(dangle.compare("-d2")==0) is_dS=false;
+}
     PFtest();
     return 0;
 }
@@ -48,7 +52,8 @@ double getScore(string seqfilepath, int pfmode, int nodanglemode, int d2mode, in
 	DEFAULTMODE=defaultmode;
 
 	char seqfileTmp[1000];strcpy(seqfileTmp, seqfilepath.c_str());
-        seqfile = seqfileTmp;printf("Inside getScore() function: seqfile=%s\n",seqfile);
+    strcpy(seqfile,seqfileTmp);
+	printf("Inside getScore() function: seqfile=%s\n",seqfile);
 	char bases[16] = {0, 'A', 'C', 'M', 'G', 'R', 'S', 'V', 'U',
                       'W', 'Y', 'H', 'K', 'D', 'B', 'N'};
     ResultBundle* resultBundle = CreateFromFile(seqfile);
@@ -79,13 +84,18 @@ void PFtest(){
 	double pfEnergy;
 	while(summaryinfile>>seqfilepath>>ensemble>>pfEnergy){
 		cout<<seqfilepath<<" "<<ensemble<<" "<<pfEnergy<<" "<<endl;
-                double pfModeScore = getScore(seqfilepath, 1,0,0,0);
+                double dSModeScore = getScore(seqfilepath, 1,0,0,0);
                 double noDangleModeScore = getScore(seqfilepath, 0,1,0,0);
                 double d2ModeScore = getScore(seqfilepath, 0,0,1,0);
 		double defaultModeScore = getScore(seqfilepath, 0,0,0,1);//cout<<"manoj="<<defaultModeScore<<"\n";
 	
-		outfile<<seqfilepath<<" "<<ensemble<<" "<<pfEnergy<<" "<<defaultModeScore<<" "<<pfModeScore<<" "<<noDangleModeScore<<" "<<d2ModeScore<<endl;
-		if(pfEnergy!=pfModeScore) errfile<<seqfilepath<<" "<<ensemble<<" "<<pfEnergy<<" "<<defaultModeScore<<" "<<pfModeScore<<" "<<noDangleModeScore<<" "<<d2ModeScore<<endl;
+		outfile<<seqfilepath<<" "<<ensemble<<" "<<pfEnergy<<" "<<defaultModeScore<<" "<<dSModeScore<<" "<<noDangleModeScore<<" "<<d2ModeScore<<endl;
+		if(is_dS){
+if(pfEnergy!=dSModeScore) errfile<<seqfilepath<<" "<<ensemble<<" "<<pfEnergy<<" "<<defaultModeScore<<" "<<dSModeScore<<" "<<noDangleModeScore<<" "<<d2ModeScore<<endl;
+}
+else{
+		if(pfEnergy!=dSModeScore) errfile<<seqfilepath<<" "<<ensemble<<" "<<pfEnergy<<" "<<defaultModeScore<<" "<<dSModeScore<<" "<<noDangleModeScore<<" "<<d2ModeScore<<endl;
+}
 	}
 	summaryinfile.close();	
 	outfile.close();

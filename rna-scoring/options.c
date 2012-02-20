@@ -9,8 +9,8 @@ int NODANGLEMODE=0;//no dangling at all means d0
 int D2MODE=0;//d2 mode
 int DEFAULTMODE=1;//default mode
 
-char* seqfile;
-char* paramDir="";
+char seqfile[200];
+char paramDir[200] = {'\0'};
 
 /**
  * Print the help message and quit.
@@ -24,7 +24,7 @@ void help() {
     printf("   --dS            Calculate score based on partition function energy calculation rules.\n");
     printf("   --d0            Calculate score based on zero dangling energy.\n");
     printf("   --d2            Calculate score based on d2 energy calculation rules.\n");
-    printf("   --pf_test <summary_file_path> <output_file_path> <error_file_path> 		Here summary_file_path is the file that is summary of all samples from stochastic sampling. After program completes output_file_path will contains all different scores (dS,d0,d2) for all structures. error_file_path will be containing entries (lines) for structures, for which partition function energies are different from -dS score. if error_file_path file is empty then it has passed the test, other wise it has failed this test and you can refer end-user to err_file_path for further investigation.\n");
+    printf("   --pf_test <summary_file_path> <output_file_path> <error_file_path> [-dS|d2]		Here summary_file_path is the file that is summary of all samples from stochastic sampling. After program completes output_file_path will contains all different scores (dS,d0,d2) for all structures. error_file_path will be containing entries (lines) for structures, for which partition function energies are different from -dS score. if error_file_path file is empty then it has passed the test, other wise it has failed this test and you can refer end-user to err_file_path for further investigation, any option can be provided as -dS or -d2 in which partition function is calculated. default value is -dS.\n");
     printf("   --param-dir  paramDir        optional parameter to explicitly define parameter directory different than current directory.\n");
     exit(-1);
 }
@@ -55,13 +55,13 @@ void parse_options(int argc, char** argv) {
 	else if(strcmp(argv[i], "--param-dir")==0){
 	 if(i<argc){
 	  i++;
-	  paramDir=argv[i];
+	  strcpy(paramDir, argv[i]);
 	 }
 	 else help();
 	}
     }
     else {
-      seqfile = argv[i];
+      strcpy(seqfile, argv[i]);
     }
 
   }

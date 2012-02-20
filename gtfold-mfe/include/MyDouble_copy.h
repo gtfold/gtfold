@@ -1,6 +1,3 @@
-#ifndef _MY_DOUBLE_H_
-#define _MY_DOUBLE_H_
-
 #include<iostream>
 #include<stdio.h>
 #include<stdlib.h>
@@ -8,7 +5,7 @@
 #include "gmp.h"
 using namespace std;
 const int PRECISION = 64;
-static char BIG_NUM_ENABLED = 'N';//'Y';
+static char BIG_NUM_ENABLED = 'Y';
 const int PRINT_DIGITS_AFTER_DECIMAL = 10;
 /*mpf_t getBigNum(double val2){
   mpf_t* bigValue = new mpf_t;
@@ -23,12 +20,9 @@ class MyDouble{
 		double* smallValue;
 		char isBig;//'y' means it is already BigNum, 'n' means it is native double
 	public:
-		MyDouble(){//printf("Inside default constructor\n");
+		MyDouble(){
 			//this((double)0.0);
 			 createDouble();			
-		}
-		void init(){
-			createDouble();
 		}
 		MyDouble(char isBig1){
 			if(isBig1=='n') createDouble();
@@ -79,14 +73,10 @@ class MyDouble{
 		void deallocate(){
 			if(isBig=='y'){ delete(bigValue); isBig='X';}
                         else if(isBig=='n'){ delete(smallValue); isBig='X';}
-			else printf("In MyDouble::deallocate(), Unknown isBig = %c\n", isBig);
+			else printf("Unknown isBig = %c\n", isBig);
 		}
-		~MyDouble(){//printf("Destructor called\n");
+		~MyDouble(){
 			//deallocate();	
-		}
-		bool isInitialized(){
-			if(isBig=='y' || isBig=='n') return true;
-			return false;
 		}
 		void reset(){
 			if(isBig=='y') mpf_clear(*bigValue);
@@ -96,8 +86,7 @@ class MyDouble{
 		void print()const{
 			//if(isBig=='y') gmp_printf("fixed point mpf %.*Ff with %d digits\n", 5, *bigValue, 5);
 			if(isBig=='y') gmp_printf("mpf %.*Ff", PRINT_DIGITS_AFTER_DECIMAL, *bigValue);
-			//else if(isBig=='n') printf("double %f", *smallValue);//TODO uncomment it
-			else if(isBig=='n') printf("%0.1f", *smallValue);
+			else if(isBig=='n') printf("double %f", *smallValue);
 			else printf("Unknown isBig = %c\n", isBig);
 		}
 		MyDouble operator*(const MyDouble &obj1) const {
@@ -477,60 +466,41 @@ class MyDouble{
 			//Function: int mpf_cmp (mpf_t op1, mpf_t op2)
 			//Function: int mpf_cmp_d (mpf_t op1, double op2)
 			//case 1: this object is bigValue and obj1 is also bigValue 
-			int result=100;
 			if(this->isBig=='y' && obj1.isBig=='y'){
-				//return mpf_cmp(*(this->bigValue), *(obj1.bigValue));
-				result = mpf_cmp(*(this->bigValue), *(obj1.bigValue));
+				return mpf_cmp(*(this->bigValue), *(obj1.bigValue));
 			}
 			//case 2: this object is bigValue and obj1 is smallValue
 			else if(this->isBig=='y' && obj1.isBig=='n'){
-				//return mpf_cmp_d(*(this->bigValue), *(obj1.smallValue));
-				result =  mpf_cmp_d(*(this->bigValue), *(obj1.smallValue));
+				return mpf_cmp_d(*(this->bigValue), *(obj1.smallValue));
 			}
 			//case 3: this object is smallValue and obj2 is bigValue
 			else if(this->isBig=='n' && obj1.isBig=='y'){
 				//mpf_t minusOne; mpf_init2(minusOne,PRECISION); mpf_set_d(minusOne, -1.0);
 				//return mpf_mul(mpf_cmp_d(*(obj1.bigValue), *(this->smallValue)), minusOne);
-				//return -1*(mpf_cmp_d(*(obj1.bigValue), *(this->smallValue)));
-				result = -1*(mpf_cmp_d(*(obj1.bigValue), *(this->smallValue)));
+				return -1*(mpf_cmp_d(*(obj1.bigValue), *(this->smallValue)));
 			}
 			//case 4: this object is smallValue and obj2 is smallValue
 			else if(this->isBig=='n' && obj1.isBig=='n'){
-				//return (*(this->smallValue)) - (*(obj1.smallValue));
-				double result1 = (*(this->smallValue)) - (*(obj1.smallValue));
-				if(result1==0) result=0;
-				else if(result1<0) result=-1;
-				else result=+1;
+				return (*(this->smallValue)) - (*(obj1.smallValue));
 			}
 			else{
                                  printf("Unknown isBig = %c, obj1.isBig = %c\n", isBig, obj1.isBig);
                         }
-			//printf("comparing: ");print();printf(" and ");obj1.print();printf(" and result is %d\n",result);
-			return result;
 		}
 		int compare(const double &obj1) const{
 			//Function: int mpf_cmp (mpf_t op1, mpf_t op2)
 			//Function: int mpf_cmp_d (mpf_t op1, double op2)
 			//case 2: this object is bigValue
-			int result = 200;
 			if(this->isBig=='y'){
-				//return mpf_cmp_d(*(this->bigValue), obj1);
-				result = mpf_cmp_d(*(this->bigValue), obj1);
+				return mpf_cmp_d(*(this->bigValue), obj1);
 			}
 			//case 4: this object is smallValue
 			else if(this->isBig=='n'){
-				//return (*(this->smallValue)) - obj1;
-				double result1 = (*(this->smallValue)) - obj1;
-				if(result1==0.0) result=0;
-                                else if(result1<0.0) result=-1;
-                                else result=+1;
-
+				return (*(this->smallValue)) - obj1;
 			}
 			else{
                                  printf("Unknown isBig = %c\n", isBig);
                         }
-			//printf("comparing: ");print();printf(" and %f and result is %d\n",obj1,result);
-			return result;
 		}
 		bool operator==(const MyDouble &obj1) const {
 			return compare(obj1)==0;		
@@ -544,51 +514,17 @@ class MyDouble{
 		bool operator!=(const double &obj1) const {
 			return compare(obj1)!=0;		
 		}
-		bool operator<(const MyDouble &obj1) const {
-			return compare(obj1)<0;		
-		}
-		bool operator<(const double &obj1) const {
-			return compare(obj1)<0;		
-		}
-		bool operator>(const MyDouble &obj1) const {
-			return compare(obj1)>0;		
-		}
-		bool operator>(const double &obj1) const {
-			return compare(obj1)>0;		
-		}
-		bool operator<=(const MyDouble &obj1) const {
-                        return compare(obj1)<=0;
-                }
-                bool operator<=(const double &obj1) const {
-                        return compare(obj1)<=0;
-                }
-                bool operator>=(const MyDouble &obj1) const {
-                        return compare(obj1)>=0;
-                }
-                bool operator>=(const double &obj1) const {
-                        return compare(obj1)>=0;
-                }
 
 		MyDouble& operator=(const MyDouble &obj1) {
 			//printf("operator overload= starts\n");obj1.print();//printf("operator overload= ends\n");
 			if(this==&obj1) return *this;
-			if(isInitialized())this->deallocate();
+			this->deallocate();
 			//printf("successful deallocation\n");
 			if(obj1.isBig=='n') createDouble(*(obj1.smallValue));
 			else if(obj1.isBig=='y') createBigNum(*(obj1.bigValue));
 			return *this;
 		}
-		MyDouble& operator=(const double &obj1) {
-			//printf("operator overload= starts\n");obj1.print();//printf("operator overload= ends\n");
-			//if(this==&obj1) return *this;
-			if(isInitialized())this->deallocate();
-			//printf("successful deallocation\n");
-			createDouble(obj1);
-			return *this;
-		}
-
 };
-#endif
 /*
 int main(){
 	MyDouble c;

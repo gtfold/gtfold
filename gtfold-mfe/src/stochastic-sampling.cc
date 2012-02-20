@@ -445,7 +445,7 @@ void rnd_u1(int i, int j, int* structure)
     cum_prob += U1_j_hl_case1(h1,l,j);
     if (rnd < cum_prob)
     {
-      int tt =  (j == l)?0:ED3_new(h1,l,l+1);
+      double tt =  (j == l)?0:ED3_new(h1,l,l+1);//CHANGE, earlier 'tt' was declared as int and not Manoj has changed it to double
       energy += (ED5_new(h1,l,h1-1)+auPenalty_new(h1,l) + tt + (j-l)*EB_new());
       if (ss_verbose == 1) 
         printf("U1_j_hl_case1(%d %d) %lf\n",h1,l, (ED5_new(h1,l,h1-1)+auPenalty_new(h1,l) + tt + (j-l)*EB_new())/100.0);
@@ -494,7 +494,7 @@ void rnd_u1d(int i, int j, int* structure)
     cum_prob += U1D_ij_il_case1(i,l,j);
     if (rnd < cum_prob)
     {
-      int tt = (j==l)?(0):(ED3_new(i,l,l+1));
+      double tt = (j==l)?(0):(ED3_new(i,l,l+1));//CHANGE, earlier 'tt' was declared as int and not Manoj has changed it to double
       energy += ( EC_new()+auPenalty_new(i,l) + tt + (j-l)*EB_new());
       if (ss_verbose == 1) {
         printf("U1D_ij_il_case1(%d %d %d) %lf\n",i,l,j, ( EC_new()+auPenalty_new(i,l) + tt + (j-l)*EB_new())/100.0);

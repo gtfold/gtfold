@@ -19,10 +19,12 @@ gtfold_SOURCES = \
 	subopt_main.cc\
 	subopt_traceback.cc\
 	stochastic-sampling.cc\
+	stochastic-sampling-d2.cc\
   algorithms-partition.c\
   boltzmann_main.cc\
 	partition-dangle.c\
 	partition-func.c\
+	partition-func-d2.cc\
 	shapereader.cc
 
 gtfold_LDFLAGS = 

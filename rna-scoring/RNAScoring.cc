@@ -20,7 +20,7 @@ extern "C" {
 #include "PFtest.h"
 
 using namespace std;
-extern char* paramDir;
+extern char paramDir[200];
 
 int main(int argc, char* argv[])
 {

@@ -11,7 +11,7 @@ extern int NODANGLEMODE;//no dangling at all means d0
 extern int D2MODE;//d2 mode
 extern int DEFAULTMODE;//default mode
 
-extern char* seqfile;
+extern char seqfile[200];
 
 
 #ifdef __cplusplus
