@@ -266,17 +266,8 @@ int boltzmann_main(int argc, char** argv) {
 		if(PF_COUNT_MODE) pf_count_mode=1;
 		int no_dangle_mode = 0;
 		if(CALC_PF_DO) no_dangle_mode=1;
-		if(CALC_PF_DS == true){
-			printf("\nComputing stochastic traceback in -dS mode ..., pf_count_mode=%d, no_dangle_mode=%d\n", pf_count_mode, no_dangle_mode);
-			double U = calculate_partition(seq.length(),pf_count_mode,0);
-			t1 = get_seconds();
-			if(DUMP_CT_FILE==false) batch_sample(num_rnd, seq.length(), U);
-			else batch_sample_and_dump(num_rnd, seq.length(), U, ctFileDumpDir, stochastic_summery_file_name, seq, seqfile); 
-			t1 = get_seconds() - t1;
-	                printf("Traceback computation running time: %9.6f seconds\n", t1);
-			free_partition();
-		}  
-		else if(CALC_PF_D2 == true){
+		  
+		if(CALC_PF_D2 == true){
 			printf("\nComputing stochastic traceback in -d2 mode ..., pf_count_mode=%d, no_dangle_mode=%d\n", pf_count_mode, no_dangle_mode);
 			StochasticTracebackD2 st_d2;
 			st_d2.initialize(seq.length(), pf_count_mode, no_dangle_mode, ss_verbose_global);
@@ -286,7 +277,17 @@ int boltzmann_main(int argc, char** argv) {
 			t1 = get_seconds() - t1;
                         printf("Traceback computation running time: %9.6f seconds\n", t1);
 			st_d2.free_traceback();
-		} 
+		}
+		else{//if(CALC_PF_DS == true){//TODO here it is making dS by default
+			printf("\nComputing stochastic traceback in -dS mode ..., pf_count_mode=%d, no_dangle_mode=%d\n", pf_count_mode, no_dangle_mode);
+			double U = calculate_partition(seq.length(),pf_count_mode,0);
+			t1 = get_seconds();
+			if(DUMP_CT_FILE==false) batch_sample(num_rnd, seq.length(), U);
+			else batch_sample_and_dump(num_rnd, seq.length(), U, ctFileDumpDir, stochastic_summery_file_name, seq, seqfile); 
+			t1 = get_seconds() - t1;
+	                printf("Traceback computation running time: %9.6f seconds\n", t1);
+			free_partition();
+		}
 	} else if(BPP_ENABLED) {
 		printf("\n");
 		printf("Calculating partition function\n");

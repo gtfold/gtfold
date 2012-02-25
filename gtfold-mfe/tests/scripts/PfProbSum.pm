@@ -96,7 +96,7 @@ sub getProbability{
 sub getPFvalue{
  my($seq, $gtdir)=@_;
 #./gtboltzmann --partition pfTestSeqDB/combseq1/combseq1.seq
- my $cmd = "$gtdir/gtboltzmann --partition ".$seq;
+ my $cmd = "$gtdir/gtboltzmann --partition -dS".$seq;
  my $output = `$cmd`;
 # print("output is:\n\n\n".$output);
 my @lines = split(/\n/, $output);

@@ -62,7 +62,7 @@ public:
                 bool feasible(int i, int j);
 		
 		MyDouble U_0(int i, int j);
-		MyDouble U_hj(int i, int j);
+		MyDouble U_ihj(int i, int h, int j);
 		MyDouble U_s1_ihj(int i, int h, int j);
 
 		MyDouble S1_ihlj(int i, int h, int l, int j);

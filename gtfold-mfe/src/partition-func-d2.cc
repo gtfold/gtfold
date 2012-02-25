@@ -462,7 +462,8 @@ void PartitionFunctionD2::calc_upm(int i, int j){
 			quadraticSum = quadraticSum + (get_s2(h,j) * myExp((-1)*((h-i-1)*b)/RT));
 		}
 		//quadraticSum = quadraticSum * (myExp((-1)*(a+ auPenalty_new(i,j) + ED5_new(j,i,j-1)/RT + ED3_new(j,i,i+1)/RT)));//TODO: make sure which one out of ed3(i,j,j-1) or ed3(i,j,j-1) is correct, similarly for ed5
-		quadraticSum = quadraticSum * (myExp((-1)*(a+auPenalty_new(i,j) + ED5_new(j,i,j-1) + ED3_new(j,i,i+1) +2*b)/RT));
+		quadraticSum = quadraticSum * (myExp((-1)*(a+auPenalty_new(i,j) + ED5_new(j,i,j-1) + ED3_new(j,i,i+1) +2*c)/RT));//TODO Old impl using ed3(j,i) instead of ed3(i,j)
+		//quadraticSum = quadraticSum * (myExp((-1)*(a+auPenalty_new(i,j) + ED5_new(i,j,j-1) + ED3_new(i,j,i+1) +2*c)/RT));//TODO New impl using ed5(i,j) instead of ed3(j,i)
 		
 		set_upm(i, j, quadraticSum);  
 	}
@@ -502,7 +503,7 @@ void PartitionFunctionD2::calc_up(int i, int j)
 	if (canPair(RNA[i],RNA[j]))
 	{
 		int h,l;
-		for (h = i+1; h < j ; h++) {
+		for (h = i+1; h < j-1 ; h++) {
 			for (l = h+1; l < j; l++) {
 				if (canPair(RNA[h],RNA[l])==0) continue;
 				if(h==(i+1) && l==(j-1)) continue;

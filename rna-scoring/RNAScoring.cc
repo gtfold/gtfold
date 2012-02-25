@@ -35,7 +35,7 @@ int main(int argc, char* argv[])
 		return 0;
 	}
 
-
+//printf("prg is not in pftest\n");
 	parse_options(argc, argv);
 	
 	//printf("hi");

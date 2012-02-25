@@ -41,6 +41,7 @@ int PFtest(int argc, char* argv[])
     error_file_path = argv[4];
 if(argc==6) {string dangle = argv[5];
 	if(dangle.compare("-d2")==0) is_dS=false;
+//printf("is_dS=%b\n",is_dS);
 }
     PFtest();
     return 0;
@@ -82,6 +83,8 @@ void PFtest(){
 
 	string seqfilepath, ensemble;
 	double pfEnergy;
+	 outfile<<"seqfilepath"<<" "<<"ensemble"<<" "<<"pfEnergy"<<" "<<"defaultModeScore"<<" "<<"dSModeScore"<<" "<<"noDangleModeScore"<<" "<<"d2ModeScore"<<endl;
+	 errfile<<"seqfilepath"<<" "<<"ensemble"<<" "<<"pfEnergy"<<" "<<"defaultModeScore"<<" "<<"dSModeScore"<<" "<<"noDangleModeScore"<<" "<<"d2ModeScore"<<endl;
 	while(summaryinfile>>seqfilepath>>ensemble>>pfEnergy){
 		cout<<seqfilepath<<" "<<ensemble<<" "<<pfEnergy<<" "<<endl;
                 double dSModeScore = getScore(seqfilepath, 1,0,0,0);
@@ -94,7 +97,7 @@ void PFtest(){
 if(pfEnergy!=dSModeScore) errfile<<seqfilepath<<" "<<ensemble<<" "<<pfEnergy<<" "<<defaultModeScore<<" "<<dSModeScore<<" "<<noDangleModeScore<<" "<<d2ModeScore<<endl;
 }
 else{
-		if(pfEnergy!=dSModeScore) errfile<<seqfilepath<<" "<<ensemble<<" "<<pfEnergy<<" "<<defaultModeScore<<" "<<dSModeScore<<" "<<noDangleModeScore<<" "<<d2ModeScore<<endl;
+		if(pfEnergy!=d2ModeScore) errfile<<seqfilepath<<" "<<ensemble<<" "<<pfEnergy<<" "<<defaultModeScore<<" "<<dSModeScore<<" "<<noDangleModeScore<<" "<<d2ModeScore<<endl;
 }
 	}
 	summaryinfile.close();	

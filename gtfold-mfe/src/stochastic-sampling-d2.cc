@@ -42,8 +42,8 @@ MyDouble StochasticTracebackD2::U_0(int i, int j){
 	return (MyDouble(1.0))/pf_d2.get_u(i,j);
 }
 
-MyDouble StochasticTracebackD2::U_hj(int h, int j){
-	return (feasible(h,j) == true) ? (pf_d2.get_up(h,j)) * (pf_d2.myExp(-((pf_d2.ED5_new(h,j,h-1))+(pf_d2.ED3_new(h,j,j+1))+(pf_d2.auPenalty_new(h,j)))/RT)) / (pf_d2.get_u(h,j)) : MyDouble(0.0);
+MyDouble StochasticTracebackD2::U_ihj(int i, int h, int j){
+	return (feasible(h,j) == true) ? (pf_d2.get_up(h,j)) * (pf_d2.myExp(-((pf_d2.ED5_new(h,j,h-1))+(pf_d2.ED3_new(h,j,j+1))+(pf_d2.auPenalty_new(h,j)))/RT)) / (pf_d2.get_u(i,j)) : MyDouble(0.0);
 }
 
 MyDouble StochasticTracebackD2::U_s1_ihj(int i, int h, int j){
@@ -51,7 +51,7 @@ MyDouble StochasticTracebackD2::U_s1_ihj(int i, int h, int j){
 }
 
 MyDouble StochasticTracebackD2::S1_ihlj(int i, int h, int l, int j){
-	return (feasible(h,l) == true) ? (pf_d2.get_up(h,l)) * (pf_d2.myExp(-((pf_d2.ED5_new(h,l,h-1))+(pf_d2.ED3_new(h,l,l+1))+(pf_d2.auPenalty_new(h,l)))/RT)) * (pf_d2.get_u(l+1,j)) / (pf_d2.get_s1(i,j)) : MyDouble(0.0);
+	return (feasible(h,l) == true) ? (pf_d2.get_up(h,l)) * (pf_d2.myExp(-((pf_d2.ED5_new(h,l,h-1))+(pf_d2.ED3_new(h,l,l+1))+(pf_d2.auPenalty_new(h,l)))/RT)) * (pf_d2.get_u(l+1,j)) / (pf_d2.get_s1(h,j)) : MyDouble(0.0);
 }
 
 MyDouble StochasticTracebackD2::Q_H_ij(int i, int j){
@@ -71,7 +71,8 @@ MyDouble StochasticTracebackD2::Q_BI_ihlj(int i, int h, int l, int j){
 }
 
 MyDouble StochasticTracebackD2::UPM_S2_ihj(int i, int h, int j){
-	return (pf_d2.get_s2(h,j)) * (pf_d2.myExp(-((pf_d2.EA_new())+ 2*(pf_d2.EC_new()) + (h-i-1)*(pf_d2.EB_new()) + (pf_d2.ED5_new(j,i,j-1)) + (pf_d2.ED3_new(j,i,i+1)))/RT)) / (pf_d2.get_upm(i,j)); //TODO: Old impl, using ed3(j,i) instead of ed3(i,j), similarly in ed5
+	return (pf_d2.get_s2(h,j)) * (pf_d2.myExp(-((pf_d2.EA_new())+ 2*(pf_d2.EC_new()) + (h-i-1)*(pf_d2.EB_new()) + (pf_d2.auPenalty_new(i,j)) + (pf_d2.ED5_new(j,i,j-1)) + (pf_d2.ED3_new(j,i,i+1)))/RT)) / (pf_d2.get_upm(i,j)); //TODO: Old impl, using ed3(j,i) instead of ed3(i,j), similarly in ed5
+	//return (pf_d2.get_s2(h,j)) * (pf_d2.myExp(-((pf_d2.EA_new())+ 2*(pf_d2.EC_new()) + (h-i-1)*(pf_d2.EB_new()) + (pf_d2.auPenalty_new(i,j)) + (pf_d2.ED5_new(i,j,j-1)) + (pf_d2.ED3_new(i,j,i+1)))/RT)) / (pf_d2.get_upm(i,j)); //TODO: New impl, using ed3(i,j) instead of ed3(j,i), similarly in ed5
 	//return exp((-1)*ED3_new(j,i,i+1)/RT)* (s2[h][j] * exp((-1)*(EA_new()+2*EC_new()+(h-i-1)*EB_new())/RT))/upm[i][j];//TODO: New impl
 }
 
@@ -120,7 +121,7 @@ void StochasticTracebackD2::rnd_u(int i, int j)
 
 	for (int h = i; h < j; ++h)
 	{
-		cum_prob = cum_prob + U_hj(h,j);
+		cum_prob = cum_prob + U_ihj(i,h,j);
 		if (rnd < cum_prob)
 		{
 			double e2 = ( (pf_d2.ED5_new(h,j,h-1)) + (pf_d2.ED3_new(h,j,j+1)) + (pf_d2.auPenalty_new(h,j)) );
@@ -135,7 +136,7 @@ void StochasticTracebackD2::rnd_u(int i, int j)
 	}
 
 	int h1 = -1;
-	for (int h = i;  h < j; ++h)
+	for (int h = i;  h < j-1; ++h)
 	{
 		cum_prob = cum_prob + U_s1_ihj(i,h,j);
 		if (rnd < cum_prob)
@@ -146,7 +147,7 @@ void StochasticTracebackD2::rnd_u(int i, int j)
 		}
 	}
 	//printf("rnd=");rnd.print();printf(",cum_prob=");cum_prob.print();
-	assert (h1 != -1) ;
+	assert (0) ;
 }
 
 void StochasticTracebackD2::rnd_s1(int i, int h, int j){
@@ -180,6 +181,23 @@ void StochasticTracebackD2::rnd_up(int i, int j)
 
 	set_base_pair(i,j);
 
+	for (int h = i+1; h < j-1; ++h)
+		for (int l = h+1; l < j; ++l)
+		{
+			if (h == i+1 && l == j-1) continue;
+			cum_prob = cum_prob + Q_BI_ihlj(i,h,l,j);
+			if (rnd < cum_prob)
+			{
+				double e2 = (pf_d2.eL_new(i,j,h,l));
+				if (ss_verbose == 1) 
+					printf("IntLoop(%d %d) %lf\n",i,j, e2/100.0);
+				energy += e2;
+				base_pair bp(h,l,UP);
+				g_stack.push(bp);
+				return;
+			}
+		}
+
 	cum_prob = cum_prob + Q_H_ij(i,j);
 	if (rnd < cum_prob)
 	{
@@ -210,22 +228,6 @@ void StochasticTracebackD2::rnd_up(int i, int j)
 		return;
 	}
 
-	for (int h = i+1; h < j-1; ++h)
-		for (int l = h+1; l < j; ++l)
-		{
-			if (h == i+1 && l == j-1) continue;
-			cum_prob = cum_prob + Q_BI_ihlj(i,h,l,j);
-			if (rnd < cum_prob)
-			{
-				double e2 = (pf_d2.eL_new(i,j,h,l));
-				if (ss_verbose == 1) 
-					printf("IntLoop(%d %d) %lf\n",i,j, e2/100.0);
-				energy += e2;
-				base_pair bp(h,l,UP);
-				g_stack.push(bp);
-				return;
-			}
-		}
 	assert(0);
 }
 
@@ -236,7 +238,7 @@ void StochasticTracebackD2::rnd_u1(int i, int j)
 
 	int h1 = -1;
 	//for (int h = i+1; h < j-1; ++h)//TODO OLD 
-	for (int h = i+1; h < j; ++h)//TODO NEW 
+	for (int h = i; h < j; ++h)//TODO NEW 
 	{
 		cum_prob = cum_prob + U1_s3_ihj(i,h,j);
 		if (rnd < cum_prob)
@@ -250,14 +252,14 @@ void StochasticTracebackD2::rnd_u1(int i, int j)
 			return;
 		}
 	}
-	assert(h1 != -1);
+	assert(0);
 }
 
 void StochasticTracebackD2::rnd_s3(int i, int h, int j){
 	// sample l given h1 
 	MyDouble rnd = randdouble();
 	MyDouble cum_prob(0.0);
-	for (int l = h+1; l <= j ; ++l)
+	for (int l = h+1; l <= j &&  l+1<=length ; ++l)
 	{
 		cum_prob = cum_prob +  S3_ihlj(i,h,l,j);
 		if (rnd < cum_prob)
@@ -293,6 +295,7 @@ void StochasticTracebackD2::rnd_s3_mb(int i, int h, int l, int j){//shel's docum
 		g_stack.push(bp1);
 		return;
 	}
+	assert(0);
 }
 
 void StochasticTracebackD2::rnd_upm(int i, int j)
@@ -308,7 +311,8 @@ void StochasticTracebackD2::rnd_upm(int i, int j)
 		cum_prob = cum_prob + UPM_S2_ihj(i,h,j);
 		if (rnd < cum_prob )
 		{
-			double e2 = (pf_d2.EA_new()) + 2*(pf_d2.EC_new()) + (h-i-1)*(pf_d2.EB_new()) + (pf_d2.ED5_new(j,i,j-1)) + (pf_d2.ED3_new(j,i,i+1));
+			double e2 = (pf_d2.EA_new()) + 2*(pf_d2.EC_new()) + (h-i-1)*(pf_d2.EB_new()) + (pf_d2.auPenalty_new(i,j)) + (pf_d2.ED5_new(j,i,j-1)) + (pf_d2.ED3_new(j,i,i+1));//TODO Old impl using ed3(j,i) instead of ed3(i,j)
+			//double e2 = (pf_d2.EA_new()) + 2*(pf_d2.EC_new()) + (h-i-1)*(pf_d2.EB_new()) + (pf_d2.auPenalty_new(i,j)) + (pf_d2.ED5_new(i,j,j-1)) + (pf_d2.ED3_new(i,j,i+1));//TODO New impl using ed3(i,j( instead of ed3(j,i)
 			energy += e2;
 			h1 = h;
 			if (ss_verbose == 1) {
@@ -341,6 +345,7 @@ void StochasticTracebackD2::rnd_s2(int i, int h, int j){
 			return;
 		}
 	}
+	assert(0);
 }
 
 double StochasticTracebackD2::rnd_structure()
@@ -532,7 +537,7 @@ void StochasticTracebackD2::batch_sample_and_dump(int num_rnd, std::string ctFil
 
 	if (num_rnd > 0 ) {
 		printf("\nSampling structures...\n");
-		int count; //nsamples =0;
+		int count, nsamples =0;
 		for (count = 1; count <= num_rnd; ++count) 
 		{
 			memset(structure, 0, (length+1)*sizeof(int));
@@ -546,11 +551,14 @@ void StochasticTracebackD2::batch_sample_and_dump(int num_rnd, std::string ctFil
 					ensemble[structure[i]] = ')';
 				}
 			}
-			//double myEnegry = -88.4;
-			//++nsamples;
-			//if (fabs(energy-myEnegry)>0.0001) continue; //TODO: debug
+			/*
+			//below code is for uniform sampling test
+			double myEnegry = -88.4;
+			++nsamples;
+			if(nsamples>1000)break;
+			if (fabs(energy-myEnegry)>0.0001) continue; //TODO: debug
 			//++count;
-
+			*/
 			std::map<std::string,std::pair<int,double> >::iterator iter ;
 			if ((iter =uniq_structs.find(ensemble.substr(1))) != uniq_structs.end())
 			{
