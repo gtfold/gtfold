@@ -25,12 +25,14 @@ string summary_file_path;
 string output_file_path;
 string error_file_path;
 bool is_dS=true;
+bool is_d2=false;
+bool is_d0=false;
 
 int PFtest(int argc, char* argv[])
 {
     if (argc < 5)
     {
-		fprintf(stderr, "USAGE: RNAScore --pf_test <summary_file_path> <output_file_path> <error_file_path> [-dS|-d2]\n");
+		fprintf(stderr, "USAGE: RNAScore --pf_test <summary_file_path> <output_file_path> <error_file_path> [-dS|-d2|-d0]\n");
 		exit(-1);
 		//help();
 		//return 1;
@@ -40,7 +42,8 @@ int PFtest(int argc, char* argv[])
     output_file_path = argv[3];
     error_file_path = argv[4];
 if(argc==6) {string dangle = argv[5];
-	if(dangle.compare("-d2")==0) is_dS=false;
+	if(dangle.compare("-d2")==0){ is_dS=false;is_d2=true;}
+	else if(dangle.compare("-d0")==0){ is_dS=false;is_d0=true;}
 //printf("is_dS=%b\n",is_dS);
 }
     PFtest();
@@ -96,8 +99,11 @@ void PFtest(){
 		if(is_dS){
 if(pfEnergy!=dSModeScore) errfile<<seqfilepath<<" "<<ensemble<<" "<<pfEnergy<<" "<<defaultModeScore<<" "<<dSModeScore<<" "<<noDangleModeScore<<" "<<d2ModeScore<<endl;
 }
-else{
+else if(is_d2){
 		if(pfEnergy!=d2ModeScore) errfile<<seqfilepath<<" "<<ensemble<<" "<<pfEnergy<<" "<<defaultModeScore<<" "<<dSModeScore<<" "<<noDangleModeScore<<" "<<d2ModeScore<<endl;
+}
+else if(is_d0){
+                if(pfEnergy!=noDangleModeScore) errfile<<seqfilepath<<" "<<ensemble<<" "<<pfEnergy<<" "<<defaultModeScore<<" "<<dSModeScore<<" "<<noDangleModeScore<<" "<<d2ModeScore<<endl;
 }
 	}
 	summaryinfile.close();	

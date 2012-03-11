@@ -5,7 +5,7 @@
 
 char bases[16] = {0, 'A', 'C', 'M', 'G', 'R', 'S', 'V', 'U',
                       'W', 'Y', 'H', 'K', 'D', 'B', 'N'};
-int printOn1=0;
+int printOn1=1;
 int eMUnpairedRegion(int i1, int j1, int i2, int j2, int* RNA, nndb_constants* param){//printf("Entering eMUnpairedRegion\n");
 	//Shel: helper function for calculating muliloop energies. 
 	//Computes dangling energy for unpaired region given the pairs for the stems on either side.
@@ -28,7 +28,10 @@ int eMUnpairedRegion(int i1, int j1, int i2, int j2, int* RNA, nndb_constants* p
 		// then add the energy for both a 3' and 5' dangling end 
 		// for the first and last nucleotides in the unpaired region, respectively.
 		//printf("A\n");
-		energy = param->dangle[RNA[j1]][RNA[i1]][RNA[j1+1]][0] + param->dangle[RNA[j2]][RNA[i2]][RNA[i2-1]][1];
+		if(D2MODE==1){
+			energy = param->dangle[RNA[j1]][RNA[i1]][RNA[j1+1]][0] + param->dangle[RNA[j2]][RNA[i2]][RNA[i2-1]][1];
+			if(printOn1)printf("i1=%d,j1=%d,i2=%d,j2=%d, param->dangle[RNA[j1]][RNA[i1]][RNA[j1+1]][0]/100=%f,  param->dangle[RNA[j2]][RNA[i2]][RNA[i2-1]][1]/100=%f\n", i1,j1,i2,j2,param->dangle[RNA[j1]][RNA[i1]][RNA[j1+1]][0]/100.0, param->dangle[RNA[j2]][RNA[i2]][RNA[i2-1]][1]/100.0);
+		}
 	} else if (j1+1 == i2-1) { //ZS: fixed limits 
 		// if there is only one nucleotide in the unpaired region,
 		// then add which energy is more favorable, 
@@ -309,8 +312,8 @@ int eM(TreeNode* node, int* pairedChildren, int numPairedChildren, int* RNA, nnd
 	int nr_unpaired = node->numChildren - numPairedChildren;
 	energy = a + nr_unpaired*b + nr_branches*c;
 	
-	//printf("nr branches = %i, nr unpaired = %i, a = %i, b = %i, c = %i, ENERGY = %i \n",  
-	//	   nr_branches, nr_unpaired, a, b, c, energy);
+	if(printOn1)printf("nr branches = %i, nr unpaired = %i, a/100 = %f, b/100 = %f, c/100 = %f, ENERGY=a + nr_unpaired*b + nr_branches*c /100.0 = %f \n",  
+		   nr_branches, nr_unpaired, a/100.0, b/100.0, c/100.0, energy/100.0);
 	
 	energy += eMUnpairedRegion(node->highBase.index, node->lowBase.index, 
 							   node->children[pairedChildren[0]]->lowBase.index, node->children[pairedChildren[0]]->highBase.index, 
@@ -335,7 +338,7 @@ int eM(TreeNode* node, int* pairedChildren, int numPairedChildren, int* RNA, nnd
      //so we just call it 
      energy += param->auend*auPen(RNA[node->children[pairedChildren[i]]->lowBase.index], RNA[node->children[pairedChildren[i]]->highBase.index]);
      if(auPen(RNA[node->children[pairedChildren[i]]->lowBase.index], RNA[node->children[pairedChildren[i]]->highBase.index]) != 0){
-				 printf("AU penalty awarded for branch nr. %i (%i, %i%): %i  \n", i, 
+				 if(printOn1)printf("AU penalty awarded for branch nr. %i (%i, %i%): %i  \n", i, 
 				 RNA[node->children[pairedChildren[i]]->lowBase.index], 
 				 RNA[node->children[pairedChildren[i]]->highBase.index], 
 				 param->auend*auPen(RNA[node->children[pairedChildren[i]]->lowBase.index], 
@@ -380,8 +383,15 @@ int eE(TreeNode* node, int* pairedChildren, int numPairedChildren, int* RNA, nnd
 		j = (node->children[pairedChildren[0]])->highBase.index;
 		if(NODANGLEMODE==1) energy += 0;
 		else {
-			if(i==1) energy += param->dangle[RNA[j]][RNA[i]][RNA[length]][1];
-			else energy += param->dangle[RNA[j]][RNA[i]][RNA[i-1]][1];	
+			//if(i==1){ if(D2MODE==1) energy+=0; else energy += param->dangle[RNA[j]][RNA[i]][RNA[length]][1];}//TODO Manoj Changed it for D2
+			if(i==1){ 
+				energy += param->dangle[RNA[j]][RNA[i]][RNA[length]][1];
+				if(printOn1)printf("i=%d,j=%d,param->dangle[RNA[j]][RNA[i]][RNA[length]][1]/100=%f\n",i,j,param->dangle[RNA[j]][RNA[i]][RNA[length]][1]/100.0);
+			}
+			else{
+				energy += param->dangle[RNA[j]][RNA[i]][RNA[i-1]][1];	
+				if(printOn1)printf("i=%d,j=%d,param->dangle[RNA[j]][RNA[i]][RNA[i-1]][1]/100=%f\n",i,j,param->dangle[RNA[j]][RNA[i]][RNA[i-1]][1]/100.0);
+			}
 		}
 	}
 	
@@ -401,8 +411,15 @@ int eE(TreeNode* node, int* pairedChildren, int numPairedChildren, int* RNA, nnd
 		j = (node->children[pairedChildren[numPairedChildren-1]])->highBase.index;
 		if(NODANGLEMODE==1) energy += 0;
                 else{
-			if(j==length) energy += param->dangle[RNA[j]][RNA[i]][RNA[1]][0];
-			else energy += param->dangle[RNA[j]][RNA[i]][RNA[j+1]][0];	
+			//if(j==length){ if(D2MODE==1) energy+=0; else energy += param->dangle[RNA[j]][RNA[i]][RNA[1]][0];}//TODO Manoj Changed it for D2
+			if(j==length){
+				 energy += param->dangle[RNA[j]][RNA[i]][RNA[1]][0];
+				if(printOn1)printf("i=%d,j=%d,param->dangle[RNA[j]][RNA[i]][RNA[1]][0]/100=%f\n",i,j,param->dangle[RNA[j]][RNA[i]][RNA[1]][0]/100.0);
+			}
+			else{
+			 energy += param->dangle[RNA[j]][RNA[i]][RNA[j+1]][0];	
+			if(printOn1)printf("i=%d,j=%d,param->dangle[RNA[j]][RNA[i]][RNA[j+1]][0]/100=%f\n",i,j,param->dangle[RNA[j]][RNA[i]][RNA[j+1]][0]/100.0);
+			}
 		}
 	}
         if(printOn1)printf("eE(i=%d,j=%d)=%f\n",(node->lowBase).index, node->highBase.index, (double)energy/100);

@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-int printOn2=0;
+int printOn2=1;
 //Shel: Function for scoring a node (recursive)
 int ScoreNode(TreeNode* node, int* RNA, nndb_constants* param, int length){
 	int result;

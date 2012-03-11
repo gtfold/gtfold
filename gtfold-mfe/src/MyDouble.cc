@@ -10,6 +10,7 @@ using namespace std;
 const int PRECISION = 64;
 static char BIG_NUM_ENABLED = 'N';//'Y';
 const int PRINT_DIGITS_AFTER_DECIMAL = 10;
+static int verbose=0;
 /*mpf_t getBigNum(double val2){
   mpf_t* bigValue = new mpf_t;
   mpf_init2(*bigValue);
@@ -23,14 +24,18 @@ class MyDouble{
 		double* smallValue;
 		char isBig;//'y' means it is already BigNum, 'n' means it is native double
 	public:
-		MyDouble(){//printf("Inside default constructor\n");
+		MyDouble(){if(verbose==1)printf("Default constructor called\n");
 			//this((double)0.0);
-			 createDouble();			
+			bigValue=0;smallValue=0;isBig='n';
+			createDouble();			
 		}
 		void init(){
+			bigValue=0;smallValue=0;isBig='n';
 			createDouble();
 		}
 		MyDouble(char isBig1){
+			if(verbose==1)printf("Constructor with input char isBig1=%c\n",isBig1);
+			bigValue=0;smallValue=0;isBig=isBig1;
 			if(isBig1=='n') createDouble();
 			else if(BIG_NUM_ENABLED=='N'){
 				printf("Error in creating mpf_t object as BIG_NUM_ENABLED is %c\n",BIG_NUM_ENABLED);
@@ -40,19 +45,23 @@ class MyDouble{
 
 		}
 		MyDouble(mpf_t val2){
+			if(verbose==1){cout<<"Constructor with input mpf_t val2=";gmp_printf("mpf %.*Ff", PRINT_DIGITS_AFTER_DECIMAL, val2);cout<<endl;}
+			bigValue=0;smallValue=0;isBig='y';
 			createBigNum(val2);	
 		}
 		MyDouble(double val2){
+			if(verbose==1){cout<<"Constructor with input double val2="<<val2<<endl;}
+			bigValue=0;smallValue=0;isBig='n';
 			createDouble(val2);	
 		}
 		void createBigNum(){
-			smallValue = 0;
+			if(smallValue!=0){delete smallValue; smallValue = 0;}
 			if(BIG_NUM_ENABLED=='N'){
 				printf("Error in creating mpf_t object as BIG_NUM_ENABLED is %c\n",BIG_NUM_ENABLED);
 				exit(-1);
 			}
 			isBig = 'y';
-			bigValue = new mpf_t[1];
+			if(bigValue==0) bigValue = new mpf_t[1];
 			mpf_init2(*bigValue,PRECISION);
 		}
 		void createDouble(){
@@ -60,29 +69,37 @@ class MyDouble{
 			createDouble(val2);
 		}
 		void createBigNum(mpf_t val2){
-			smallValue = 0;
+			//smallValue = 0;
+			if(smallValue!=0){delete smallValue; smallValue = 0;}
 			if(BIG_NUM_ENABLED=='N'){
 				printf("Error in creating mpf_t object as BIG_NUM_ENABLED is %c\n",BIG_NUM_ENABLED);
 				exit(-1);
 			}
 			isBig = 'y';
-			bigValue = new mpf_t[1];
+			if(bigValue==0){
+				if(verbose==1)printf("Allocation mpf_t\n");
+				bigValue = new mpf_t[1];
+			}
 			mpf_init2(*bigValue,PRECISION);
 			mpf_set(*bigValue, val2);//value=val2;
 		}
 		void createDouble(double val2){
-			bigValue = 0;
-			smallValue = new double;
+			//bigValue = 0;
+			if(bigValue!=0){ delete bigValue; bigValue=0;}
+			if(smallValue==0){
+				if(verbose==1)printf("Allocation double for %f\n",val2);
+				smallValue = new double;
+			}
 			*smallValue = val2;
 			isBig='n';
 		}
 		void deallocate(){
-			if(isBig=='y'){ delete(bigValue); isBig='X';}
-                        else if(isBig=='n'){ delete(smallValue); isBig='X';}
+			if(isBig=='y'){ if(bigValue!=0){ if(verbose==1) printf("Deallocation mpf_t\n"); delete(bigValue); bigValue=0;}isBig='X';}
+                        else if(isBig=='n'){ if(smallValue!=0){ if(verbose==1) printf("Deallocation double for %f\n",*smallValue); delete(smallValue); smallValue=0;} isBig='X';}
 			else printf("In MyDouble::deallocate(), Unknown isBig = %c\n", isBig);
 		}
-		~MyDouble(){//printf("Destructor called\n");
-			//deallocate();	
+		~MyDouble(){if(verbose==1)printf("Destructor called\n");
+			deallocate();	
 		}
 		bool isInitialized(){
 			if(isBig=='y' || isBig=='n') return true;
@@ -97,7 +114,7 @@ class MyDouble{
 			//if(isBig=='y') gmp_printf("fixed point mpf %.*Ff with %d digits\n", 5, *bigValue, 5);
 			if(isBig=='y') gmp_printf("mpf %.*Ff", PRINT_DIGITS_AFTER_DECIMAL, *bigValue);
 			//else if(isBig=='n') printf("double %f", *smallValue);//TODO uncomment it
-			else if(isBig=='n') printf("%0.1f", *smallValue);
+			else if(isBig=='n') printf("%f", *smallValue);
 			else printf("Unknown isBig = %c\n", isBig);
 		}
 		MyDouble operator*(const MyDouble &obj1) const {
@@ -134,7 +151,7 @@ class MyDouble{
 					return res;
 				}
 				else{
-					printf("Overflow Error occurred while native double multiplication\n");
+					if(verbose==1)printf("Overflow Error occurred while native double multiplication\n");
 					if(BIG_NUM_ENABLED == 'N'){
 						printf("BIG_NUM_ENABLED is not Enabled, hence exiting\n");
 						exit(-1);
@@ -145,7 +162,7 @@ class MyDouble{
 					mpf_t op2; mpf_init2(op2,PRECISION); mpf_set_d(op2, *(obj1.smallValue));
 					mpf_mul(*(res.bigValue),op1, op2);
 					//res.print();
-					printf("successful multiplication\n");
+					if(verbose==1) printf("successful multiplication\n");
 					return res;
 				}
 			}
@@ -174,7 +191,7 @@ class MyDouble{
 					return res;
 				}
 				else{
-					printf("Overflow Error occurred while native double multiplication\n");
+					if(verbose==1)printf("Overflow Error occurred while native double multiplication\n");
 					if(BIG_NUM_ENABLED == 'N'){
 						printf("BIG_NUM_ENABLED is not Enabled, hence exiting\n");
 						exit(-1);
@@ -185,7 +202,7 @@ class MyDouble{
 					mpf_t op2; mpf_init2(op2,PRECISION); mpf_set_d(op2, *(obj1.smallValue));
 					mpf_mul(*(res.bigValue),op1, op2);
 					//res.print();
-					printf("successful multiplication\n");
+					if(verbose==1)printf("successful multiplication\n");
 					return res;
 				}
 			}
@@ -219,7 +236,7 @@ class MyDouble{
 				return res;
 			}
 			//case 4: this object is smallValue and obj2 is smallValue -- result can be smallValue or bigValue, we need to check
-			else if(this->isBig=='n' && obj1.isBig=='n'){
+			else if(this->isBig=='n' && obj1.isBig=='n'){if(verbose==1)printf("operator+ MyDouble obj1 this->isBig=='n' && obj1.isBig=='n'\n");
 				double a = (*(this->smallValue)) + (*(obj1.smallValue));
 				//check if a is finite
 				if(isfinite(a)){
@@ -228,7 +245,7 @@ class MyDouble{
 					return res;
 				}
 				else{
-					printf("Overflow Error occurred while native double addition\n");
+					if(verbose==1)printf("Overflow Error occurred while native double addition\n");
 					if(BIG_NUM_ENABLED == 'N'){
 						printf("BIG_NUM_ENABLED is not Enabled, hence exiting\n");
 						exit(-1);
@@ -239,7 +256,7 @@ class MyDouble{
 					mpf_t op2; mpf_init2(op2,PRECISION); mpf_set_d(op2, *(obj1.smallValue));
 					mpf_add(*(res.bigValue),op1, op2);
 					//res.print();
-					printf("successful multiplication\n");
+					if(verbose==1)printf("successful addition\n");
 					return res;
 				}
 			}
@@ -268,7 +285,7 @@ class MyDouble{
 					return res;
 				}
 				else{
-					printf("Overflow Error occurred while native double multiplication\n");
+					if(verbose==1)printf("Overflow Error occurred while native double addition\n");
 					if(BIG_NUM_ENABLED == 'N'){
 						printf("BIG_NUM_ENABLED is not Enabled, hence exiting\n");
 						exit(-1);
@@ -279,7 +296,7 @@ class MyDouble{
 					mpf_t op2; mpf_init2(op2,PRECISION); mpf_set_d(op2, *(obj1.smallValue));
 					mpf_add(*(res.bigValue),op1, op2);
 					//res.print();
-					printf("successful multiplication\n");
+					if(verbose==1)printf("successful multiplication\n");
 					return res;
 				}
 			}
@@ -321,7 +338,7 @@ class MyDouble{
 					return res;
 				}
 				else{
-					printf("Overflow Error occurred while native double addition\n");
+					if(verbose==1)printf("Overflow Error occurred while native double subtraction\n");
 					if(BIG_NUM_ENABLED == 'N'){
 						printf("BIG_NUM_ENABLED is not Enabled, hence exiting\n");
 						exit(-1);
@@ -332,7 +349,7 @@ class MyDouble{
 					mpf_t op2; mpf_init2(op2,PRECISION); mpf_set_d(op2, *(obj1.smallValue));
 					mpf_sub(*(res.bigValue),op1, op2);
 					//res.print();
-					printf("successful multiplication\n");
+					if(verbose==1)printf("successful subtraction\n");
 					return res;
 				}
 			}
@@ -361,7 +378,7 @@ class MyDouble{
 					return res;
 				}
 				else{
-					printf("Overflow Error occurred while native double multiplication\n");
+					if(verbose==1)printf("Overflow Error occurred while native double subtraction\n");
 					if(BIG_NUM_ENABLED == 'N'){
 						printf("BIG_NUM_ENABLED is not Enabled, hence exiting\n");
 						exit(-1);
@@ -372,7 +389,7 @@ class MyDouble{
 					mpf_t op2; mpf_init2(op2,PRECISION); mpf_set_d(op2, *(obj1.smallValue));
 					mpf_sub(*(res.bigValue),op1, op2);
 					//res.print();
-					printf("successful multiplication\n");
+					if(verbose==1)printf("successful subtraction\n");
 					return res;
 				}
 			}
@@ -414,7 +431,7 @@ class MyDouble{
 					return res;
 				}
 				else{
-					printf("Overflow Error occurred while native double addition\n");
+					if(verbose==1)printf("Overflow Error occurred while native double division\n");
 					if(BIG_NUM_ENABLED == 'N'){
 						printf("BIG_NUM_ENABLED is not Enabled, hence exiting\n");
 						exit(-1);
@@ -425,7 +442,7 @@ class MyDouble{
 					mpf_t op2; mpf_init2(op2,PRECISION); mpf_set_d(op2, *(obj1.smallValue));
 					mpf_div(*(res.bigValue),op1, op2);
 					//res.print();
-					printf("successful multiplication\n");
+					if(verbose==1)printf("successful division\n");
 					return res;
 				}
 			}
@@ -454,7 +471,7 @@ class MyDouble{
 					return res;
 				}
 				else{
-					printf("Overflow Error occurred while native double multiplication\n");
+					if(verbose==1)printf("Overflow Error occurred while native double division\n");
 					if(BIG_NUM_ENABLED == 'N'){
 						printf("BIG_NUM_ENABLED is not Enabled, hence exiting\n");
 						exit(-1);
@@ -465,7 +482,7 @@ class MyDouble{
 					mpf_t op2; mpf_init2(op2,PRECISION); mpf_set_d(op2, *(obj1.smallValue));
 					mpf_div(*(res.bigValue),op1, op2);
 					//res.print();
-					printf("successful multiplication\n");
+					if(verbose==1)printf("successful division\n");
 					return res;
 				}
 			}
@@ -570,6 +587,7 @@ class MyDouble{
                 }
 
 		MyDouble& operator=(const MyDouble &obj1) {
+			if(verbose==1){ cout<<"operator= called: obj1=";obj1.print();cout<<", this=";this->print();cout<<endl;}
 			//printf("operator overload= starts\n");obj1.print();//printf("operator overload= ends\n");
 			if(this==&obj1) return *this;
 			if(isInitialized())this->deallocate();
@@ -579,12 +597,24 @@ class MyDouble{
 			return *this;
 		}
 		MyDouble& operator=(const double &obj1) {
+			if(verbose==1){ cout<<"operator= called: obj1="<<obj1;cout<<", this=";this->print();cout<<endl;}
 			//printf("operator overload= starts\n");obj1.print();//printf("operator overload= ends\n");
 			//if(this==&obj1) return *this;
 			if(isInitialized())this->deallocate();
 			//printf("successful deallocation\n");
 			createDouble(obj1);
 			return *this;
+		}
+		MyDouble(const MyDouble &obj1) {
+			bigValue=0;smallValue=0;isBig='n';
+			if(verbose==1){ cout<<"Copy constructor called: obj1=";obj1.print();cout<<endl;}//cout<<", this=";if(isInitialized())this->print();else cout<<"Uninitialized,";cout<<endl;
+			//printf("operator overload= starts\n");obj1.print();//printf("operator overload= ends\n");
+			//if(this==&obj1) return ;//*this;
+			//if(isInitialized())this->deallocate();
+			//printf("successful deallocation\n");
+			if(obj1.isBig=='n') createDouble(*(obj1.smallValue));
+			else if(obj1.isBig=='y') createBigNum(*(obj1.bigValue));
+			//return *this;
 		}
 
 };
@@ -616,3 +646,21 @@ int main(){
 	return 0;
 }
 */
+/*
+MyDouble f1(MyDouble a){
+	MyDouble b(5.0);
+	MyDouble c = a+b;
+	return c;
+}
+MyDouble f2(MyDouble a){
+	return f1(a)+MyDouble(3.0);
+	//return a+MyDouble(3.0);
+}
+int main(){
+	MyDouble a(4.0);
+	a = f2(a);
+	//a = a+MyDouble(3.0);
+	a.print();
+	cout<<endl;
+	return 0;
+}*/

@@ -10,7 +10,7 @@
 #include<sstream>
 #include<fstream>
 
-int ss_verbose = 0; 
+int ss_verbose = 1; 
 
 std::stack<base_pair> g_stack;
 
@@ -227,7 +227,7 @@ void rnd_u(int i, int j, int* structure)
     {
       energy += ED5_new(h,j,h-1)+auPenalty_new(h,j);
       if (ss_verbose == 1) 
-        printf("(%d %d) %lf\n",i,j,(ED5_new(h,j,h-1)+auPenalty_new(h,j)) /100.0);
+        printf("(h=%d j=%d) (ED5_new(h,j,h-1)=%f auPenalty_new(h,j)=%f\n",h,j,(ED5_new(h,j,h-1)/100, auPenalty_new(h,j)/100.0));
       base_pair bp(h,j,UP);
       //set_single_stranded(i,h-1,structure);
       g_stack.push(bp);
@@ -265,7 +265,7 @@ void rnd_u(int i, int j, int* structure)
     {
       energy += (ED5_new(h1,l,h1-1)+ auPenalty_new(h1,l) + ED3_new(h1,l,l+1));
       if (ss_verbose == 1) 
-        printf("(%d %d) %lf\n",i,j,(ED5_new(h1,l,h1-1)+ auPenalty_new(h1,l) + ED3_new(h1,l,l+1)) /100.0);
+        printf("(h1=%d l=%d) ED5_new(h1,l,h1-1)=%f, auPenalty_new(h1,l)=%f, ED3_new(h1,l,l+1)=%f\n",h1,l,ED5_new(h1,l,h1-1)/100, auPenalty_new(h1,l)/100, ED3_new(h1,l,l+1)/100.0);
       base_pair bp1(h1,l,UP);
       base_pair bp2(l+2,j,U);
       g_stack.push(bp1);
@@ -278,7 +278,7 @@ void rnd_u(int i, int j, int* structure)
     {
       energy += (ED5_new(h1,l,h1-1)+auPenalty_new(h1,l));
       if (ss_verbose == 1) 
-        printf("(%d %d) %lf\n",i,j,(ED5_new(h1,l,h1-1)+auPenalty_new(h1,l))/100.0);
+        printf("(h1=%d l=%d) ED5_new(h1,l,h1-1)=%f auPenalty_new(h1,l)=%f\n",h1,l,ED5_new(h1,l,h1-1)/100,auPenalty_new(h1,l)/100.0);
       
       base_pair bp1(h1,l,UP);
       base_pair bp2(l+1,j,UD);
@@ -292,7 +292,7 @@ void rnd_u(int i, int j, int* structure)
     {
       energy += (ED5_new(h1,l,h1-1)+auPenalty_new(h1,l) + auPenalty_new(l+1,j));
       if (ss_verbose == 1) 
-        printf("(%d %d) %lf\n",i,j, (ED5_new(h1,l,h1-1)+auPenalty_new(h1,l) + auPenalty_new(l+1,j))/100.0);
+        printf("(h1=%d l=%d j=%d) ED5_new(h1,l,h1-1)=%f auPenalty_new(h1,l)=%f auPenalty_new(l+1,j)=%f\n",h1,l,j, ED5_new(h1,l,h1-1)/100, auPenalty_new(h1,l)/100, auPenalty_new(l+1,j)/100.0);
       //set_single_stranded(i,h1-1,structure);
       base_pair bp1(h1,l,UP);
       base_pair bp2(l+1,j,UP);

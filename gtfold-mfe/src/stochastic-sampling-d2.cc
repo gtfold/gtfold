@@ -125,8 +125,10 @@ void StochasticTracebackD2::rnd_u(int i, int j)
 		if (rnd < cum_prob)
 		{
 			double e2 = ( (pf_d2.ED5_new(h,j,h-1)) + (pf_d2.ED3_new(h,j,j+1)) + (pf_d2.auPenalty_new(h,j)) );
-			if (ss_verbose == 1) 
-				printf("(%d %d) %lf\n",i,j, e2/100.0);
+			if (ss_verbose == 1) {
+				printf(" (pf_d2.ED5_new(h,j,h-1))=%f, (pf_d2.ED3_new(h,j,j+1))=%f, (pf_d2.auPenalty_new(h,j))=%f\n", (pf_d2.ED5_new(h,j,h-1))/100.0, (pf_d2.ED3_new(h,j,j+1))/100.0, (pf_d2.auPenalty_new(h,j))/100.0);
+				printf(" U_ihj(i=%d,h=%d,j=%d)= %lf\n",i,h,j, e2/100.0);
+			}
 			energy += e2;
 			base_pair bp(h,j,UP);
 			//set_single_stranded(i,h-1,structure);
@@ -159,8 +161,10 @@ void StochasticTracebackD2::rnd_s1(int i, int h, int j){
 		if (rnd < cum_prob)
 		{
 			double e2 = (pf_d2.ED5_new(h,l,h-1))+ (pf_d2.auPenalty_new(h,l)) + (pf_d2.ED3_new(h,l,l+1));
-			if (ss_verbose == 1) 
+			if (ss_verbose == 1) {
+				printf("(pf_d2.ED5_new(h,l,h-1))=%f, (pf_d2.auPenalty_new(h,l))=%f, (pf_d2.ED3_new(h,l,l+1))=%f\n",(pf_d2.ED5_new(h,l,h-1)), (pf_d2.auPenalty_new(h,l)), (pf_d2.ED3_new(h,l,l+1)));
 				printf("(%d %d) %lf\n",i,j, e2/100.0);
+			}
 			energy += e2;
 			base_pair bp1(h,l,UP);
 			base_pair bp2(l+1,j,U);
@@ -244,8 +248,10 @@ void StochasticTracebackD2::rnd_u1(int i, int j)
 		if (rnd < cum_prob)
 		{
 			double e2 = (pf_d2.EC_new()) + (h-i)*(pf_d2.EB_new());
-			if (ss_verbose == 1) 
-				printf("U1_s3_ihj(%d) %lf\n",h, e2/100.0);
+			if (ss_verbose == 1){ 
+				printf("(pf_d2.EC_new())=%f (h-i)*(pf_d2.EB_new())=%f\n",(pf_d2.EC_new())/100.0, (h-i)*(pf_d2.EB_new())/100.0);
+				printf("U1_s3_ihj(%d %d %d) %lf\n",i,h,j, e2/100.0);
+			}
 			energy += e2;
 			h1 = h;
 			rnd_s3(i, h1, j);
@@ -265,8 +271,10 @@ void StochasticTracebackD2::rnd_s3(int i, int h, int j){
 		if (rnd < cum_prob)
 		{
 			double e2 = ((pf_d2.auPenalty_new(h,l)) + (pf_d2.ED5_new(h,l,h-1)) + (pf_d2.ED3_new(h,l,l+1)));
-			if (ss_verbose == 1) 
-				printf("S3_ihlj(%d %d) %lf\n",h,l, e2/100.0);
+			if (ss_verbose == 1) {
+				printf("(pf_d2.auPenalty_new(h,l))=%f, (pf_d2.ED5_new(h,l,h-1))=%f, (pf_d2.ED3_new(h,l,l+1))=%f\n",(pf_d2.auPenalty_new(h,l))/100.0, (pf_d2.ED5_new(h,l,h-1))/100.0, (pf_d2.ED3_new(h,l,l+1))/100.0);
+				printf("S3_ihlj(%d %d %d %d) %lf\n",i,h,l,j,e2/100.0);
+			}
 			energy += e2;
 			base_pair bp(h,l,UP);
 			g_stack.push(bp);
@@ -283,10 +291,11 @@ void StochasticTracebackD2::rnd_s3_mb(int i, int h, int l, int j){//shel's docum
 	cum_prob = cum_prob +  S3_MB_ihlj(i,h,l,j);
 	if (rnd < cum_prob)
 	{
-		double tt =  (j == l)? 0 : (pf_d2.ED3_new(h,l,l+1));//this term is corresponding to f(j+1,h,l)
+		double tt =  0;//(j == l)? 0 : (pf_d2.ED3_new(h,l,l+1));//this term is corresponding to f(j+1,h,l)
 		double e2 = tt + (j-l)*(pf_d2.EB_new());
-		if (ss_verbose == 1)
-			printf("S3_MB_ihlj(%d %d) %lf\n",h,l, e2/100.0);
+		if (ss_verbose == 1){
+			printf("j=%d,l=%d,tt=(j == l)?0:(pf_d2.ED3_new(h,l,l+1))=%f,(j-l)*(pf_d2.EB_new())=%f\n",j,l,tt/100.0,(j-l)*(pf_d2.EB_new())/100.0);				printf("S3_MB_ihlj(%d %d %d %d) %lf\n",i,h,l,j, e2/100.0);
+		}
 		energy += e2;
 		return;
 	}
@@ -316,7 +325,9 @@ void StochasticTracebackD2::rnd_upm(int i, int j)
 			energy += e2;
 			h1 = h;
 			if (ss_verbose == 1) {
-				printf("%s(%d) %lf\n", "UPM_S2_ihj",h1,e2/100.0);
+				printf("(pf_d2.EA_new())=%f, (pf_d2.EC_new())=%f, (pf_d2.EB_new())=%f\n",(pf_d2.EA_new())/100.0, (pf_d2.EC_new())/100.0, (pf_d2.EB_new())/100.0);
+				printf("(pf_d2.EA_new()) + 2*(pf_d2.EC_new()) + (h-i-1)*(pf_d2.EB_new())=%f, (pf_d2.auPenalty_new(i,j))=%f, (pf_d2.ED5_new(j,i,j-1))=%f, (pf_d2.ED3_new(j,i,i+1))=%f\n",((pf_d2.EA_new()) + 2*(pf_d2.EC_new()) + (h-i-1)*(pf_d2.EB_new()))/100.0, (pf_d2.auPenalty_new(i,j))/100.0, (pf_d2.ED5_new(j,i,j-1))/100.0, (pf_d2.ED3_new(j,i,i+1))/100.0);
+				printf("%s(%d %d %d) %lf\n", "UPM_S2_ihj",i,h1,j,e2/100.0);
 			}
 			rnd_s2(i,h1,j);
 			return;
@@ -336,8 +347,10 @@ void StochasticTracebackD2::rnd_s2(int i, int h, int j){
 		{
 			double e2 = (pf_d2.auPenalty_new(h,l)) + (pf_d2.ED5_new(h,l,h-1)) + (pf_d2.ED3_new(h,l,l+1));       
 			energy += e2;
-			if (ss_verbose == 1) 
-				printf("%s(%d %d) %lf\n"," S2_ihlj",h,l, e2/100.0);
+			if (ss_verbose == 1){
+				printf("(pf_d2.auPenalty_new(h,l))=%f, (pf_d2.ED5_new(h,l,h-1))=%f, (pf_d2.ED3_new(h,l,l+1))=%f\n",(pf_d2.auPenalty_new(h,l))/100.0, (pf_d2.ED5_new(h,l,h-1))/100.0, (pf_d2.ED3_new(h,l,l+1))/100.0);
+				printf("%s(%d %d %d %d) %lf\n"," S2_ihlj",i,h,l,j, e2/100.0);
+			}
 			base_pair bp1(h,l,UP);
 			base_pair bp2(l+1,j-1,U1);
 			g_stack.push(bp1);
@@ -452,9 +465,10 @@ void StochasticTracebackD2::batch_sample(int num_rnd)
 
 	if (num_rnd > 0 ) {
 		printf("\nSampling structures...\n");
-		int count; //nsamples =0;
+		int count, nsamples =0;
 		for (count = 1; count <= num_rnd; ++count) 
 		{
+			nsamples++;
 			memset(structure, 0, (length+1)*sizeof(int));
 			double energy = rnd_structure();
 
@@ -466,10 +480,10 @@ void StochasticTracebackD2::batch_sample(int num_rnd)
 					ensemble[structure[i]] = ')';
 				}
 			}
-			/*double myEnegry = -88.4;
-			if (fabs(energy-myEnegry)>0.0001){count--; continue;} //TODO: debug
-			//++count;*/
-
+			/*//Below line of codes is for finding samples with particular energy
+			double myEnegry = -91.3;//-94.8;//dS=-88.4;//d2=-93.1
+			if (fabs(energy-myEnegry)>0.0001){ count--;continue;} //TODO: debug
+			*/
 			std::map<std::string,std::pair<int,double> >::iterator iter ;
 			if ((iter =uniq_structs.find(ensemble.substr(1))) != uniq_structs.end())
 			{
@@ -486,7 +500,9 @@ void StochasticTracebackD2::batch_sample(int num_rnd)
 		int pcount = 0;
 		int maxCount = 0; std::string bestStruct;
 		double bestE = INFINITY;
-
+		printf("nsamples=%d\n",nsamples);
+		printf("%s,%s,%s","structure","energy","boltzman_probability");
+		printf(",%s,%s\n","estimated_probability","frequency");
 		std::map<std::string,std::pair<int,double> >::iterator iter ;
 		for (iter = uniq_structs.begin(); iter != uniq_structs.end();  ++iter)
 		{
@@ -494,10 +510,14 @@ void StochasticTracebackD2::batch_sample(int num_rnd)
 			const std::pair<int,double>& pp = iter->second;
 			const double& estimated_p =  (double)pp.first/(double)num_rnd;
 			const double& energy = pp.second;
-			MyDouble actual_p = (MyDouble(pow(2.718281,-1.0*energy/RT_)))/U;
-
-			printf("%s %lf\n",ss.c_str(),energy);actual_p.print();
-			printf("%lf %d\n",estimated_p,pp.first);
+			//MyDouble actual_p = (MyDouble(pow(2.718281,-1.0*energy/RT_)))/U;
+			MyDouble actual_p = (pf_d2.myExp(-(energy)/(RT_)))/U;
+			//MyDouble actual_p(-(energy)/(RT_));///U;
+			printf("%s,%f,",ss.c_str(),energy);actual_p.print();
+			printf(",%f,%d\n",estimated_p,pp.first);
+	
+			//printf("%s %lf\n",ss.c_str(),energy);actual_p.print();
+			//printf("%lf %d\n",estimated_p,pp.first);
 			pcount += pp.first;
 			if (pp.first > maxCount)
 			{
@@ -582,6 +602,8 @@ void StochasticTracebackD2::batch_sample_and_dump(int num_rnd, std::string ctFil
 		int maxCount = 0; std::string bestStruct;
 		double bestE = INFINITY;
 
+		printf("%s,%s,%s","structure","energy","boltzman_probability");
+		printf(",%s,%s\n","estimated_probability","frequency");
 		std::map<std::string,std::pair<int,double> >::iterator iter ;
 		for (iter = uniq_structs.begin(); iter != uniq_structs.end();  ++iter)
 		{
@@ -591,8 +613,8 @@ void StochasticTracebackD2::batch_sample_and_dump(int num_rnd, std::string ctFil
 			const double& energy = pp.second;
 	
 			MyDouble actual_p = (MyDouble(pow(2.718281,-1.0*energy/RT_)))/U;
-			printf("%s %lf\n",ss.c_str(),energy);actual_p.print();
-			printf("%lf %d\n",estimated_p,pp.first);
+			printf("%s,%lf,",ss.c_str(),energy);actual_p.print();
+			printf(",%lf,%d\n",estimated_p,pp.first);
 	
 			pcount += pp.first;
 			if (pp.first > maxCount)
