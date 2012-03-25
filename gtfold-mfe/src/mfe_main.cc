@@ -126,7 +126,6 @@ void init_fold(const char* seq) {
     if (dangles != -1 && !UNAMODE && !RNAMODE) printf("Ignoring -d as it accept 0 or 2 only\n");	
     dangles = -1;
   }
-
   g_nthreads = nThreads;
   g_unamode  = UNAMODE;
   g_mismatch = T_MISMATCH;

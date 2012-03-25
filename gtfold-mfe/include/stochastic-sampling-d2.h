@@ -48,12 +48,13 @@ public:
 			}
 		};
 	private:
+		bool PF_D2_UP_APPROX_ENABLED;
 		enum {U=0,UP,U1};
-		int* structure;
+		//int* structure;
 		PartitionFunctionD2 pf_d2;
 		int ss_verbose;
-		std::stack<base_pair> g_stack;
-		double energy;
+		//std::stack<base_pair> g_stack;
+		//double energy;
 		int length;
                 int PF_COUNT_MODE;
                 int NO_DANGLE_MODE;
@@ -81,23 +82,24 @@ public:
 		MyDouble S3_ihlj(int i, int h, int l, int j);
 		MyDouble S3_MB_ihlj(int i, int h, int l, int j);
 
-		void set_single_stranded(int i, int j);
-		void set_base_pair(int i, int j);
-		
-		void rnd_u(int i, int j);
-		void rnd_s1(int i, int h, int j);
-		void rnd_up(int i, int j);
-		void rnd_upm(int i, int j);
-		void rnd_s2(int i, int h, int j);
-		void rnd_u1(int i, int j);
-		void rnd_s3(int i, int h, int j);
-		void rnd_s3_mb(int i, int h, int l, int j);
+		void set_single_stranded(int i, int j, int* structure);
+		void set_base_pair(int i, int j, int* structure);
+		void rnd_u(int i, int j, int* structure, double & energy, std::stack<base_pair>& g_stack);
+		void rnd_s1(int i, int h, int j, int* structure, double & energy, std::stack<base_pair>& g_stack);
+		void rnd_up(int i, int j, int* structure, double & energy, std::stack<base_pair>& g_stack);
+		void rnd_up_approximate(int i, int j, int* structure, double & energy, std::stack<base_pair>& g_stack);
+		void rnd_upm(int i, int j, int* structure, double & energy, std::stack<base_pair>& g_stack);
+		void rnd_s2(int i, int h, int j, int* structure, double & energy, std::stack<base_pair>& g_stack);
+		void rnd_u1(int i, int j, int* structure, double & energy, std::stack<base_pair>& g_stack);
+		void rnd_s3(int i, int h, int j, int* structure, double & energy, std::stack<base_pair>& g_stack);
+		void rnd_s3_mb(int i, int h, int l, int j, int* structure, double & energy, std::stack<base_pair>& g_stack);
+		double rnd_structure(int* structure);
 
-		double rnd_structure();
 	public:
-		void initialize(int length1, int PF_COUNT_MODE1, int NO_DANGLE_MODE1, int ss_verbose1);
+		void initialize(int length1, int PF_COUNT_MODE1, int NO_DANGLE_MODE1, int ss_verbose1, bool PF_D2_UP_APPROX_ENABLED);
 		void free_traceback();
 		void batch_sample(int num_rnd);
+		void batch_sample_parallel(int num_rnd);
 		void batch_sample_and_dump(int num_rnd, std::string ctFileDumpDir, std::string stochastic_summery_file_name, std::string seq, std::string seqfile);
 
 

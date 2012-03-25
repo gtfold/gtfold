@@ -10,7 +10,7 @@
 #include<sstream>
 #include<fstream>
 
-int ss_verbose = 1; 
+int ss_verbose = 0; 
 
 std::stack<base_pair> g_stack;
 

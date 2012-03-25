@@ -7,8 +7,9 @@
 #include<math.h>
 #include "gmp.h"
 using namespace std;
-const int PRECISION = 64;
-static char BIG_NUM_ENABLED = 'N';//'Y';
+const int PRECISION = 1024;
+static char BIG_NUM_ENABLED = 'Y';//'N';//'Y';
+static int BIGNUM_ONLY=0;
 const int PRINT_DIGITS_AFTER_DECIMAL = 10;
 static int verbose=0;
 /*mpf_t getBigNum(double val2){
@@ -29,10 +30,10 @@ class MyDouble{
 			bigValue=0;smallValue=0;isBig='n';
 			createDouble();			
 		}
-		void init(){
+	/*	void init(){
 			bigValue=0;smallValue=0;isBig='n';
 			createDouble();
-		}
+		}*/
 		MyDouble(char isBig1){
 			if(verbose==1)printf("Constructor with input char isBig1=%c\n",isBig1);
 			bigValue=0;smallValue=0;isBig=isBig1;
@@ -61,8 +62,10 @@ class MyDouble{
 				exit(-1);
 			}
 			isBig = 'y';
-			if(bigValue==0) bigValue = new mpf_t[1];
-			mpf_init2(*bigValue,PRECISION);
+			if(bigValue==0){
+				bigValue = new mpf_t[1];
+				mpf_init2(*bigValue,PRECISION);
+			}
 		}
 		void createDouble(){
 			double val2 =0.0;
@@ -79,12 +82,18 @@ class MyDouble{
 			if(bigValue==0){
 				if(verbose==1)printf("Allocation mpf_t\n");
 				bigValue = new mpf_t[1];
+				mpf_init2(*bigValue,PRECISION);//TODO This line was earlier outside this "if"
 			}
-			mpf_init2(*bigValue,PRECISION);
+			//mpf_init2(*bigValue,PRECISION);
 			mpf_set(*bigValue, val2);//value=val2;
 		}
 		void createDouble(double val2){
 			//bigValue = 0;
+			if(BIGNUM_ONLY==1){
+				mpf_t op2; mpf_init2(op2,PRECISION); mpf_set_d(op2, val2);
+			       	createBigNum(op2);
+				return;
+			}
 			if(bigValue!=0){ delete bigValue; bigValue=0;}
 			if(smallValue==0){
 				if(verbose==1)printf("Allocation double for %f\n",val2);
@@ -95,8 +104,9 @@ class MyDouble{
 		}
 		void deallocate(){
 			if(isBig=='y'){ if(bigValue!=0){ if(verbose==1) printf("Deallocation mpf_t\n"); delete(bigValue); bigValue=0;}isBig='X';}
-                        else if(isBig=='n'){ if(smallValue!=0){ if(verbose==1) printf("Deallocation double for %f\n",*smallValue); delete(smallValue); smallValue=0;} isBig='X';}
-			else printf("In MyDouble::deallocate(), Unknown isBig = %c\n", isBig);
+			else if(isBig=='n'){ if(smallValue!=0){ if(verbose==1) printf("Deallocation double for %f\n",*smallValue); delete(smallValue); smallValue=0;} isBig='X';}
+			else if(verbose==1) printf("In MyDouble::deallocate(), Unknown isBig = %c\n", isBig);
+			bigValue=0;smallValue=0;isBig='X';
 		}
 		~MyDouble(){if(verbose==1)printf("Destructor called\n");
 			deallocate();	
@@ -591,9 +601,10 @@ class MyDouble{
 			//printf("operator overload= starts\n");obj1.print();//printf("operator overload= ends\n");
 			if(this==&obj1) return *this;
 			if(isInitialized())this->deallocate();
+			else {bigValue=0; smallValue=0;}
 			//printf("successful deallocation\n");
-			if(obj1.isBig=='n') createDouble(*(obj1.smallValue));
-			else if(obj1.isBig=='y') createBigNum(*(obj1.bigValue));
+			if(obj1.isBig=='n'){ isBig='n'; createDouble(*(obj1.smallValue));}
+			else if(obj1.isBig=='y'){isBig='y'; createBigNum(*(obj1.bigValue));}
 			return *this;
 		}
 		MyDouble& operator=(const double &obj1) {
@@ -601,7 +612,9 @@ class MyDouble{
 			//printf("operator overload= starts\n");obj1.print();//printf("operator overload= ends\n");
 			//if(this==&obj1) return *this;
 			if(isInitialized())this->deallocate();
+			else {bigValue=0; smallValue=0;}
 			//printf("successful deallocation\n");
+			isBig='n';
 			createDouble(obj1);
 			return *this;
 		}
@@ -612,8 +625,8 @@ class MyDouble{
 			//if(this==&obj1) return ;//*this;
 			//if(isInitialized())this->deallocate();
 			//printf("successful deallocation\n");
-			if(obj1.isBig=='n') createDouble(*(obj1.smallValue));
-			else if(obj1.isBig=='y') createBigNum(*(obj1.bigValue));
+			if(obj1.isBig=='n'){ isBig='n'; createDouble(*(obj1.smallValue));}
+			else if(obj1.isBig=='y'){ isBig='y'; createBigNum(*(obj1.bigValue));}
 			//return *this;
 		}
 

@@ -4115,6 +4115,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	  	  	  	  	  	  	  	  	  	  	  	  	  for ac_option in -fopenmp -xopenmp -openmp -mp -omp -qsmp=omp; do
 	    ac_save_CFLAGS=$CFLAGS
 	    CFLAGS="$CFLAGS $ac_option"
+	    CXXFLAGS="$CXXFLAGS $ac_option"
 	    cat >conftest.$ac_ext <<_ACEOF
 
 #ifndef _OPENMP

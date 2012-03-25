@@ -7,6 +7,10 @@
 #include "global.h"
 #include "utils.h"
 #include<omp.h>
+#include <assert.h>
+
+#define PAIRABLE_POINTS_GATHER_OPTIMIZATION_DISABLED true
+
 static void errorAndExit(char* msg, int i, int j, MyDouble oldVal, MyDouble newVal){
 	printf("%s\n", msg);
 	printf("i=%d,j=%d,oldVal=",i,j);oldVal.print();printf(",newVal=");newVal.print();printf("\n");
@@ -84,44 +88,53 @@ inline void set_s3(int i, int j, double val) {s3[i][j]=val;}
 double PartitionFunctionD2::eS_new(int i, int j){
 	if(PF_COUNT_MODE_) return 0;
 	return eS(i,j);
+	//return eS(i,j)/100;
 }
 double PartitionFunctionD2::eH_new(int i, int j){
 	if(PF_COUNT_MODE_) return 0;
 	return eH(i,j);
+	//return eH(i,j)/100;
 }
 double PartitionFunctionD2::eL_new(int i, int j, int p, int q){
 	if(PF_COUNT_MODE_) return 0;
 	return eL(i,j,p,q);
+	//return eL(i,j,p,q)/100;
 }
 double PartitionFunctionD2::ED3_new(int i, int j, int k){
 	if(NO_DANGLE_MODE_) return 0;
 	if(PF_COUNT_MODE_) return 0;
-	if(k > part_len) return 0;//This is to take care of round robin way of d2, this is shel's suggestion and rnafold also seems to follow this
-	//if(k > part_len) k=1;//This is to take care of round robin way of d2, rnascoring code follows this means, you need to do this in case you want to pass scoring test
+	//if(k > part_len) return 0;//This is to take care of round robin way of d2, this is shel's suggestion and rnafold also seems to follow this
+	if(k > part_len) k=1;//This is to take care of round robin way of d2, rnascoring code follows this means, you need to do this in case you want to pass scoring test
 	return Ed5(j,i,k);
+	//return Ed5(j,i,k)/100;
 }
 double PartitionFunctionD2::ED5_new(int i, int j, int k){
 	if(NO_DANGLE_MODE_) return 0;
 	if(PF_COUNT_MODE_) return 0;
-	if (k<1) return 0;//This is to take care of round robin way of d2, this is shel's suggestion and rnafold also seems to follow this
-	//if (k<1) k=part_len;//This is to take care of round robin way of d2, rnascoring code follows this means, you need to do this in case you want to pass scoring test
+	//if (k<1) return 0;//This is to take care of round robin way of d2, this is shel's suggestion and rnafold also seems to follow this
+	if (k<1) k=part_len;//This is to take care of round robin way of d2, rnascoring code follows this means, you need to do this in case you want to pass scoring test
 	return Ed3(j,i,k);
+	//return Ed3(j,i,k)/100;
 }
 double PartitionFunctionD2::EA_new(){
 	if(PF_COUNT_MODE_) return 0;
 	return Ea;
+	//return Ea/100;
 }
 double PartitionFunctionD2::EB_new(){
 	if(PF_COUNT_MODE_) return 0;
 	return Ec;
+	//return Ec/100;
 }
 double PartitionFunctionD2::EC_new(){
 	if(PF_COUNT_MODE_) return 0;
 	return Eb;
+	//return Eb/100;
 }
 double PartitionFunctionD2::auPenalty_new(int i, int j){
 	if(PF_COUNT_MODE_) return 0;
 	return auPenalty(i,j);
+	//return auPenalty(i,j)/100;
 }
 MyDouble PartitionFunctionD2::f(int j, int h, int l){
 	//if(j - 1 == l || PF_COUNT_MODE_ || NO_DANGLE_MODE_)//TODO: if(j - 1 == l)
@@ -153,11 +166,12 @@ void PartitionFunctionD2::printAllMatrixes(){
 	printf("\n\nAfter calculation, s3 matrix:\n\n");
 	printMatrix(s3,part_len);
 }
-MyDouble PartitionFunctionD2::calculate_partition(int len, int pf_count_mode, int no_dangle_mode)
+MyDouble PartitionFunctionD2::calculate_partition(int len, int pf_count_mode, int no_dangle_mode, bool PF_D2_UP_APPROX_ENABLED1)
 {
 	PF_COUNT_MODE_ = pf_count_mode;
 	NO_DANGLE_MODE_ = no_dangle_mode;
 	part_len = len;
+	PF_D2_UP_APPROX_ENABLED = PF_D2_UP_APPROX_ENABLED1;
 		
 	//OPTIMIZED CODE STARTS
         #ifdef _OPENMP
@@ -189,13 +203,12 @@ void PartitionFunctionD2::free_partition()
 void PartitionFunctionD2::init_part_arrays_negatives(){
 	int i,j,n;
 	n = part_len+1;
-	/*
+	
 	//OPTIMIZED CODE STARTS
 	#ifdef _OPENMP
 	#pragma omp parallel for private (i,j) schedule(guided)
 	#endif
 	//OPTIMIZED CODE ENDS
-	*/
 	for(i=0; i<=n; ++i){
 		for(j=0; j<=n; ++j){
 			u[i][j]=MyDouble(-1.0);
@@ -207,13 +220,13 @@ void PartitionFunctionD2::init_part_arrays_negatives(){
 			u1[i][j]=MyDouble(-1.0);
 		}
 	}
-	/*
+	
 	//OPTIMIZED CODE STARTS
 	#ifdef _OPENMP
 	#pragma omp parallel for private (i,j) schedule(guided)
 	#endif
 	//OPTIMIZED CODE ENDS
-	*/
+	
 	for(i=0; i<=n+1; ++i){
 		for(j=0; j<=n+1; ++j){
 			u1[i][j]=MyDouble(-1.0);
@@ -224,13 +237,13 @@ void PartitionFunctionD2::init_partition_arrays()
 {  init_part_arrays_negatives();
 	int i, j;
 	int n = part_len;
-	/*
+	
 	//OPTIMIZED CODE STARTS
 	#ifdef _OPENMP
 	#pragma omp parallel for private (i,j) schedule(guided)
 	#endif
 	//OPTIMIZED CODE ENDS
-	*/
+	
 	for(i=1; i<=n; ++i){
 		for(j=i; j<=i+TURN && j<=n; ++j){
 			u[i][j] = MyDouble(1.0);
@@ -246,24 +259,23 @@ void PartitionFunctionD2::init_partition_arrays()
                 s2[i][i+4] = MyDouble(0.0);
         }
 
-	/*
+	
 	//OPTIMIZED CODE STARTS
 	#ifdef _OPENMP
 	#pragma omp parallel for private (i) schedule(guided)
 	#endif
 	//OPTIMIZED CODE ENDS
-	*/
+	
 	for(i=1; i<=n; ++i){
 		u[i+1][i] = MyDouble(1.0);
 		u1[i+1][i] = MyDouble(0.0);
 	}
-	/*
+	
 	//OPTIMIZED CODE STARTS
 	#ifdef _OPENMP
 	#pragma omp parallel for private (i) schedule(guided)
 	#endif
 	//OPTIMIZED CODE ENDS
-	*/
 	//for(i=1; i<=n; i++){//OLD
 	for(i=1; i<=n-1; i++){//NEW
 		u1[i+2][i] = MyDouble(0.0);//TODO Uncomment it, as of now i have tested it that commenting it does not impact correctness
@@ -308,11 +320,13 @@ MyDouble** PartitionFunctionD2::mallocTwoD(int r, int c) {
             return NULL;
         }
     }
+/*
     for(i=0; i<r; ++i){
 	for(j=0; j<c; ++j){
-	  arr[i][j].init();
+	  //arr[i][j].init();
 	}
     }
+*/
     return arr;
 }
 void PartitionFunctionD2::freeTwoD(MyDouble** arr, int r, int c) {
@@ -332,22 +346,26 @@ void PartitionFunctionD2::fill_partition_arrays()
 {
 	int b,i,j;
 	int n=part_len;
-	/*//Optimized Parallel Implementation
+	
+	//Optimized Parallel Implementation
 	int numThds = omp_get_num_threads();
 	int* i_canPair = (int*)malloc((n+1)*sizeof(int));
 	int* i_cannotPair = (int*)malloc((n+1)*sizeof(int));
 	int len_i_canPair=0, len_i_cannotPair=0;
 	int index1=0;
-	int b_threshold = n;//n-numThds/2;//TURN+1;//n-numThds/2;//n;
+	int b_threshold = n;//n-numThds/2;//TURN+1;//n-numThds/2;//n;//TODO it should be equal to n only as parallel up is not defined completely
 	for(b=TURN+1; b<b_threshold; ++b){
 		//OPTIMIZED CODE STARTS
 		len_i_canPair=0;
 	       	len_i_cannotPair=0;
 		for(i=1; i<=n-b; ++i){
 			j=i+b;
-			if(canPair(RNA[i],RNA[j])){i_canPair[len_i_canPair++]=i;}
+			if(PAIRABLE_POINTS_GATHER_OPTIMIZATION_DISABLED || canPair(RNA[i],RNA[j])){i_canPair[len_i_canPair++]=i;}
 			else {i_cannotPair[len_i_cannotPair++]=i;}
 		}
+
+		if(PAIRABLE_POINTS_GATHER_OPTIMIZATION_DISABLED) assert(len_i_cannotPair==0);
+
 		#ifdef _OPENMP
 		#pragma omp parallel for private (index1,i,j) schedule(guided)
 		#endif
@@ -357,11 +375,10 @@ void PartitionFunctionD2::fill_partition_arrays()
 			calc_s1(i,j);
 			calc_s2(i,j);
 			calc_upm(i,j);
-			calc_up(i,j);
+			if(PF_D2_UP_APPROX_ENABLED) calc_up_serial_and_approximate(i, j);
+			else calc_up(i,j);
 			calc_s3(i,j);
-			calc_u1d(i,j);
 			calc_u1(i,j);
-			calc_ud(i,j);
 			calc_u(i,j);
 		}
 		#ifdef _OPENMP
@@ -373,11 +390,10 @@ void PartitionFunctionD2::fill_partition_arrays()
 			calc_s1(i,j);
 			calc_s2(i,j);
 			calc_upm(i,j);
-			calc_up(i,j);
+			if(PF_D2_UP_APPROX_ENABLED) calc_up_serial_and_approximate(i, j);
+			else calc_up(i,j);
 			calc_s3(i,j);
-			calc_u1d(i,j);
 			calc_u1(i,j);
-			calc_ud(i,j);
 			calc_u(i,j);
 		}
 		//OPTIMIZED CODE ENDS
@@ -388,15 +404,16 @@ void PartitionFunctionD2::fill_partition_arrays()
 			calc_s1(i,j);
 			calc_s2(i,j);
 			calc_upm(i,j);
-			calc_up_parallel(i,j);
+			if(PF_D2_UP_APPROX_ENABLED) calc_up_parallel_and_approximate(i, j);
+			else calc_up_parallel(i,j);
 			calc_s3(i,j);
-			calc_u1d(i,j);
 			calc_u1(i,j);
-			calc_ud(i,j);
 			calc_u(i,j);
 		}
 	}
-	*/
+	
+
+	/*
 	//parallel implementation, sequential Implementation
 	for(b=TURN+1; b<n; ++b){
 		
@@ -414,7 +431,7 @@ void PartitionFunctionD2::fill_partition_arrays()
 			calc_u1(i,j);
 			calc_u(i,j);
 		}
-	}
+	}*/
 
 }
 
@@ -525,6 +542,99 @@ void PartitionFunctionD2::calc_up(int i, int j)
 		set_up(i, j, 0.0);
 	}
 }
+
+void PartitionFunctionD2::calc_up_serial_and_approximate(int i, int j)
+{
+        MyDouble up_val(0.0);
+        if (canPair(RNA[i],RNA[j]))
+        {
+                int p,q;
+                for (p = i+1; p <= MIN(j-2-TURN,i+MAXLOOP+1) ; p++) {
+                        MyDouble my_up_val(0.0);
+                        int minq = j-i+p-MAXLOOP-2;
+                        if (minq < p+1+TURN) minq = p+1+TURN;
+                        int maxq = (p==(i+1))?(j-2):(j-1);
+                        for (q = minq; q <= maxq; q++) {
+                                if (canPair(p,q)==0) continue;
+                                my_up_val = my_up_val + (get_up(p,q) * myExp(-((double)eL_new(i,j,p,q))/RT));
+                        }
+                        up_val = up_val + my_up_val;
+                }
+
+                up_val = up_val + myExp(-((double)eH_new(i,j))/RT );
+                up_val = up_val + (myExp(-((double)eS_new(i,j))/RT ) * get_up(i+1,j-1));
+                up_val = up_val + get_upm(i,j);
+                set_up(i, j, up_val);
+                //printUPprobabilities(i,j);
+        }
+        else  {
+                set_up(i, j, 0.0);
+        }
+}
+//TODO complete it
+void PartitionFunctionD2::calc_up_parallel(int i, int j)
+{
+	MyDouble up_val(0.0);
+	if (canPair(RNA[i],RNA[j]))
+	{
+		int h;
+		/*#ifdef _OPENMP
+                #pragma omp parallel for private (h) schedule(guided) reduction(+ : up_val)
+                #endif*/
+		for (h = i+1; h < j-1 ; h++) {
+			int l;
+			MyDouble my_up_val(0.0);
+			for (l = h+1; l < j; l++) {
+				if (canPair(RNA[h],RNA[l])==0) continue;
+				if(h==(i+1) && l==(j-1)) continue;
+				my_up_val = my_up_val + (get_up(h,l) * myExp(-((double)eL_new(i,j,h,l))/RT));
+			}
+			up_val = up_val + my_up_val;
+		}
+		up_val = up_val + myExp(-((double)eH_new(i,j))/RT );
+		up_val = up_val + (myExp(-((double)eS_new(i,j))/RT ) * get_up(i+1,j-1));
+		up_val = up_val + get_upm(i,j);
+		set_up(i, j, up_val);
+		//printUPprobabilities(i,j);
+	}
+	else  {
+		set_up(i, j, 0.0);
+	}
+}
+//TODO complete it
+void PartitionFunctionD2::calc_up_parallel_and_approximate(int i, int j)
+{
+        MyDouble up_val(0.0);
+        if (canPair(RNA[i],RNA[j]))
+        {
+                int p;
+		/*#ifdef _OPENMP
+                #pragma omp parallel for private (p) schedule(guided) reduction(+ : up_val)
+                #endif*/
+                for (p = i+1; p <= MIN(j-2-TURN,i+MAXLOOP+1) ; p++) {
+			int q;
+                        MyDouble my_up_val(0.0);
+                        int minq = j-i+p-MAXLOOP-2;
+                        if (minq < p+1+TURN) minq = p+1+TURN;
+                        int maxq = (p==(i+1))?(j-2):(j-1);
+                        for (q = minq; q <= maxq; q++) {
+                                if (canPair(p,q)==0) continue;
+                                my_up_val = my_up_val + (get_up(p,q) * myExp(-((double)eL_new(i,j,p,q))/RT));
+                        }
+                        up_val = up_val + my_up_val;
+                }
+
+                up_val = up_val + myExp(-((double)eH_new(i,j))/RT );
+                up_val = up_val + (myExp(-((double)eS_new(i,j))/RT ) * get_up(i+1,j-1));
+                up_val = up_val + get_upm(i,j);
+                set_up(i, j, up_val);
+                //printUPprobabilities(i,j);
+        }
+        else  {
+                set_up(i, j, 0.0);
+        }
+}
+
 /*
 void printUPprobabilities(int i, int j){
 	int h,l;

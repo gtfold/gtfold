@@ -30,6 +30,7 @@ static bool DUMP_CT_FILE = false;
 static bool CALC_PF_DO = false;
 static bool CALC_PF_DS = false;
 static bool CALC_PF_D2 = false;
+static bool PF_D2_UP_APPROX_ENABLED = false;
 
 static string seqfile = "";
 static string outputPrefix = "";
@@ -50,14 +51,15 @@ static void help() {
 
 	printf("OPTIONS\n");
 
+	printf("   -t|--threads INT    Limit number of threads used to INT.\n");
 	printf("   --partition          Calculate the partition function (default is using sfold reccurences).\n");
 	printf("   --partition -dS      Calculate the partition function using sfold reccurences.\n");
 	printf("   --partition -d0      Calculate the partition function using -d0 reccurences.\n");
-	printf("   --partition -d2      Calculate the partition function using -d2 reccurences.\n");
+	printf("   --partition -d2 [--approxUP]      Calculate the partition function using -d2 reccurences, if --approxUP used then use approximate calculation of UP.\n");
 
 	printf("   --sample   INT -dS      Sample number of structures equal to INT  using -dS reccurences.\n");
-	printf("   --sample   INT -d2      Sample number of structures equal to INT  using -d2 reccurences.\n");
-	printf("   --sample   INT  --dump [--dump_dir dump_dir_path] [--dump_summary dump_summery_file_name] -dS|-d2      Sample number of structures equal to INT and dump each structure to a ct file in dump_dir_path directory (if no value provided then use current directory value for this purpose) and also create a summary file with name stochastic_summery_file_name in dump_dir_path directory (if no value provided, use stochaSampleSummary.txt value for this purpose)\n");
+	printf("   --sample   INT -d2 [--approxUP]     Sample number of structures equal to INT  using -d2 reccurences, if --approxUP used then use approximate calculation of UP.\n");
+	printf("   --sample   INT  --dump [--dump_dir dump_dir_path] [--dump_summary dump_summery_file_name] -dS|-d2 [--approxUP]     Sample number of structures equal to INT and dump each structure to a ct file in dump_dir_path directory (if no value provided then use current directory value for this purpose) and also create a summary file with name stochastic_summery_file_name in dump_dir_path directory (if no value provided, use stochaSampleSummary.txt value for this purpose), if --approxUP used then use approximate calculation of UP which is working only for d2 case as of now.\n");
 	printf("   --pfcount           Calculate the structure count using partition function and zero energy value.\n");
 	printf("   --bpp                Calculate base pair probabilities.\n");
 	printf("\n");
@@ -105,7 +107,8 @@ static void parse_options(int argc, char** argv) {
 				CALC_PF_DO = true;  
 			} else if (strcmp(argv[i],"-d2") == 0) {
 				//help();
-				CALC_PF_D2 = true;  
+				CALC_PF_D2 = true; 
+				if(i < argc && strcmp(argv[i+1],"--approxUP") == 0){ i=i+1;PF_D2_UP_APPROX_ENABLED = true;}
 			}
 			else if (strcmp(argv[i],"--pfcount") == 0) {
 				CALC_PART_FUNC = true;
@@ -194,11 +197,10 @@ int boltzmann_main(int argc, char** argv) {
 		printf("Failed to open sequence file: %s.\n\n", seqfile.c_str());
 		exit(-1);
 	}
-
+	parse_mfe_options(argc, argv);
 	init_fold(seq.c_str());
 
 	readThermodynamicParameters(paramDir.c_str(), PARAM_DIR, 0, 0, 0);
-
 	if (CALC_PART_FUNC == true && CALC_PF_DS == true) {
 		int pf_count_mode = 0;
 		if(PF_COUNT_MODE) pf_count_mode=1;
@@ -217,10 +219,10 @@ int boltzmann_main(int argc, char** argv) {
 		if(PF_COUNT_MODE) pf_count_mode=1;
 		int no_dangle_mode = 0;
 		if(CALC_PF_DO) no_dangle_mode=1;
-		printf("\nComputing partition function in -d2 mode ..., pf_count_mode=%d, no_dangle_mode=%d\n", pf_count_mode, no_dangle_mode);
+		printf("\nComputing partition function in -d2 mode ..., pf_count_mode=%d, no_dangle_mode=%d, PF_D2_UP_APPROX_ENABLED=%d\n", pf_count_mode, no_dangle_mode,PF_D2_UP_APPROX_ENABLED);
 		t1 = get_seconds();
 		PartitionFunctionD2 pf_d2;
-		pf_d2.calculate_partition(seq.length(),pf_count_mode,no_dangle_mode);
+		pf_d2.calculate_partition(seq.length(),pf_count_mode,no_dangle_mode,PF_D2_UP_APPROX_ENABLED);
 		t1 = get_seconds() - t1;
 		printf("partition function computation running time: %9.6f seconds\n", t1);
 		//calculate_partition(seq.length(),0,0);
@@ -268,14 +270,20 @@ int boltzmann_main(int argc, char** argv) {
 		if(CALC_PF_DO) no_dangle_mode=1;
 		  
 		if(CALC_PF_D2 == true){
-			printf("\nComputing stochastic traceback in -d2 mode ..., pf_count_mode=%d, no_dangle_mode=%d\n", pf_count_mode, no_dangle_mode);
+			printf("\nComputing stochastic traceback in -d2 mode ..., pf_count_mode=%d, no_dangle_mode=%d, PF_D2_UP_APPROX_ENABLED=%d\n", pf_count_mode, no_dangle_mode,PF_D2_UP_APPROX_ENABLED);
 			StochasticTracebackD2 st_d2;
-			st_d2.initialize(seq.length(), pf_count_mode, no_dangle_mode, ss_verbose_global);
 			t1 = get_seconds();
-			if(DUMP_CT_FILE==false) st_d2.batch_sample(num_rnd);
+                        st_d2.initialize(seq.length(), pf_count_mode, no_dangle_mode, ss_verbose_global,PF_D2_UP_APPROX_ENABLED);
+                        t1 = get_seconds() - t1;
+                        printf("D2 Traceback initialization (partition function computation) running time: %9.6f seconds\n", t1);
+			t1 = get_seconds();
+			if(DUMP_CT_FILE==false){
+				//st_d2.batch_sample(num_rnd);
+				st_d2.batch_sample_parallel(num_rnd);
+			}
                         else  st_d2.batch_sample_and_dump(num_rnd, ctFileDumpDir, stochastic_summery_file_name, seq, seqfile);
 			t1 = get_seconds() - t1;
-                        printf("Traceback computation running time: %9.6f seconds\n", t1);
+                        printf("D2 Traceback computation running time: %9.6f seconds\n", t1);
 			st_d2.free_traceback();
 		}
 		else{//if(CALC_PF_DS == true){//TODO here it is making dS by default

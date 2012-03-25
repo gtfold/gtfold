@@ -9,22 +9,25 @@
 #include <map>
 #include<sstream>
 #include<fstream>
+#include "utils.h"
+#include<omp.h>
 
 //Basic utility functions
-void StochasticTracebackD2::initialize(int length1, int PF_COUNT_MODE1, int NO_DANGLE_MODE1, int ss_verbose1){
+void StochasticTracebackD2::initialize(int length1, int PF_COUNT_MODE1, int NO_DANGLE_MODE1, int ss_verbose1, bool PF_D2_UP_APPROX_ENABLED1){
 	length = length1;
 	ss_verbose = ss_verbose1; 
-	energy = 0.0;
-	structure = new int[length+1];
+	//energy = 0.0;
+	//structure = new int[length+1];
 	//std::stack<base_pair> g_stack;
 	PF_COUNT_MODE = PF_COUNT_MODE1;
 	NO_DANGLE_MODE = NO_DANGLE_MODE1;
-	pf_d2.calculate_partition(length,PF_COUNT_MODE,NO_DANGLE_MODE);
+	PF_D2_UP_APPROX_ENABLED = PF_D2_UP_APPROX_ENABLED1;
+	pf_d2.calculate_partition(length,PF_COUNT_MODE,NO_DANGLE_MODE, PF_D2_UP_APPROX_ENABLED);
 }
 
 void StochasticTracebackD2::free_traceback(){
 	pf_d2.free_partition();
-	delete[] structure;
+	//delete[] structure;
 }
 
 MyDouble StochasticTracebackD2::randdouble()
@@ -108,7 +111,7 @@ MyDouble StochasticTracebackD2::S3_MB_ihlj(int i, int h, int l, int j){
    }*/
 
 //Functions related to sampling
-void StochasticTracebackD2::rnd_u(int i, int j)
+void StochasticTracebackD2::rnd_u(int i, int j, int* structure, double & energy, std::stack<base_pair>& g_stack)
 {
 	MyDouble rnd = randdouble();
 	MyDouble cum_prob(0.0);
@@ -144,7 +147,7 @@ void StochasticTracebackD2::rnd_u(int i, int j)
 		if (rnd < cum_prob)
 		{
 			h1 = h;
-			rnd_s1(i,h1,j);
+			rnd_s1(i,h1,j, structure, energy, g_stack);
 			return;
 		}
 	}
@@ -152,7 +155,7 @@ void StochasticTracebackD2::rnd_u(int i, int j)
 	assert (0) ;
 }
 
-void StochasticTracebackD2::rnd_s1(int i, int h, int j){
+void StochasticTracebackD2::rnd_s1(int i, int h, int j, int* structure, double & energy, std::stack<base_pair>& g_stack){
 	MyDouble rnd = randdouble();
 	MyDouble cum_prob(0.0);
 	for (int l = h+1; l < j; ++l)
@@ -176,14 +179,14 @@ void StochasticTracebackD2::rnd_s1(int i, int h, int j){
 	assert(0);
 }
 
-void StochasticTracebackD2::rnd_up(int i, int j)
+void StochasticTracebackD2::rnd_up(int i, int j, int* structure, double & energy, std::stack<base_pair>& g_stack)
 {
 	MyDouble rnd = randdouble();
 	MyDouble cum_prob(0.0);
 	assert(structure[i] == 0);
 	assert(structure[j] == 0);
 
-	set_base_pair(i,j);
+	set_base_pair(i,j, structure);
 
 	for (int h = i+1; h < j-1; ++h)
 		for (int l = h+1; l < j; ++l)
@@ -228,14 +231,77 @@ void StochasticTracebackD2::rnd_up(int i, int j)
 	cum_prob = cum_prob + Q_M_ij(i,j);
 	if (rnd < cum_prob)
 	{
-		rnd_upm(i,j);
+		rnd_upm(i,j, structure, energy, g_stack);
 		return;
 	}
 
 	assert(0);
 }
 
-void StochasticTracebackD2::rnd_u1(int i, int j)
+void StochasticTracebackD2::rnd_up_approximate(int i, int j, int* structure, double & energy, std::stack<base_pair>& g_stack)
+{
+	MyDouble rnd = randdouble();
+	MyDouble cum_prob(0.0);
+	assert(structure[i] == 0);
+	assert(structure[j] == 0);
+
+	set_base_pair(i,j, structure);
+
+	for (int p = i+1; p <= MIN(j-2-TURN,i+MAXLOOP+1); ++p){
+		int minq = j-i+p-MAXLOOP-2;
+		if (minq < p+1+TURN) minq = p+1+TURN;
+		int maxq = (p==(i+1))?(j-2):(j-1);
+		for (int q = minq; q <=maxq ; ++q)
+		{
+			cum_prob = cum_prob + Q_BI_ihlj(i,p,q,j);
+			if (rnd < cum_prob)
+			{
+				double e2 = (pf_d2.eL_new(i,j,p,q));
+				if (ss_verbose == 1) 
+					printf("IntLoop(%d %d) %lf\n",i,j, e2/100.0);
+				energy += e2;
+				base_pair bp(p,q,UP);
+				g_stack.push(bp);
+				return;
+			}
+		}
+	}
+
+	cum_prob = cum_prob + Q_H_ij(i,j);
+	if (rnd < cum_prob)
+	{
+		double e2 = (pf_d2.eH_new(i,j));
+		if (ss_verbose == 1) 
+			printf("Hairpin(%d %d) %lf\n",i,j, e2/100.0);
+		energy += e2;
+		//set_single_stranded(i+1,j-1,structure);
+		return ;
+	}
+
+	cum_prob = cum_prob + Q_S_ij(i,j);
+	if (rnd < cum_prob)
+	{
+		double e2 = (pf_d2.eS_new(i,j));
+		if (ss_verbose == 1) 
+			printf("Stack(%d %d) %lf\n",i,j, e2/100.0);
+		energy+=e2;
+		base_pair bp(i+1,j-1,UP);
+		g_stack.push(bp);
+		return ;
+	}
+
+	cum_prob = cum_prob + Q_M_ij(i,j);
+	if (rnd < cum_prob)
+	{
+		rnd_upm(i,j, structure, energy, g_stack);
+		return;
+	}
+
+	assert(0);
+}
+
+
+void StochasticTracebackD2::rnd_u1(int i, int j, int* structure, double & energy, std::stack<base_pair>& g_stack)
 {
 	MyDouble rnd = randdouble();
 	MyDouble cum_prob(0.0);
@@ -254,14 +320,14 @@ void StochasticTracebackD2::rnd_u1(int i, int j)
 			}
 			energy += e2;
 			h1 = h;
-			rnd_s3(i, h1, j);
+			rnd_s3(i, h1, j, structure, energy, g_stack);
 			return;
 		}
 	}
 	assert(0);
 }
 
-void StochasticTracebackD2::rnd_s3(int i, int h, int j){
+void StochasticTracebackD2::rnd_s3(int i, int h, int j, int* structure, double & energy, std::stack<base_pair>& g_stack){
 	// sample l given h1 
 	MyDouble rnd = randdouble();
 	MyDouble cum_prob(0.0);
@@ -278,14 +344,14 @@ void StochasticTracebackD2::rnd_s3(int i, int h, int j){
 			energy += e2;
 			base_pair bp(h,l,UP);
 			g_stack.push(bp);
-			rnd_s3_mb(i,h,l,j);
+			rnd_s3_mb(i,h,l,j, structure, energy, g_stack);
 			return;
 		}
 	}
 	assert(0);
 }
 
-void StochasticTracebackD2::rnd_s3_mb(int i, int h, int l, int j){//shel's document call this method with arguments i,h,l,j+1 therefore one will see difference of 1 in this code and shel's document
+void StochasticTracebackD2::rnd_s3_mb(int i, int h, int l, int j, int* structure, double & energy, std::stack<base_pair>& g_stack){//shel's document call this method with arguments i,h,l,j+1 therefore one will see difference of 1 in this code and shel's document
 	MyDouble rnd = randdouble();
 	MyDouble cum_prob(0.0);
 	cum_prob = cum_prob +  S3_MB_ihlj(i,h,l,j);
@@ -307,7 +373,7 @@ void StochasticTracebackD2::rnd_s3_mb(int i, int h, int l, int j){//shel's docum
 	assert(0);
 }
 
-void StochasticTracebackD2::rnd_upm(int i, int j)
+void StochasticTracebackD2::rnd_upm(int i, int j, int* structure, double & energy, std::stack<base_pair>& g_stack)
 {
 	MyDouble rnd = randdouble();
 	MyDouble cum_prob(0.0);
@@ -329,7 +395,7 @@ void StochasticTracebackD2::rnd_upm(int i, int j)
 				printf("(pf_d2.EA_new()) + 2*(pf_d2.EC_new()) + (h-i-1)*(pf_d2.EB_new())=%f, (pf_d2.auPenalty_new(i,j))=%f, (pf_d2.ED5_new(j,i,j-1))=%f, (pf_d2.ED3_new(j,i,i+1))=%f\n",((pf_d2.EA_new()) + 2*(pf_d2.EC_new()) + (h-i-1)*(pf_d2.EB_new()))/100.0, (pf_d2.auPenalty_new(i,j))/100.0, (pf_d2.ED5_new(j,i,j-1))/100.0, (pf_d2.ED3_new(j,i,i+1))/100.0);
 				printf("%s(%d %d %d) %lf\n", "UPM_S2_ihj",i,h1,j,e2/100.0);
 			}
-			rnd_s2(i,h1,j);
+			rnd_s2(i,h1,j, structure, energy, g_stack);
 			return;
 		}
 	}
@@ -337,7 +403,7 @@ void StochasticTracebackD2::rnd_upm(int i, int j)
 	assert(0);
 }
 
-void StochasticTracebackD2::rnd_s2(int i, int h, int j){
+void StochasticTracebackD2::rnd_s2(int i, int h, int j, int* structure, double & energy, std::stack<base_pair>& g_stack){
 	MyDouble rnd = randdouble();
 	MyDouble cum_prob(0.0);
 	for (int l = h+1; l < j; ++l)
@@ -361,14 +427,15 @@ void StochasticTracebackD2::rnd_s2(int i, int h, int j){
 	assert(0);
 }
 
-double StochasticTracebackD2::rnd_structure()
+double StochasticTracebackD2::rnd_structure(int* structure)
 {
 	//printf("%lf %lf %lf\n", EA_new(), EB_new(), EC_new());
 	srand(rand());
 	//MyDouble U = pf_d2.get_u(1,len);
 	base_pair first(1,length,U);
+	std::stack<base_pair> g_stack;
 	g_stack.push(first);
-	energy = 0.0;
+	double energy = 0.0;
 
 	while (!g_stack.empty())
 	{
@@ -377,11 +444,13 @@ double StochasticTracebackD2::rnd_structure()
 		g_stack.pop();
 
 		if (bp.type() == U)
-			rnd_u(bp.i,bp.j);
-		else if (bp.type() == UP)
-			rnd_up(bp.i,bp.j);
+			rnd_u(bp.i,bp.j, structure, energy, g_stack);
+		else if (bp.type() == UP){
+			if(pf_d2.PF_D2_UP_APPROX_ENABLED) rnd_up_approximate(bp.i,bp.j, structure, energy, g_stack);
+			else rnd_up(bp.i,bp.j, structure, energy, g_stack);
+		}
 		else if (bp.type() == U1)
-			rnd_u1(bp.i,bp.j);
+			rnd_u1(bp.i,bp.j, structure, energy, g_stack);
 	}
 	return (double)energy/100.0;
 }
@@ -459,9 +528,21 @@ delete [] structure;
 
 void StochasticTracebackD2::batch_sample(int num_rnd)
 {
-	MyDouble U = pf_d2.get_u(1,length);
+	MyDouble U;
+	if(PF_D2_UP_APPROX_ENABLED){
+		double t1 = get_seconds();
+                PartitionFunctionD2 pf_d2_exact_up;
+                bool PF_D2_UP_APPROX_ENABLED2 = false;
+                pf_d2_exact_up.calculate_partition(length,PF_COUNT_MODE,NO_DANGLE_MODE, PF_D2_UP_APPROX_ENABLED2);
+                U = pf_d2_exact_up.get_u(1,length);
+                pf_d2_exact_up.free_partition();
+                t1 = get_seconds() - t1;
+                printf("D2 Exact UP partition function computation running time: %9.6f seconds\n", t1);
+	}
+	else U = pf_d2.get_u(1,length);
 	srand(time(NULL));
 	std::map<std::string,std::pair<int,double> >  uniq_structs;
+	int* structure = new int[length+1];
 
 	if (num_rnd > 0 ) {
 		printf("\nSampling structures...\n");
@@ -470,7 +551,7 @@ void StochasticTracebackD2::batch_sample(int num_rnd)
 		{
 			nsamples++;
 			memset(structure, 0, (length+1)*sizeof(int));
-			double energy = rnd_structure();
+			double energy = rnd_structure(structure);
 
 			std::string ensemble(length+1,'.');
 			for (int i = 1; i <= (int)length; ++ i) {
@@ -480,15 +561,18 @@ void StochasticTracebackD2::batch_sample(int num_rnd)
 					ensemble[structure[i]] = ')';
 				}
 			}
-			/*//Below line of codes is for finding samples with particular energy
-			double myEnegry = -91.3;//-94.8;//dS=-88.4;//d2=-93.1
+			/*
+			//Below line of codes is for finding samples with particular energy
+			double myEnegry = -92.1;//-91.3;//-94.8;//dS=-88.4;//d2=-93.1
 			if (fabs(energy-myEnegry)>0.0001){ count--;continue;} //TODO: debug
 			*/
+
 			std::map<std::string,std::pair<int,double> >::iterator iter ;
 			if ((iter =uniq_structs.find(ensemble.substr(1))) != uniq_structs.end())
 			{
 				std::pair<int,double>& pp = iter->second;
 				pp.first++;
+				assert(energy==pp.second);
 			}
 			else {
 				uniq_structs.insert(make_pair(ensemble.substr(1),std::pair<int,double>(1,energy))); 
@@ -530,11 +614,175 @@ void StochasticTracebackD2::batch_sample(int num_rnd)
 		printf("\nMax frequency structure : \n%s e=%lf freq=%d p=%lf\n",bestStruct.c_str(),bestE,maxCount,(double)maxCount/(double)num_rnd);
 
 	}
+	delete[] structure;
 }
+
+void StochasticTracebackD2::batch_sample_parallel(int num_rnd)
+{
+	//MyDouble U = pf_d2.get_u(1,length);
+	 MyDouble U;
+        if(PF_D2_UP_APPROX_ENABLED){
+		double t1 = get_seconds();
+                PartitionFunctionD2 pf_d2_exact_up;
+                bool PF_D2_UP_APPROX_ENABLED2 = false;
+                pf_d2_exact_up.calculate_partition(length,PF_COUNT_MODE,NO_DANGLE_MODE, PF_D2_UP_APPROX_ENABLED2);
+                U = pf_d2_exact_up.get_u(1,length);
+                pf_d2_exact_up.free_partition();
+                t1 = get_seconds() - t1;
+                printf("D2 Exact UP partition function computation running time: %9.6f seconds\n", t1);
+       }
+        else U = pf_d2.get_u(1,length);
+
+	srand(time(NULL));
+	//OPTIMIZED CODE STARTS
+        #ifdef _OPENMP
+        if (g_nthreads > 0) omp_set_num_threads(g_nthreads);
+        #endif
+
+	#ifdef _OPENMP
+	#pragma omp parallel
+	//#pragma omp master
+	{
+		int thdId1 = omp_get_thread_num();
+		if(thdId1==0){
+			fprintf(stdout,"Stochastic Traceback: Thread count: %3d \n",omp_get_num_threads());
+			if(g_nthreads < 0) g_nthreads = omp_get_num_threads();//TODO move this line to mfe_main.cc
+		}
+	}
+	#endif
+	//OPTIMIZED CODE ENDSS
+	
+	std::map<std::string,std::pair<int,double> >  uniq_structs;
+	//std::map<std::string,std::pair<int,double> >  uniq_structs_thread[g_nthreads];
+	//g_nthreads=4;//TODO remove this line
+	cout<<"Manoj after: g_nthreads="<<g_nthreads<<endl;
+	std::map<std::string,std::pair<int,double> > *  uniq_structs_thread = new std::map<std::string,std::pair<int,double> >[g_nthreads];
+	int* structures_thread = new int[g_nthreads*(length+1)];
+
+	if (num_rnd > 0 ) {
+		printf("\nSampling structures...\n");
+		int count;// nsamples =0;
+		#ifdef _OPENMP
+                #pragma omp parallel for private (count) shared(structures_thread) schedule(guided)
+                #endif
+		for (count = 1; count <= num_rnd; ++count) 
+		{
+			//nsamples++;
+			int thdId = omp_get_thread_num();
+			//cout<<"thdId="<<thdId<<endl;
+			int* structure = structures_thread + thdId*(length+1);
+			memset(structure, 0, (length+1)*sizeof(int));
+			double energy = rnd_structure(structure);
+
+			std::string ensemble(length+1,'.');
+			for (int i = 1; i <= (int)length; ++ i) {
+				if (structure[i] > 0 && ensemble[i] == '.')
+				{
+					ensemble[i] = '(';
+					ensemble[structure[i]] = ')';
+				}
+			}
+			/*
+			//Below line of codes is for finding samples with particular energy
+			double myEnegry = -92.1;//-91.3;//-94.8;//dS=-88.4;//d2=-93.1
+			if (fabs(energy-myEnegry)>0.0001){ count--;continue;} //TODO: debug
+			*/
+
+			std::map<std::string,std::pair<int,double> >::iterator iter ;
+			if ((iter =uniq_structs_thread[thdId].find(ensemble.substr(1))) != uniq_structs_thread[thdId].end())
+			{
+				std::pair<int,double>& pp = iter->second;
+				pp.first++;
+				//cout<<"energy="<<energy<<",pp.second="<<pp.second<<endl;
+				assert(energy==pp.second);
+			}
+			else {
+				std::pair< std::string, std::pair<int,double> > new_pp = make_pair(ensemble.substr(1),std::pair<int,double>(1,energy));
+				uniq_structs_thread[thdId].insert(new_pp); 
+				//uniq_structs_thread[thdId].insert(make_pair(ensemble.substr(1),std::pair<int,double>(1,energy))); 
+			}
+
+			// std::cout << ensemble.substr(1) << ' ' << energy << std::endl;
+		}
+
+		for(int thd_id=0; thd_id<g_nthreads; thd_id++){
+			std::map<std::string,std::pair<int,double> >::iterator thd_iter ;
+			for (thd_iter = uniq_structs_thread[thd_id].begin(); thd_iter != uniq_structs_thread[thd_id].end();  ++thd_iter)
+			{
+				const std::string& thd_ss = thd_iter->first;
+				const std::pair<int,double>& thd_pp = thd_iter->second;
+				const int thd_freq = thd_pp.first;
+				const double thd_e = thd_pp.second;
+
+				std::map<std::string,std::pair<int,double> >::iterator iter ;
+				if ((iter =uniq_structs.find(thd_ss)) != uniq_structs.end())
+				{
+					std::pair<int,double>& pp = iter->second;
+					(pp.first)+=thd_freq;
+					const double e = pp.second;
+					//cout<<"e="<<e<<",thd_e="<<thd_e<<endl;
+					assert(e==thd_e);
+				}
+				else {
+					uniq_structs.insert(make_pair(thd_ss,std::pair<int,double>(thd_freq,thd_e)));
+				}
+			}
+		}
+		//std::cout << nsamples << std::endl;
+		int pcount = 0;
+		int maxCount = 0; std::string bestStruct;
+		double bestE = INFINITY;
+		printf("nsamples=%d\n",num_rnd);
+		printf("%s,%s,%s","structure","energy","boltzman_probability");
+		printf(",%s,%s\n","estimated_probability","frequency");
+		std::map<std::string,std::pair<int,double> >::iterator iter ;
+		for (iter = uniq_structs.begin(); iter != uniq_structs.end();  ++iter)
+		{
+			const std::string& ss = iter->first;
+			const std::pair<int,double>& pp = iter->second;
+			const double& estimated_p =  (double)pp.first/(double)num_rnd;
+			const double& energy = pp.second;
+			//MyDouble actual_p = (MyDouble(pow(2.718281,-1.0*energy/RT_)))/U;
+			MyDouble actual_p = (pf_d2.myExp(-(energy)/(RT_)))/U;
+			//MyDouble actual_p(-(energy)/(RT_));///U;
+			printf("%s,%f,",ss.c_str(),energy);actual_p.print();
+			printf(",%f,%d\n",estimated_p,pp.first);
+	
+			//printf("%s %lf\n",ss.c_str(),energy);actual_p.print();
+			//printf("%lf %d\n",estimated_p,pp.first);
+			pcount += pp.first;
+			if (pp.first > maxCount)
+			{
+				maxCount = pp.first;
+				bestStruct  = ss;
+				bestE = pp.second;
+			}
+		}
+		assert(num_rnd == pcount);
+		printf("\nMax frequency structure : \n%s e=%lf freq=%d p=%lf\n",bestStruct.c_str(),bestE,maxCount,(double)maxCount/(double)num_rnd);
+
+	}
+	delete [] structures_thread;
+	delete [] uniq_structs_thread;
+}
+
 
 void StochasticTracebackD2::batch_sample_and_dump(int num_rnd, std::string ctFileDumpDir, std::string stochastic_summery_file_name, std::string seq, std::string seqfile)
 {
-	MyDouble U = pf_d2.get_u(1,length);
+	//MyDouble U = pf_d2.get_u(1,length);
+	 MyDouble U;
+        if(PF_D2_UP_APPROX_ENABLED){
+		double t1 = get_seconds();
+                PartitionFunctionD2 pf_d2_exact_up;
+                bool PF_D2_UP_APPROX_ENABLED2 = false;
+                pf_d2_exact_up.calculate_partition(length,PF_COUNT_MODE,NO_DANGLE_MODE, PF_D2_UP_APPROX_ENABLED2);
+                U = pf_d2_exact_up.get_u(1,length);
+                pf_d2_exact_up.free_partition();
+                t1 = get_seconds() - t1;
+                printf("D2 Exact UP partition function computation running time: %9.6f seconds\n", t1);
+       }
+        else U = pf_d2.get_u(1,length);
+
 	//data dump preparation code starts here
 	if(ctFileDumpDir.compare("")==0){
 		char abspath[1000];
@@ -554,14 +802,14 @@ void StochasticTracebackD2::batch_sample_and_dump(int num_rnd, std::string ctFil
 
 	srand(time(NULL));
 	std::map<std::string,std::pair<int,double> >  uniq_structs;
-
+	int* structure = new int[length+1];
 	if (num_rnd > 0 ) {
 		printf("\nSampling structures...\n");
 		int count, nsamples =0;
 		for (count = 1; count <= num_rnd; ++count) 
 		{
 			memset(structure, 0, (length+1)*sizeof(int));
-			double energy = rnd_structure();
+			double energy = rnd_structure(structure);
 
 			std::string ensemble(length+1,'.');
 			for (int i = 1; i <= (int)length; ++ i) {
@@ -628,16 +876,17 @@ void StochasticTracebackD2::batch_sample_and_dump(int num_rnd, std::string ctFil
 		printf("\nMax frequency structure : \n%s e=%lf freq=%d p=%lf\n",bestStruct.c_str(),bestE,maxCount,(double)maxCount/(double)num_rnd);
 	}
 	summaryoutfile.close();
+	delete[] structure;
 
 }
 
-void StochasticTracebackD2::set_single_stranded(int i, int j)
+void StochasticTracebackD2::set_single_stranded(int i, int j, int* structure)
 {
 	for(;i<=j;++i) 
 		structure[i] = 0;
 }
 
-void StochasticTracebackD2::set_base_pair(int i, int j)
+void StochasticTracebackD2::set_base_pair(int i, int j, int* structure)
 {
 	bool cond = j-i > TURN && canPair(RNA[i],RNA[j]);
 	assert(cond);

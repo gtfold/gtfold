@@ -9,6 +9,8 @@ extern "C" {
 #endif
  */
 class PartitionFunctionD2{
+	public:
+		bool PF_D2_UP_APPROX_ENABLED;
 	private:
 		//Arrays to store partition function values
 		MyDouble ** u;
@@ -44,6 +46,9 @@ class PartitionFunctionD2{
 		void calc_s1(int i, int j);
 		void calc_s2(int i, int j);
 		void calc_s3(int i, int j);
+		void calc_up_serial_and_approximate(int i, int j);
+		void calc_up_parallel_and_approximate(int i, int j);
+		void calc_up_parallel(int i, int j);
 		//general utility functions
 		MyDouble **mallocTwoD(int r, int c);
 		void freeTwoD(MyDouble** arr, int r, int c);
@@ -70,7 +75,7 @@ class PartitionFunctionD2{
 		MyDouble get_s2(int i, int j);
 		MyDouble get_s3(int i, int j);
 		//Functions to calculate partition, and other partition function related utilities exposed to outside world
-		MyDouble calculate_partition(int len, int pf_count_mode, int no_dangle_mode);
+		MyDouble calculate_partition(int len, int pf_count_mode, int no_dangle_mode, bool PF_D2_UP_APPROX_ENABLED);
 		void free_partition();
 		void printAllMatrixes();
 

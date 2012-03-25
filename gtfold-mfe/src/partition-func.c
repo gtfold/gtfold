@@ -136,41 +136,50 @@ inline double myExp(double arg){
 inline double eS_new(int i, int j){
 	if(PF_COUNT_MODE_) return 0;
 	return eS(i,j);
+	//return eS(i,j)/100;
 }
 inline double eH_new(int i, int j){
 	if(PF_COUNT_MODE_) return 0;
 	return eH(i,j);
+	//return eH(i,j)/100;
 }
 inline double eL_new(int i, int j, int p, int q){
 	if(PF_COUNT_MODE_) return 0;
 	return eL(i,j,p,q);
+	//return eL(i,j,p,q)/100;
 }
 inline double ED3_new(int i, int j, int k){
 	if(NO_DANGLE_MODE_) return 0;
 	if(PF_COUNT_MODE_) return 0;
 	return Ed5(j,i,k);
+	//return Ed5(j,i,k)/100;
 }
 inline double ED5_new(int i, int j, int k){
 	if(NO_DANGLE_MODE_) return 0;
 	if(PF_COUNT_MODE_) return 0;
 	if (k<1) return 0;
 	return Ed3(j,i,k);
+	//return Ed3(j,i,k)/100;
 }
 inline double EA_new(){
 	if(PF_COUNT_MODE_) return 0;
 	return Ea;
+	//return Ea/100;
 }
 inline double EB_new(){
 	if(PF_COUNT_MODE_) return 0;
 	return Ec;
+	//return Ec/100;
 }
 inline double EC_new(){
 	if(PF_COUNT_MODE_) return 0;
 	return Eb;
+	//return Eb/100;
 }
 inline double auPenalty_new(int i, int j){
 	if(PF_COUNT_MODE_) return 0;
 	return auPenalty(i,j);
+	//return auPenalty(i,j)/100;
 }
 inline 	double f(int j, int h, int l){
 	if(j - 1 == l)
@@ -212,7 +221,6 @@ double calculate_partition(int len, int pf_count_mode, int no_dangle_mode)
 	PF_COUNT_MODE_ = pf_count_mode;
 	NO_DANGLE_MODE_ = no_dangle_mode;
 	part_len = len;
-	
 	//OPTIMIZED CODE STARTS
         #ifdef _OPENMP
         if (g_nthreads > 0) omp_set_num_threads(g_nthreads);
