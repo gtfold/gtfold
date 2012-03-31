@@ -727,7 +727,8 @@ void batch_sample(int num_rnd, int length, double U)
         const std::pair<int,double>& pp = iter->second;
         const double& estimated_p =  (double)pp.first/(double)num_rnd;
         const double& energy = pp.second;
-        double actual_p = pow(2.718281,-1.0*energy/RT_)/U;
+        //double actual_p = pow(2.718281,-1.0*energy/RT_)/U;
+        double actual_p = pow(2.718281,-1.0*energy*100/RT)/U;
 
         printf("%s %lf %lf %lf %d\n",ss.c_str(),energy,actual_p,estimated_p,pp.first);
         pcount += pp.first;
@@ -820,7 +821,8 @@ void batch_sample_and_dump(int num_rnd, int length, double U, std::string ctFile
         const std::pair<int,double>& pp = iter->second;
         const double& estimated_p =  (double)pp.first/(double)num_rnd;
         const double& energy = pp.second;
-        double actual_p = pow(2.718281,-1.0*energy/RT_)/U;
+        //double actual_p = pow(2.718281,-1.0*energy/RT_)/U;
+        double actual_p = pow(2.718281,-1.0*energy*100/RT)/U;
 
         printf("%s %lf %lf %lf %d\n",ss.c_str(),energy,actual_p,estimated_p,pp.first);
         pcount += pp.first;

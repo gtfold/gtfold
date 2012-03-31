@@ -31,6 +31,11 @@ static bool CALC_PF_DO = false;
 static bool CALC_PF_DS = false;
 static bool CALC_PF_D2 = false;
 static bool PF_D2_UP_APPROX_ENABLED = false;
+static bool ST_D2_ENABLE_COUNTS_PARALLELIZATION = false;
+static bool ST_D2_ENABLE_ONE_SAMPLE_PARALLELIZATION = false;
+static bool ST_D2_ENABLE_SCATTER_PLOT = false;
+static bool ST_D2_ENABLE_UNIFORM_SAMPLE = false;
+static double ST_D2_UNIFORM_SAMPLE_ENERGY = 0.0;
 
 static string seqfile = "";
 static string outputPrefix = "";
@@ -58,7 +63,7 @@ static void help() {
 	printf("   --partition -d2 [--approxUP]      Calculate the partition function using -d2 reccurences, if --approxUP used then use approximate calculation of UP.\n");
 
 	printf("   --sample   INT -dS      Sample number of structures equal to INT  using -dS reccurences.\n");
-	printf("   --sample   INT -d2 [--approxUP]     Sample number of structures equal to INT  using -d2 reccurences, if --approxUP used then use approximate calculation of UP.\n");
+	printf("   --sample   INT -d2 [--approxUP] [--scatterPlot] [--uniformSample energy1] [--counts-parallel] [--one-sample-parallel]    Sample number of structures equal to INT  using -d2 reccurences, if --approxUP used then use approximate calculation of UP, if --scatterPlot used then collect frequency of all structures and calculate estimate probability and boltzmann probability for scatter plot, if --uniformSample used then samples with Energy energy1 will only be sampled, if --counts-parallel used then parallelize INT sample counts, if --one-sample-parallel used then parallelize one sample.\n");
 	printf("   --sample   INT  --dump [--dump_dir dump_dir_path] [--dump_summary dump_summery_file_name] -dS|-d2 [--approxUP]     Sample number of structures equal to INT and dump each structure to a ct file in dump_dir_path directory (if no value provided then use current directory value for this purpose) and also create a summary file with name stochastic_summery_file_name in dump_dir_path directory (if no value provided, use stochaSampleSummary.txt value for this purpose), if --approxUP used then use approximate calculation of UP which is working only for d2 case as of now.\n");
 	printf("   --pfcount           Calculate the structure count using partition function and zero energy value.\n");
 	printf("   --bpp                Calculate base pair probabilities.\n");
@@ -107,8 +112,18 @@ static void parse_options(int argc, char** argv) {
 				CALC_PF_DO = true;  
 			} else if (strcmp(argv[i],"-d2") == 0) {
 				//help();
-				CALC_PF_D2 = true; 
+				CALC_PF_D2 = true;
 				if(i < argc && strcmp(argv[i+1],"--approxUP") == 0){ i=i+1;PF_D2_UP_APPROX_ENABLED = true;}
+				if(i < argc && strcmp(argv[i+1],"--scatterPlot") == 0){ i=i+1;ST_D2_ENABLE_SCATTER_PLOT = true;}
+				if(i < argc && strcmp(argv[i+1],"--uniformSample") == 0){
+					i=i+1;ST_D2_ENABLE_UNIFORM_SAMPLE = true;
+					if(i < argc){ST_D2_UNIFORM_SAMPLE_ENERGY = atof(argv[++i]);}
+					else help();
+					continue;
+					
+				}
+				if(i < argc && strcmp(argv[i+1],"--counts-parallel") == 0){ i=i+1; ST_D2_ENABLE_COUNTS_PARALLELIZATION = true;}
+				if(i < argc && strcmp(argv[i+1],"--one-sample-parallel") == 0){ i=i+1; ST_D2_ENABLE_ONE_SAMPLE_PARALLELIZATION = true;}
 			}
 			else if (strcmp(argv[i],"--pfcount") == 0) {
 				CALC_PART_FUNC = true;
@@ -278,8 +293,9 @@ int boltzmann_main(int argc, char** argv) {
                         printf("D2 Traceback initialization (partition function computation) running time: %9.6f seconds\n", t1);
 			t1 = get_seconds();
 			if(DUMP_CT_FILE==false){
-				//st_d2.batch_sample(num_rnd);
-				st_d2.batch_sample_parallel(num_rnd);
+				if(ST_D2_ENABLE_COUNTS_PARALLELIZATION)
+					st_d2.batch_sample_parallel(num_rnd,ST_D2_ENABLE_SCATTER_PLOT,ST_D2_ENABLE_ONE_SAMPLE_PARALLELIZATION);
+				else st_d2.batch_sample(num_rnd,ST_D2_ENABLE_SCATTER_PLOT,ST_D2_ENABLE_ONE_SAMPLE_PARALLELIZATION,ST_D2_ENABLE_UNIFORM_SAMPLE,ST_D2_UNIFORM_SAMPLE_ENERGY);
 			}
                         else  st_d2.batch_sample_and_dump(num_rnd, ctFileDumpDir, stochastic_summery_file_name, seq, seqfile);
 			t1 = get_seconds() - t1;

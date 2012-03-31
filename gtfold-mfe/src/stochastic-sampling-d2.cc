@@ -454,6 +454,79 @@ double StochasticTracebackD2::rnd_structure(int* structure)
 	}
 	return (double)energy/100.0;
 }
+
+double StochasticTracebackD2::rnd_structure_parallel(int* structure, int threads_for_one_sample)
+{
+	//printf("%lf %lf %lf\n", EA_new(), EB_new(), EC_new());
+	srand(rand());
+	//MyDouble U = pf_d2.get_u(1,len);
+	base_pair first(1,length,U);
+	//std::stack<base_pair> g_stack;
+	std::stack<base_pair> g_stack;
+	g_stack.push(first);
+	double energy = 0.0;
+	std::stack<base_pair> g_stack_threads[threads_for_one_sample];
+	double* energy_threads = new double[threads_for_one_sample];
+	for(int index=0; index<threads_for_one_sample; ++index)energy_threads[index]=0.0;
+
+	while (!g_stack.empty())
+	{
+		if(g_stack.size()%threads_for_one_sample != 0){
+			base_pair bp = g_stack.top();
+			//   std::cout << bp;
+			g_stack.pop();
+
+			if (bp.type() == U)
+				rnd_u(bp.i,bp.j, structure, energy, g_stack);
+			else if (bp.type() == UP){
+				if(pf_d2.PF_D2_UP_APPROX_ENABLED) rnd_up_approximate(bp.i,bp.j, structure, energy, g_stack);
+				else rnd_up(bp.i,bp.j, structure, energy, g_stack);
+			}
+			else if (bp.type() == U1)
+				rnd_u1(bp.i,bp.j, structure, energy, g_stack);
+		}
+		else{
+			std::deque<base_pair> g_deque;
+			while(!g_stack.empty()){
+				base_pair bp = g_stack.top();
+				g_stack.pop();
+				g_deque.push_back(bp);
+			}
+			int index;
+			
+			#ifdef _OPENMP
+			#pragma omp parallel for private(index) shared(energy_threads, g_stack_threads, structure) schedule(guided) num_threads(threads_for_one_sample)
+			//#pragma omp parallel for private(index) shared(energy_threads, g_stack_threads, structure) schedule(guided)
+			#endif
+			for (index = 0; index < g_deque.size(); ++index) {
+				int thdId = omp_get_thread_num();
+				base_pair bp = g_deque[index];
+				if (bp.type() == U)
+					rnd_u(bp.i,bp.j, structure, energy_threads[thdId], g_stack_threads[thdId]);
+				else if (bp.type() == UP){
+					if(pf_d2.PF_D2_UP_APPROX_ENABLED) rnd_up_approximate(bp.i,bp.j, structure, energy_threads[thdId], g_stack_threads[thdId]);
+					else rnd_up(bp.i,bp.j, structure, energy_threads[thdId], g_stack_threads[thdId]);
+				}
+				else if (bp.type() == U1)
+					rnd_u1(bp.i,bp.j, structure, energy_threads[thdId], g_stack_threads[thdId]);
+			}
+
+			for(index=0; index<threads_for_one_sample; ++index){
+				energy += energy_threads[index];
+				energy_threads[index] = 0.0;
+				while(!g_stack_threads[index].empty()){
+					base_pair bp = g_stack_threads[index].top();
+					g_stack_threads[index].pop();
+					g_stack.push(bp);
+				}
+			}
+		}
+	}
+	delete[] energy_threads;
+	return (double)energy/100.0;
+}
+
+
 /*
    void batch_sample(int num_rnd, int length, double U)
    {
@@ -526,21 +599,36 @@ delete [] structure;
 }
  */
 
-void StochasticTracebackD2::batch_sample(int num_rnd)
-{
+void StochasticTracebackD2::batch_sample(int num_rnd, bool ST_D2_ENABLE_SCATTER_PLOT, bool ST_D2_ENABLE_ONE_SAMPLE_PARALLELIZATION ,bool ST_D2_ENABLE_UNIFORM_SAMPLE, double ST_D2_UNIFORM_SAMPLE_ENERGY)
+{cout<<"ST_D2_ENABLE_UNIFORM_SAMPLE="<<ST_D2_ENABLE_UNIFORM_SAMPLE<<",ST_D2_UNIFORM_SAMPLE_ENERGY="<<ST_D2_UNIFORM_SAMPLE_ENERGY<<endl;
 	MyDouble U;
-	if(PF_D2_UP_APPROX_ENABLED){
-		double t1 = get_seconds();
-                PartitionFunctionD2 pf_d2_exact_up;
-                bool PF_D2_UP_APPROX_ENABLED2 = false;
-                pf_d2_exact_up.calculate_partition(length,PF_COUNT_MODE,NO_DANGLE_MODE, PF_D2_UP_APPROX_ENABLED2);
-                U = pf_d2_exact_up.get_u(1,length);
-                pf_d2_exact_up.free_partition();
-                t1 = get_seconds() - t1;
-                printf("D2 Exact UP partition function computation running time: %9.6f seconds\n", t1);
+	/*if(PF_D2_UP_APPROX_ENABLED){
+	  double t1 = get_seconds();
+	  PartitionFunctionD2 pf_d2_exact_up;
+	  bool PF_D2_UP_APPROX_ENABLED2 = false;
+	  pf_d2_exact_up.calculate_partition(length,PF_COUNT_MODE,NO_DANGLE_MODE, PF_D2_UP_APPROX_ENABLED2);
+	  U = pf_d2_exact_up.get_u(1,length);
+	  pf_d2_exact_up.free_partition();
+	  t1 = get_seconds() - t1;
+	  printf("D2 Exact UP partition function computation running time: %9.6f seconds\n", t1);
+	  }
+	  else U = pf_d2.get_u(1,length);*/
+	U = pf_d2.get_u(1,length);
+
+	int threads_for_one_sample = 1;
+	#ifdef _OPENMP
+	#pragma omp parallel
+	//#pragma omp master
+	{
+		int thdId1 = omp_get_thread_num();
+		if(thdId1==0){
+			if(g_nthreads < 0) threads_for_one_sample = omp_get_num_threads();//TODO move this line to mfe_main.cc
+			else threads_for_one_sample = g_nthreads;
+		}
 	}
-	else U = pf_d2.get_u(1,length);
-	srand(time(NULL));
+	#endif
+	if(ST_D2_ENABLE_ONE_SAMPLE_PARALLELIZATION) fprintf(stdout,"Stochastic Traceback: Thread count for one sample parallelization: %3d \n",threads_for_one_sample);
+
 	std::map<std::string,std::pair<int,double> >  uniq_structs;
 	int* structure = new int[length+1];
 
@@ -551,7 +639,13 @@ void StochasticTracebackD2::batch_sample(int num_rnd)
 		{
 			nsamples++;
 			memset(structure, 0, (length+1)*sizeof(int));
-			double energy = rnd_structure(structure);
+			double energy;
+			if(ST_D2_ENABLE_ONE_SAMPLE_PARALLELIZATION){
+				energy = rnd_structure_parallel(structure, threads_for_one_sample);
+			}
+			else{
+				energy = rnd_structure(structure);
+			}
 
 			std::string ensemble(length+1,'.');
 			for (int i = 1; i <= (int)length; ++ i) {
@@ -561,11 +655,12 @@ void StochasticTracebackD2::batch_sample(int num_rnd)
 					ensemble[structure[i]] = ')';
 				}
 			}
-			/*
+			
 			//Below line of codes is for finding samples with particular energy
-			double myEnegry = -92.1;//-91.3;//-94.8;//dS=-88.4;//d2=-93.1
-			if (fabs(energy-myEnegry)>0.0001){ count--;continue;} //TODO: debug
-			*/
+			if(ST_D2_ENABLE_UNIFORM_SAMPLE){
+				//double myEnegry = -92.1;//-91.3;//-94.8;//dS=-88.4;//d2=-93.1
+				if (fabs(energy-ST_D2_UNIFORM_SAMPLE_ENERGY)>0.0001){ count--;continue;} //TODO: debug
+			}
 
 			std::map<std::string,std::pair<int,double> >::iterator iter ;
 			if ((iter =uniq_structs.find(ensemble.substr(1))) != uniq_structs.end())
@@ -575,96 +670,153 @@ void StochasticTracebackD2::batch_sample(int num_rnd)
 				assert(energy==pp.second);
 			}
 			else {
-				uniq_structs.insert(make_pair(ensemble.substr(1),std::pair<int,double>(1,energy))); 
+				if(ST_D2_ENABLE_SCATTER_PLOT) uniq_structs.insert(make_pair(ensemble.substr(1),std::pair<int,double>(1,energy))); 
 			}
 
-			// std::cout << ensemble.substr(1) << ' ' << energy << std::endl;
+			if(!ST_D2_ENABLE_SCATTER_PLOT) std::cout << ensemble.substr(1) << ' ' << energy << std::endl;
 		}
 		//std::cout << nsamples << std::endl;
-		int pcount = 0;
-		int maxCount = 0; std::string bestStruct;
-		double bestE = INFINITY;
-		printf("nsamples=%d\n",nsamples);
-		printf("%s,%s,%s","structure","energy","boltzman_probability");
-		printf(",%s,%s\n","estimated_probability","frequency");
-		std::map<std::string,std::pair<int,double> >::iterator iter ;
-		for (iter = uniq_structs.begin(); iter != uniq_structs.end();  ++iter)
-		{
-			const std::string& ss = iter->first;
-			const std::pair<int,double>& pp = iter->second;
-			const double& estimated_p =  (double)pp.first/(double)num_rnd;
-			const double& energy = pp.second;
-			//MyDouble actual_p = (MyDouble(pow(2.718281,-1.0*energy/RT_)))/U;
-			MyDouble actual_p = (pf_d2.myExp(-(energy)/(RT_)))/U;
-			//MyDouble actual_p(-(energy)/(RT_));///U;
-			printf("%s,%f,",ss.c_str(),energy);actual_p.print();
-			printf(",%f,%d\n",estimated_p,pp.first);
-	
-			//printf("%s %lf\n",ss.c_str(),energy);actual_p.print();
-			//printf("%lf %d\n",estimated_p,pp.first);
-			pcount += pp.first;
-			if (pp.first > maxCount)
+		if(ST_D2_ENABLE_SCATTER_PLOT){
+			int pcount = 0;
+			int maxCount = 0; std::string bestStruct;
+			double bestE = INFINITY;
+			printf("nsamples=%d\n",nsamples);
+			printf("%s,%s,%s","structure","energy","boltzman_probability");
+			printf(",%s,%s\n","estimated_probability","frequency");
+			std::map<std::string,std::pair<int,double> >::iterator iter ;
+			for (iter = uniq_structs.begin(); iter != uniq_structs.end();  ++iter)
 			{
-				maxCount = pp.first;
-				bestStruct  = ss;
-				bestE = pp.second;
+				const std::string& ss = iter->first;
+				const std::pair<int,double>& pp = iter->second;
+				const double& estimated_p =  (double)pp.first/(double)num_rnd;
+				const double& energy = pp.second;
+				//MyDouble actual_p = (MyDouble(pow(2.718281,-1.0*energy/RT_)))/U;
+				//MyDouble actual_p = (pf_d2.myExp(-(energy)/(RT_)))/U;
+				MyDouble actual_p = (pf_d2.myExp(-(energy*100)/(RT)))/U;
+				//MyDouble actual_p(-(energy)/(RT_));///U;
+				printf("%s,%f,",ss.c_str(),energy);actual_p.print();
+				printf(",%f,%d\n",estimated_p,pp.first);
+
+				//printf("%s %lf\n",ss.c_str(),energy);actual_p.print();
+				//printf("%lf %d\n",estimated_p,pp.first);
+				pcount += pp.first;
+				if (pp.first > maxCount)
+				{
+					maxCount = pp.first;
+					bestStruct  = ss;
+					bestE = pp.second;
+				}
 			}
+			assert(num_rnd == pcount);
+			printf("\nMax frequency structure : \n%s e=%lf freq=%d p=%lf\n",bestStruct.c_str(),bestE,maxCount,(double)maxCount/(double)num_rnd);
 		}
-		assert(num_rnd == pcount);
-		printf("\nMax frequency structure : \n%s e=%lf freq=%d p=%lf\n",bestStruct.c_str(),bestE,maxCount,(double)maxCount/(double)num_rnd);
+		else{
+			printf("nsamples=%d\n",nsamples);
+		}
 
 	}
 	delete[] structure;
 }
 
-void StochasticTracebackD2::batch_sample_parallel(int num_rnd)
+void StochasticTracebackD2::batch_sample_parallel(int num_rnd, bool ST_D2_ENABLE_SCATTER_PLOT, bool ST_D2_ENABLE_ONE_SAMPLE_PARALLELIZATION)
 {
 	//MyDouble U = pf_d2.get_u(1,length);
-	 MyDouble U;
-        if(PF_D2_UP_APPROX_ENABLED){
-		double t1 = get_seconds();
-                PartitionFunctionD2 pf_d2_exact_up;
-                bool PF_D2_UP_APPROX_ENABLED2 = false;
-                pf_d2_exact_up.calculate_partition(length,PF_COUNT_MODE,NO_DANGLE_MODE, PF_D2_UP_APPROX_ENABLED2);
-                U = pf_d2_exact_up.get_u(1,length);
-                pf_d2_exact_up.free_partition();
-                t1 = get_seconds() - t1;
-                printf("D2 Exact UP partition function computation running time: %9.6f seconds\n", t1);
-       }
-        else U = pf_d2.get_u(1,length);
+	MyDouble U;
+	/*if(PF_D2_UP_APPROX_ENABLED){
+	  double t1 = get_seconds();
+	  PartitionFunctionD2 pf_d2_exact_up;
+	  bool PF_D2_UP_APPROX_ENABLED2 = false;
+	  pf_d2_exact_up.calculate_partition(length,PF_COUNT_MODE,NO_DANGLE_MODE, PF_D2_UP_APPROX_ENABLED2);
+	  U = pf_d2_exact_up.get_u(1,length);
+	  pf_d2_exact_up.free_partition();
+	  t1 = get_seconds() - t1;
+	  printf("D2 Exact UP partition function computation running time: %9.6f seconds\n", t1);
+	  }
+	  else U = pf_d2.get_u(1,length);
+	 */
+	U = pf_d2.get_u(1,length);
 
 	srand(time(NULL));
+	/*
 	//OPTIMIZED CODE STARTS
-        #ifdef _OPENMP
-        if (g_nthreads > 0) omp_set_num_threads(g_nthreads);
-        #endif
+	#ifdef _OPENMP
+	if (g_nthreads > 0) omp_set_num_threads(g_nthreads);
+	#endif
 
+	#ifdef _OPENMP
+	#pragma omp parallel
+	//#pragma omp master
+	{
+	int thdId1 = omp_get_thread_num();
+	if(thdId1==0){
+	fprintf(stdout,"Stochastic Traceback: Thread count: %3d \n",omp_get_num_threads());
+	if(g_nthreads < 0) g_nthreads = omp_get_num_threads();//TODO move this line to mfe_main.cc
+	}
+	}
+	#endif
+	//OPTIMIZED CODE ENDSS
+	 */
+	int total_used_threads = 1;
 	#ifdef _OPENMP
 	#pragma omp parallel
 	//#pragma omp master
 	{
 		int thdId1 = omp_get_thread_num();
 		if(thdId1==0){
-			fprintf(stdout,"Stochastic Traceback: Thread count: %3d \n",omp_get_num_threads());
-			if(g_nthreads < 0) g_nthreads = omp_get_num_threads();//TODO move this line to mfe_main.cc
+			if(g_nthreads < 0) total_used_threads = omp_get_num_threads();//TODO move this line to mfe_main.cc
+			else total_used_threads = g_nthreads;
 		}
 	}
 	#endif
-	//OPTIMIZED CODE ENDSS
-	
+	int threads_for_counts = total_used_threads;
+	int threads_for_one_sample = 1;
+
+	if(ST_D2_ENABLE_ONE_SAMPLE_PARALLELIZATION){
+		int sample_count_per_thread = num_rnd/total_used_threads;
+		if(total_used_threads%2 !=0 || total_used_threads < 4 || length < 200 || sample_count_per_thread > 40){
+			threads_for_counts = total_used_threads;
+			threads_for_one_sample = 1;
+		}
+		else if(total_used_threads%4 !=0 || total_used_threads < 8 || length < 600 || sample_count_per_thread > 20 ){
+			threads_for_counts = total_used_threads/2;
+			threads_for_one_sample = 2;
+		}
+		else if(total_used_threads%8 !=0 || total_used_threads < 16 || length < 1500 || sample_count_per_thread > 10){
+			threads_for_counts = total_used_threads/4;
+			threads_for_one_sample = 4;
+		}
+		else if(total_used_threads%16 !=0 || total_used_threads < 32 || length < 3000 || sample_count_per_thread > 5 ){
+			threads_for_counts = total_used_threads/8;
+			threads_for_one_sample = 8;
+		}
+		else if(total_used_threads%32 !=0 || total_used_threads < 64 || length < 6000 || sample_count_per_thread > 2 ){
+			threads_for_counts = total_used_threads/16;
+			threads_for_one_sample = 16;
+		}
+		else{
+			threads_for_counts = total_used_threads/32;
+			threads_for_one_sample = 32;
+		}
+
+		fprintf(stdout,"Stochastic Traceback: Thread count for one sample parallelization: %3d \n",threads_for_one_sample);
+	}
+	fprintf(stdout,"Stochastic Traceback: Thread count for counts parallelization: %3d \n",threads_for_counts);
+
+
+
 	std::map<std::string,std::pair<int,double> >  uniq_structs;
 	//std::map<std::string,std::pair<int,double> >  uniq_structs_thread[g_nthreads];
 	//g_nthreads=4;//TODO remove this line
-	cout<<"Manoj after: g_nthreads="<<g_nthreads<<endl;
-	std::map<std::string,std::pair<int,double> > *  uniq_structs_thread = new std::map<std::string,std::pair<int,double> >[g_nthreads];
-	int* structures_thread = new int[g_nthreads*(length+1)];
+	//cout<<"Manoj after: g_nthreads="<<g_nthreads<<endl;
+	std::map<std::string,std::pair<int,double> > *  uniq_structs_thread = new std::map<std::string,std::pair<int,double> >[threads_for_counts];
+	int* structures_thread = new int[threads_for_counts*(length+1)];
 
 	if (num_rnd > 0 ) {
 		printf("\nSampling structures...\n");
 		int count;// nsamples =0;
 		#ifdef _OPENMP
-                #pragma omp parallel for private (count) shared(structures_thread) schedule(guided)
-                #endif
+		#pragma omp parallel for private (count) shared(structures_thread) schedule(guided) num_threads(threads_for_counts)
+		#endif
 		for (count = 1; count <= num_rnd; ++count) 
 		{
 			//nsamples++;
@@ -672,7 +824,14 @@ void StochasticTracebackD2::batch_sample_parallel(int num_rnd)
 			//cout<<"thdId="<<thdId<<endl;
 			int* structure = structures_thread + thdId*(length+1);
 			memset(structure, 0, (length+1)*sizeof(int));
-			double energy = rnd_structure(structure);
+			//double energy = rnd_structure(structure);
+			double energy;
+			if(ST_D2_ENABLE_ONE_SAMPLE_PARALLELIZATION){
+				energy = rnd_structure_parallel(structure, threads_for_one_sample);
+			}
+			else{
+				energy = rnd_structure(structure);
+			}
 
 			std::string ensemble(length+1,'.');
 			for (int i = 1; i <= (int)length; ++ i) {
@@ -686,7 +845,7 @@ void StochasticTracebackD2::batch_sample_parallel(int num_rnd)
 			//Below line of codes is for finding samples with particular energy
 			double myEnegry = -92.1;//-91.3;//-94.8;//dS=-88.4;//d2=-93.1
 			if (fabs(energy-myEnegry)>0.0001){ count--;continue;} //TODO: debug
-			*/
+			 */
 
 			std::map<std::string,std::pair<int,double> >::iterator iter ;
 			if ((iter =uniq_structs_thread[thdId].find(ensemble.substr(1))) != uniq_structs_thread[thdId].end())
@@ -697,70 +856,78 @@ void StochasticTracebackD2::batch_sample_parallel(int num_rnd)
 				assert(energy==pp.second);
 			}
 			else {
-				std::pair< std::string, std::pair<int,double> > new_pp = make_pair(ensemble.substr(1),std::pair<int,double>(1,energy));
-				uniq_structs_thread[thdId].insert(new_pp); 
+				if(ST_D2_ENABLE_SCATTER_PLOT){
+					std::pair< std::string, std::pair<int,double> > new_pp = make_pair(ensemble.substr(1),std::pair<int,double>(1,energy));
+					uniq_structs_thread[thdId].insert(new_pp); 
+				}
 				//uniq_structs_thread[thdId].insert(make_pair(ensemble.substr(1),std::pair<int,double>(1,energy))); 
 			}
 
-			// std::cout << ensemble.substr(1) << ' ' << energy << std::endl;
+			if(!ST_D2_ENABLE_SCATTER_PLOT) std::cout << ensemble.substr(1) << ' ' << energy << std::endl;
 		}
 
-		for(int thd_id=0; thd_id<g_nthreads; thd_id++){
-			std::map<std::string,std::pair<int,double> >::iterator thd_iter ;
-			for (thd_iter = uniq_structs_thread[thd_id].begin(); thd_iter != uniq_structs_thread[thd_id].end();  ++thd_iter)
-			{
-				const std::string& thd_ss = thd_iter->first;
-				const std::pair<int,double>& thd_pp = thd_iter->second;
-				const int thd_freq = thd_pp.first;
-				const double thd_e = thd_pp.second;
-
-				std::map<std::string,std::pair<int,double> >::iterator iter ;
-				if ((iter =uniq_structs.find(thd_ss)) != uniq_structs.end())
+		if(ST_D2_ENABLE_SCATTER_PLOT){
+			for(int thd_id=0; thd_id<threads_for_counts; thd_id++){
+				std::map<std::string,std::pair<int,double> >::iterator thd_iter ;
+				for (thd_iter = uniq_structs_thread[thd_id].begin(); thd_iter != uniq_structs_thread[thd_id].end();  ++thd_iter)
 				{
-					std::pair<int,double>& pp = iter->second;
-					(pp.first)+=thd_freq;
-					const double e = pp.second;
-					//cout<<"e="<<e<<",thd_e="<<thd_e<<endl;
-					assert(e==thd_e);
-				}
-				else {
-					uniq_structs.insert(make_pair(thd_ss,std::pair<int,double>(thd_freq,thd_e)));
-				}
-			}
-		}
-		//std::cout << nsamples << std::endl;
-		int pcount = 0;
-		int maxCount = 0; std::string bestStruct;
-		double bestE = INFINITY;
-		printf("nsamples=%d\n",num_rnd);
-		printf("%s,%s,%s","structure","energy","boltzman_probability");
-		printf(",%s,%s\n","estimated_probability","frequency");
-		std::map<std::string,std::pair<int,double> >::iterator iter ;
-		for (iter = uniq_structs.begin(); iter != uniq_structs.end();  ++iter)
-		{
-			const std::string& ss = iter->first;
-			const std::pair<int,double>& pp = iter->second;
-			const double& estimated_p =  (double)pp.first/(double)num_rnd;
-			const double& energy = pp.second;
-			//MyDouble actual_p = (MyDouble(pow(2.718281,-1.0*energy/RT_)))/U;
-			MyDouble actual_p = (pf_d2.myExp(-(energy)/(RT_)))/U;
-			//MyDouble actual_p(-(energy)/(RT_));///U;
-			printf("%s,%f,",ss.c_str(),energy);actual_p.print();
-			printf(",%f,%d\n",estimated_p,pp.first);
-	
-			//printf("%s %lf\n",ss.c_str(),energy);actual_p.print();
-			//printf("%lf %d\n",estimated_p,pp.first);
-			pcount += pp.first;
-			if (pp.first > maxCount)
-			{
-				maxCount = pp.first;
-				bestStruct  = ss;
-				bestE = pp.second;
-			}
-		}
-		assert(num_rnd == pcount);
-		printf("\nMax frequency structure : \n%s e=%lf freq=%d p=%lf\n",bestStruct.c_str(),bestE,maxCount,(double)maxCount/(double)num_rnd);
+					const std::string& thd_ss = thd_iter->first;
+					const std::pair<int,double>& thd_pp = thd_iter->second;
+					const int thd_freq = thd_pp.first;
+					const double thd_e = thd_pp.second;
 
+					std::map<std::string,std::pair<int,double> >::iterator iter ;
+					if ((iter =uniq_structs.find(thd_ss)) != uniq_structs.end())
+					{
+						std::pair<int,double>& pp = iter->second;
+						(pp.first)+=thd_freq;
+						const double e = pp.second;
+						//cout<<"e="<<e<<",thd_e="<<thd_e<<endl;
+						assert(e==thd_e);
+					}
+					else {
+						uniq_structs.insert(make_pair(thd_ss,std::pair<int,double>(thd_freq,thd_e)));
+					}
+				}
+			}
+			//std::cout << nsamples << std::endl;
+			int pcount = 0;
+			int maxCount = 0; std::string bestStruct;
+			double bestE = INFINITY;
+			printf("nsamples=%d\n",num_rnd);
+			printf("%s,%s,%s","structure","energy","boltzman_probability");
+			printf(",%s,%s\n","estimated_probability","frequency");
+			std::map<std::string,std::pair<int,double> >::iterator iter ;
+			for (iter = uniq_structs.begin(); iter != uniq_structs.end();  ++iter)
+			{
+				const std::string& ss = iter->first;
+				const std::pair<int,double>& pp = iter->second;
+				const double& estimated_p =  (double)pp.first/(double)num_rnd;
+				const double& energy = pp.second;
+				//MyDouble actual_p = (MyDouble(pow(2.718281,-1.0*energy/RT_)))/U;
+				//MyDouble actual_p = (pf_d2.myExp(-(energy)/(RT_)))/U;
+				MyDouble actual_p;
+				actual_p = (pf_d2.myExp(-(energy*100)/(RT)))/U;
+				//MyDouble actual_p(-(energy)/(RT_));///U;
+				printf("%s,%f,",ss.c_str(),energy);actual_p.print();
+				printf(",%f,%d\n",estimated_p,pp.first);
+
+				//printf("%s %lf\n",ss.c_str(),energy);actual_p.print();
+				//printf("%lf %d\n",estimated_p,pp.first);
+				pcount += pp.first;
+				if (pp.first > maxCount)
+				{
+					maxCount = pp.first;
+					bestStruct  = ss;
+					bestE = pp.second;
+				}
+			}
+			assert(num_rnd == pcount);
+			printf("\nMax frequency structure : \n%s e=%lf freq=%d p=%lf\n",bestStruct.c_str(),bestE,maxCount,(double)maxCount/(double)num_rnd);
+		}
+		else{
+			printf("nsamples=%d\n",num_rnd);
+		}
 	}
 	delete [] structures_thread;
 	delete [] uniq_structs_thread;
@@ -771,7 +938,7 @@ void StochasticTracebackD2::batch_sample_and_dump(int num_rnd, std::string ctFil
 {
 	//MyDouble U = pf_d2.get_u(1,length);
 	 MyDouble U;
-        if(PF_D2_UP_APPROX_ENABLED){
+        /*if(PF_D2_UP_APPROX_ENABLED){
 		double t1 = get_seconds();
                 PartitionFunctionD2 pf_d2_exact_up;
                 bool PF_D2_UP_APPROX_ENABLED2 = false;
@@ -782,7 +949,8 @@ void StochasticTracebackD2::batch_sample_and_dump(int num_rnd, std::string ctFil
                 printf("D2 Exact UP partition function computation running time: %9.6f seconds\n", t1);
        }
         else U = pf_d2.get_u(1,length);
-
+	*/
+         U = pf_d2.get_u(1,length);
 	//data dump preparation code starts here
 	if(ctFileDumpDir.compare("")==0){
 		char abspath[1000];
@@ -860,7 +1028,8 @@ void StochasticTracebackD2::batch_sample_and_dump(int num_rnd, std::string ctFil
 			const double& estimated_p =  (double)pp.first/(double)num_rnd;
 			const double& energy = pp.second;
 	
-			MyDouble actual_p = (MyDouble(pow(2.718281,-1.0*energy/RT_)))/U;
+			//MyDouble actual_p = (MyDouble(pow(2.718281,-1.0*energy/RT_)))/U;
+			MyDouble actual_p = (MyDouble(pow(2.718281,-1.0*energy*100/RT)))/U;
 			printf("%s,%lf,",ss.c_str(),energy);actual_p.print();
 			printf(",%lf,%d\n",estimated_p,pp.first);
 	

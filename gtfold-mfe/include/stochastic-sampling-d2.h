@@ -94,14 +94,13 @@ public:
 		void rnd_s3(int i, int h, int j, int* structure, double & energy, std::stack<base_pair>& g_stack);
 		void rnd_s3_mb(int i, int h, int l, int j, int* structure, double & energy, std::stack<base_pair>& g_stack);
 		double rnd_structure(int* structure);
+		double rnd_structure_parallel(int* structure, int threads_for_one_sample);
 
 	public:
 		void initialize(int length1, int PF_COUNT_MODE1, int NO_DANGLE_MODE1, int ss_verbose1, bool PF_D2_UP_APPROX_ENABLED);
 		void free_traceback();
-		void batch_sample(int num_rnd);
-		void batch_sample_parallel(int num_rnd);
+		void batch_sample(int num_rnd, bool ST_D2_ENABLE_SCATTER_PLOT, bool ST_D2_ENABLE_ONE_SAMPLE_PARALLELIZATION, bool ST_D2_ENABLE_UNIFORM_SAMPLE, double ST_D2_UNIFORM_SAMPLE_ENERGY);
+		void batch_sample_parallel(int num_rnd, bool ST_D2_ENABLE_SCATTER_PLOT, bool ST_D2_ENABLE_ONE_SAMPLE_PARALLELIZATION);
 		void batch_sample_and_dump(int num_rnd, std::string ctFileDumpDir, std::string stochastic_summery_file_name, std::string seq, std::string seqfile);
-
-
 };
 #endif
