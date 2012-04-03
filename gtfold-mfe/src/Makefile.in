@@ -54,7 +54,7 @@ am_gtfold_OBJECTS = main.$(OBJEXT) mfe_main.$(OBJEXT) loader.$(OBJEXT) \
 	traceback.$(OBJEXT) subopt_main.$(OBJEXT) \
 	subopt_traceback.$(OBJEXT) stochastic-sampling.$(OBJEXT) stochastic-sampling-d2.$(OBJEXT) \
 	algorithms-partition.$(OBJEXT) boltzmann_main.$(OBJEXT) partition-dangle.$(OBJEXT) \
-	partition-func.$(OBJEXT) partition-func-d2.$(OBJEXT) shapereader.$(OBJEXT)
+	partition-func.$(OBJEXT) partition-func-d2.$(OBJEXT) shapereader.$(OBJEXT) pf-shel-check.$(OBJEXT) key.$(OBJEXT)
 gtfold_OBJECTS = $(am_gtfold_OBJECTS)
 gtfold_DEPENDENCIES =
 gtfold_LINK = $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(gtfold_LDFLAGS) \
@@ -203,7 +203,9 @@ gtfold_SOURCES = \
   partition-dangle.c\
 	partition-func.c\
 	partition-func-d2.cc\
-	shapereader.cc
+	shapereader.cc\
+	pf-shel-check.cc\
+	key.cc\
 
 gtfold_LDFLAGS = 
 gtfold_LDADD = -lm
@@ -313,6 +315,8 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/subopt_traceback.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/traceback.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/utils.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pf-shel-check.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/key.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<

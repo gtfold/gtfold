@@ -65,7 +65,7 @@ CPP = gcc -E
 CPPFLAGS = 
 CXX = g++
 CXXDEPMODE = depmode=gcc3
-CXXFLAGS = -g -O2 -Wall -lgmp
+CXXFLAGS = -g -O2 -fopenmp -Wall -lgmp
 CYGPATH_W = echo
 DEFS = -DHAVE_CONFIG_H
 DEPDIR = .deps
@@ -154,7 +154,7 @@ target_vendor = unknown
 top_build_prefix = ../
 top_builddir = ..
 top_srcdir = ..
-noinst_HEADERS = algorithms.h constants.h data.h loader.h main.h traceback.h partition-dangle.h random-sample.h algorithms-partition.h global.h options.h random-sample.h subopt_traceback.h constraints.h energy.h shapereader.h utils.h
+noinst_HEADERS = algorithms.h constants.h data.h loader.h main.h traceback.h partition-dangle.h random-sample.h algorithms-partition.h global.h options.h random-sample.h subopt_traceback.h constraints.h energy.h shapereader.h utils.h pf-shel-check.h key.h
 CLEANFILES = *~
 all: all-am
 
