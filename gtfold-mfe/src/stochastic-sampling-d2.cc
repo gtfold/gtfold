@@ -782,7 +782,7 @@ void StochasticTracebackD2::batch_sample(int num_rnd, bool ST_D2_ENABLE_SCATTER_
 			if(!ST_D2_ENABLE_SCATTER_PLOT) std::cout << ensemble.substr(1) << ' ' << energy << std::endl;
 		}
 		//std::cout << nsamples << std::endl;
-		if(ST_D2_ENABLE_SCATTER_PLOT){
+		if(ST_D2_ENABLE_SCATTER_PLOT && !ST_D2_ENABLE_BPP_PROBABILITY){
 			int pcount = 0;
 			int maxCount = 0; std::string bestStruct;
 			double bestE = INFINITY;
@@ -833,9 +833,11 @@ void StochasticTracebackD2::batch_sample(int num_rnd, bool ST_D2_ENABLE_SCATTER_
 				const int& struc_freq =  pp.first;
 				updateBppFreq(struc_str, struc_freq, bpp_freq, length, total_bpp_freq);
 			}
-			cout<<"\nBPP Probabilities are\ni,j,bppFreq,totalBppFreq\n";
+			//cout<<"\nBPP Probabilities are\ni,j,bppFreq,totalBppFreq\n";
+			cout<<"\nBPP Probabilities are\ni,j,bppFreq,totalSamples\n";
 			for(int p=1; p<=length; ++p) for(int q=p+1; q<=length; ++q){
-				if(bpp_freq[p][q]>0) cout<<p<<","<<q<<","<<bpp_freq[p][q]<<","<<total_bpp_freq<<endl;
+				//if(bpp_freq[p][q]>0) cout<<p<<","<<q<<","<<bpp_freq[p][q]<<","<<total_bpp_freq<<endl;
+				if(bpp_freq[p][q]>0) cout<<p<<","<<q<<","<<bpp_freq[p][q]<<","<<num_rnd<<endl;
 			}
 			for(int p=1; p<=length; ++p) delete[] bpp_freq[p];
 			delete[] bpp_freq;
@@ -1037,6 +1039,8 @@ void StochasticTracebackD2::batch_sample_parallel(int num_rnd, bool ST_D2_ENABLE
 					}
 				}
 			}
+		}
+		if(ST_D2_ENABLE_SCATTER_PLOT && !ST_D2_ENABLE_BPP_PROBABILITY){
 			//std::cout << nsamples << std::endl;
 			int pcount = 0;
 			int maxCount = 0; std::string bestStruct;
@@ -1075,6 +1079,30 @@ void StochasticTracebackD2::batch_sample_parallel(int num_rnd, bool ST_D2_ENABLE
 		else{
 			printf("nsamples=%d\n",num_rnd);
 		}
+		if(ST_D2_ENABLE_BPP_PROBABILITY){
+                        int** bpp_freq = new int*[length+1];
+                        for(int p=1; p<=length; ++p) bpp_freq[p] = new int[length+1];
+                        for(int p=1; p<=length; ++p) for(int q=p+1; q<=length; ++q) bpp_freq[p][q]=0;
+                        //for(int p=1; p<=length; ++p) for(int q=1; q<=length; ++q) bpp_freq[p][q]=0;
+                        int total_bpp_freq=0;
+                        std::map<std::string,std::pair<int,double> >::iterator iter ;
+                        for (iter = uniq_structs.begin(); iter != uniq_structs.end();  ++iter)
+                        {
+                                const std::string& struc_str = iter->first;
+                                const std::pair<int,double>& pp = iter->second;
+                                const int& struc_freq =  pp.first;
+                                updateBppFreq(struc_str, struc_freq, bpp_freq, length, total_bpp_freq);
+                        }
+                        //cout<<"\nBPP Probabilities are\ni,j,bppFreq,totalBppFreq\n";
+                        cout<<"\nBPP Probabilities are\ni,j,bppFreq,totalSamples\n";
+                        for(int p=1; p<=length; ++p) for(int q=p+1; q<=length; ++q){
+                                //if(bpp_freq[p][q]>0) cout<<p<<","<<q<<","<<bpp_freq[p][q]<<","<<total_bpp_freq<<endl;
+                                if(bpp_freq[p][q]>0) cout<<p<<","<<q<<","<<bpp_freq[p][q]<<","<<num_rnd<<endl;
+                        }
+                        for(int p=1; p<=length; ++p) delete[] bpp_freq[p];
+                        delete[] bpp_freq;
+                }
+
 	}
 	delete [] structures_thread;
 	delete [] uniq_structs_thread;
