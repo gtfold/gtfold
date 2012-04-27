@@ -25,6 +25,10 @@ pf_shel_check::pf_shel_check(int len)
 {
 	add(0, 1, len, true);
 }
+void pf_shel_check::clear()
+{
+       myMap.clear(); 
+}
 
 int pf_shel_check::count() {
 	//printf("There are %d elements in the numerator.\n There are %d elements in the denominator.\n", getNumNumerator(), getNumDenominator());

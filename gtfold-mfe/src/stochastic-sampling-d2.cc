@@ -10,12 +10,13 @@
 #include<fstream>
 #include "utils.h"
 #include<omp.h>
+#include<time.h>
 
 //Basic utility functions
 void StochasticTracebackD2::initialize(int length1, int PF_COUNT_MODE1, int NO_DANGLE_MODE1, int ss_verbose1, bool PF_D2_UP_APPROX_ENABLED1, bool checkFraction1){
 	checkFraction = checkFraction1;
 	length = length1;
-	if(checkFraction) fraction = pf_shel_check(length);
+	//if(checkFraction) fraction = pf_shel_check(length);
 	ss_verbose = ss_verbose1; 
 	//energy = 0.0;
 	//structure = new int[length+1];
@@ -213,8 +214,10 @@ void StochasticTracebackD2::rnd_up(int i, int j, int* structure, double & energy
 
 	set_base_pair(i,j, structure);
 
-	for (int h = i+1; h < j-1; ++h)
-		for (int l = h+1; l < j; ++l)
+	//for (int h = i+1; h < j-1; ++h)
+	for (int h = i+1; h <= j-2-TURN ; h++)
+                for (int l = h+1+TURN; l < j; l++)	
+		//for (int l = h+1; l < j; ++l)
 		{
 			if (h == i+1 && l == j-1) continue;
 			cum_prob = cum_prob + Q_BI_ihlj(i,h,l,j);
@@ -285,7 +288,7 @@ void StochasticTracebackD2::rnd_up(int i, int j, int* structure, double & energy
 		rnd_upm(i,j, structure, energy, g_stack);
 		return;
 	}
-
+/*
 	for (int h = i+1; h < j-1; ++h)
 		for (int l = h+1; l < j; ++l)
 		{
@@ -308,6 +311,7 @@ void StochasticTracebackD2::rnd_up(int i, int j, int* structure, double & energy
 				return;
 			}
 		}
+*/
 	assert(0);
 }
 
@@ -320,7 +324,8 @@ void StochasticTracebackD2::rnd_up_approximate(int i, int j, int* structure, dou
 
 	set_base_pair(i,j, structure);
 
-	for (int p = i+1; p <= MIN(j-2-TURN,i+MAXLOOP+1); ++p){
+	//for (int p = i+1; p <= MIN(j-2-TURN,i+MAXLOOP+1); ++p){
+	for (int p = i+1; p <= j-2-TURN; ++p){
 		int minq = j-i+p-MAXLOOP-2;
 		if (minq < p+1+TURN) minq = p+1+TURN;
 		int maxq = (p==(i+1))?(j-2):(j-1);
@@ -329,9 +334,16 @@ void StochasticTracebackD2::rnd_up_approximate(int i, int j, int* structure, dou
 			cum_prob = cum_prob + Q_BI_ihlj(i,p,q,j);
 			if (rnd < cum_prob)
 			{
+				if(checkFraction) {
+                                        //printf("Q_BI_ihlj(i, h, l, j)");
+                                        //printf("\n");
+                                        fraction.add(1, p, q, true);
+                                        fraction.add(1, i, j, false);
+                                }
 				double e2 = (pf_d2.eL_new(i,j,p,q));
 				if (ss_verbose == 1) 
 					printf("IntLoop(%d %d) %lf\n",i,j, e2/100.0);
+			
 				energy += e2;
 				base_pair bp(p,q,UP);
 				g_stack.push(bp);
@@ -343,6 +355,11 @@ void StochasticTracebackD2::rnd_up_approximate(int i, int j, int* structure, dou
 	cum_prob = cum_prob + Q_H_ij(i,j);
 	if (rnd < cum_prob)
 	{
+		if(checkFraction){
+                        //printf("Q_H_ij(i, j)");
+                        //printf("\n");
+                        fraction.add(1, i, j, false);
+                }
 		double e2 = (pf_d2.eH_new(i,j));
 		if (ss_verbose == 1) 
 			printf("Hairpin(%d %d) %lf\n",i,j, e2/100.0);
@@ -354,6 +371,12 @@ void StochasticTracebackD2::rnd_up_approximate(int i, int j, int* structure, dou
 	cum_prob = cum_prob + Q_S_ij(i,j);
 	if (rnd < cum_prob)
 	{
+		if(checkFraction) {
+			//printf("Q_S_ij(i,j)");
+			//printf("\n");
+			fraction.add(1, i+1, j-1, true);
+			fraction.add(1, i, j, false);
+		}
 		double e2 = (pf_d2.eS_new(i,j));
 		if (ss_verbose == 1) 
 			printf("Stack(%d %d) %lf\n",i,j, e2/100.0);
@@ -366,6 +389,12 @@ void StochasticTracebackD2::rnd_up_approximate(int i, int j, int* structure, dou
 	cum_prob = cum_prob + Q_M_ij(i,j);
 	if (rnd < cum_prob)
 	{
+		if(checkFraction) {
+			//printf("Q_M_ij(i,j)");
+			//printf("\n");
+			fraction.add(3, i, j,true);
+			fraction.add(1, i, j, false);
+		}
 		rnd_upm(i,j, structure, energy, g_stack);
 		return;
 	}
@@ -542,7 +571,7 @@ double StochasticTracebackD2::rnd_structure(int* structure)
 	std::stack<base_pair> g_stack;
 	g_stack.push(first);
 	double energy = 0.0;
-
+	if(checkFraction) fraction = pf_shel_check(length);
 	while (!g_stack.empty())
 	{
 		base_pair bp = g_stack.top();
@@ -552,11 +581,17 @@ double StochasticTracebackD2::rnd_structure(int* structure)
 		if (bp.type() == U)
 			rnd_u(bp.i,bp.j, structure, energy, g_stack);
 		else if (bp.type() == UP){
-			if(pf_d2.PF_D2_UP_APPROX_ENABLED) rnd_up_approximate(bp.i,bp.j, structure, energy, g_stack);
+			if(pf_d2.PF_D2_UP_APPROX_ENABLED) {rnd_up_approximate(bp.i,bp.j, structure, energy, g_stack);}
 			else rnd_up(bp.i,bp.j, structure, energy, g_stack);
 		}
 		else if (bp.type() == U1)
 			rnd_u1(bp.i,bp.j, structure, energy, g_stack);
+	}
+	if(checkFraction){
+		int remains = fraction.count();
+		cout<<"Fraction Check test: remains:"<<remains<<endl;
+		if(remains>0) cout<<"Fraction Check Error: remains="<<remains<<endl;
+		fraction.clear();
 	}
 	return (double)energy/100.0;
 }
@@ -585,7 +620,7 @@ double StochasticTracebackD2::rnd_structure_parallel(int* structure, int threads
 			if (bp.type() == U)
 				rnd_u(bp.i,bp.j, structure, energy, g_stack);
 			else if (bp.type() == UP){
-				if(pf_d2.PF_D2_UP_APPROX_ENABLED) rnd_up_approximate(bp.i,bp.j, structure, energy, g_stack);
+				if(pf_d2.PF_D2_UP_APPROX_ENABLED) { rnd_up_approximate(bp.i,bp.j, structure, energy, g_stack);}
 				else rnd_up(bp.i,bp.j, structure, energy, g_stack);
 			}
 			else if (bp.type() == U1)
@@ -601,7 +636,8 @@ double StochasticTracebackD2::rnd_structure_parallel(int* structure, int threads
 			int index;
 			
 			#ifdef _OPENMP
-			#pragma omp parallel for private(index) shared(energy_threads, g_stack_threads, structure) schedule(guided) num_threads(threads_for_one_sample)
+			//#pragma omp parallel for private(index) shared(energy_threads, g_stack_threads, structure) schedule(guided) num_threads(threads_for_one_sample)
+			#pragma omp parallel for private(index) shared(energy_threads, g_stack_threads, structure) schedule(dynamic) num_threads(threads_for_one_sample)
 			//#pragma omp parallel for private(index) shared(energy_threads, g_stack_threads, structure) schedule(guided)
 			#endif
 			for (index = 0; index < g_deque.size(); ++index) {
@@ -720,6 +756,7 @@ void StochasticTracebackD2::batch_sample(int num_rnd, bool ST_D2_ENABLE_SCATTER_
 	  }
 	  else U = pf_d2.get_u(1,length);*/
 	U = pf_d2.get_u(1,length);
+	srand(time(NULL));
 
 	int threads_for_one_sample = 1;
 	#ifdef _OPENMP
@@ -964,7 +1001,8 @@ void StochasticTracebackD2::batch_sample_parallel(int num_rnd, bool ST_D2_ENABLE
 		printf("\nSampling structures...\n");
 		int count;// nsamples =0;
 		#ifdef _OPENMP
-		#pragma omp parallel for private (count) shared(structures_thread) schedule(guided) num_threads(threads_for_counts)
+		//#pragma omp parallel for private (count) shared(structures_thread) schedule(guided) num_threads(threads_for_counts)
+		#pragma omp parallel for private (count) shared(structures_thread) schedule(dynamic) num_threads(threads_for_counts)
 		#endif
 		for (count = 1; count <= num_rnd; ++count) 
 		{

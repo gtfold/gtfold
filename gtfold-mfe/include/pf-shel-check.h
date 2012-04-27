@@ -3,6 +3,8 @@
 class pf_shel_check {
 	public:
 	int main();
+	void clear();
+
 	int numCount;
 	pf_shel_check();
 	pf_shel_check(int num);

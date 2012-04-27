@@ -188,7 +188,7 @@ MyDouble PartitionFunctionD2::calculate_partition(int len, int pf_count_mode, in
 	create_partition_arrays();
 	init_partition_arrays();
 	fill_partition_arrays();
-	//printAllMatrixes();//TODO uncomment it
+	printAllMatrixes();//TODO uncomment it
 	//printf("%4.4f\n",u[1][part_len]);
 	(u[1][part_len]).print();
 	printf("\n");
@@ -367,7 +367,8 @@ void PartitionFunctionD2::fill_partition_arrays()
 		if(PAIRABLE_POINTS_GATHER_OPTIMIZATION_DISABLED) assert(len_i_cannotPair==0);
 
 		#ifdef _OPENMP
-		#pragma omp parallel for private (index1,i,j) schedule(guided)
+		//#pragma omp parallel for private (index1,i,j) schedule(guided)
+		#pragma omp parallel for private (index1,i,j) schedule(dynamic)
 		#endif
 		for(index1=0; index1<len_i_canPair; ++index1){
 			i=i_canPair[index1];
@@ -375,14 +376,15 @@ void PartitionFunctionD2::fill_partition_arrays()
 			calc_s1(i,j);
 			calc_s2(i,j);
 			calc_upm(i,j);
-			if(PF_D2_UP_APPROX_ENABLED) calc_up_serial_and_approximate(i, j);
+			if(PF_D2_UP_APPROX_ENABLED){ calc_up_serial_and_approximate(i, j);}
 			else calc_up(i,j);
 			calc_s3(i,j);
 			calc_u1(i,j);
 			calc_u(i,j);
 		}
 		#ifdef _OPENMP
-		#pragma omp parallel for private (index1,i,j) schedule(guided)
+		//#pragma omp parallel for private (index1,i,j) schedule(guided)
+		#pragma omp parallel for private (index1,i,j) schedule(dynamic)
 		#endif
 		for(index1=0; index1<len_i_cannotPair; ++index1){
 			i=i_cannotPair[index1];
@@ -525,8 +527,10 @@ void PartitionFunctionD2::calc_up(int i, int j)
 	if (canPair(RNA[i],RNA[j]))
 	{
 		int h,l;
-		for (h = i+1; h < j-1 ; h++) {
-			for (l = h+1; l < j; l++) {
+		//for (h = i+1; h < j-1 ; h++) {
+		for (h = i+1; h <= j-2-TURN ; h++) {
+			for (l = h+1+TURN; l < j; l++) {
+			//for (l = h+1; l < j; l++) {
 				if (canPair(RNA[h],RNA[l])==0) continue;
 				if(h==(i+1) && l==(j-1)) continue;
 				up_val = up_val + (get_up(h,l) * myExp(-((double)eL_new(i,j,h,l))/RT));
@@ -549,13 +553,14 @@ void PartitionFunctionD2::calc_up_serial_and_approximate(int i, int j)
         if (canPair(RNA[i],RNA[j]))
         {
                 int p,q;
-                for (p = i+1; p <= MIN(j-2-TURN,i+MAXLOOP+1) ; p++) {
+                //for (p = i+1; p <= MIN(j-2-TURN,i+MAXLOOP+1) ; p++) {
+                for (p = i+1; p <= j-2-TURN ; p++) {
                         MyDouble my_up_val(0.0);
                         int minq = j-i+p-MAXLOOP-2;
                         if (minq < p+1+TURN) minq = p+1+TURN;
                         int maxq = (p==(i+1))?(j-2):(j-1);
                         for (q = minq; q <= maxq; q++) {
-                                if (canPair(p,q)==0) continue;
+                                if (canPair(RNA[p],RNA[q])==0) continue;
                                 my_up_val = my_up_val + (get_up(p,q) * myExp(-((double)eL_new(i,j,p,q))/RT));
                         }
                         up_val = up_val + my_up_val;
