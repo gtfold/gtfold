@@ -1,0 +1,3 @@
+key.o key.o: key.cc ../include/key.h
+
+../include/key.h:
