@@ -30,7 +30,7 @@ int canILoop(int i, int j, int p, int q);
 int forceSS(int i);
 int forceSSregion(int i, int j);
 int forcePair(int i, int j);
-
+int forcePaired(int i);
 
 int withinCD(int i, int j);
 int verify_structure();
