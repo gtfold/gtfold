@@ -19,6 +19,9 @@ int g_prefilter_mode;
 int g_prefilter1;
 int g_prefilter2;
 
+int g_LIMIT_DISTANCE;
+int g_contactDistance;
+
 void init_global_params(int len) {
 	RNA = (unsigned char *) malloc((len+1)* sizeof(unsigned char));
 	if (RNA == NULL) {

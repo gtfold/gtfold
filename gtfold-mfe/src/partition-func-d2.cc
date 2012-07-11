@@ -526,21 +526,26 @@ void PartitionFunctionD2::calc_up(int i, int j)
 	MyDouble up_val(0.0);
 	if (canPair(RNA[i],RNA[j]))
 	{
-		int h,l;
-		//for (h = i+1; h < j-1 ; h++) {
-		for (h = i+1; h <= j-2-TURN ; h++) {
-			for (l = h+1+TURN; l < j; l++) {
-			//for (l = h+1; l < j; l++) {
-				if (canPair(RNA[h],RNA[l])==0) continue;
-				if(h==(i+1) && l==(j-1)) continue;
-				up_val = up_val + (get_up(h,l) * myExp(-((double)eL_new(i,j,h,l))/RT));
-			}
+		if (g_LIMIT_DISTANCE && j-i > g_contactDistance){
+			set_up(i,j,0.0);
 		}
-		up_val = up_val + myExp(-((double)eH_new(i,j))/RT );
-		up_val = up_val + (myExp(-((double)eS_new(i,j))/RT ) * get_up(i+1,j-1));
-		up_val = up_val + get_upm(i,j);
-		set_up(i, j, up_val);
-		//printUPprobabilities(i,j);
+		else {
+			int h,l;
+			//for (h = i+1; h < j-1 ; h++) {
+			for (h = i+1; h <= j-2-TURN ; h++) {
+				for (l = h+1+TURN; l < j; l++) {
+				//for (l = h+1; l < j; l++) {
+					if (canPair(RNA[h],RNA[l])==0) continue;
+					if(h==(i+1) && l==(j-1)) continue;
+					up_val = up_val + (get_up(h,l) * myExp(-((double)eL_new(i,j,h,l))/RT));
+				}
+			}
+			up_val = up_val + myExp(-((double)eH_new(i,j))/RT );
+			up_val = up_val + (myExp(-((double)eS_new(i,j))/RT ) * get_up(i+1,j-1));
+			up_val = up_val + get_upm(i,j);
+			set_up(i, j, up_val);
+			//printUPprobabilities(i,j);
+		}
 	}
 	else  {
 		set_up(i, j, 0.0);
@@ -552,6 +557,10 @@ void PartitionFunctionD2::calc_up_serial_and_approximate(int i, int j)
         MyDouble up_val(0.0);
         if (canPair(RNA[i],RNA[j]))
         {
+        	if (g_LIMIT_DISTANCE && j-i > g_contactDistance){
+				set_up(i,j,0.0);
+			}
+			else {
                 int p,q;
                 //for (p = i+1; p <= MIN(j-2-TURN,i+MAXLOOP+1) ; p++) {
                 for (p = i+1; p <= j-2-TURN ; p++) {
@@ -571,6 +580,7 @@ void PartitionFunctionD2::calc_up_serial_and_approximate(int i, int j)
                 up_val = up_val + get_upm(i,j);
                 set_up(i, j, up_val);
                 //printUPprobabilities(i,j);
+            }
         }
         else  {
                 set_up(i, j, 0.0);
@@ -582,25 +592,30 @@ void PartitionFunctionD2::calc_up_parallel(int i, int j)
 	MyDouble up_val(0.0);
 	if (canPair(RNA[i],RNA[j]))
 	{
-		int h;
-		/*#ifdef _OPENMP
-                #pragma omp parallel for private (h) schedule(guided) reduction(+ : up_val)
-                #endif*/
-		for (h = i+1; h < j-1 ; h++) {
-			int l;
-			MyDouble my_up_val(0.0);
-			for (l = h+1; l < j; l++) {
-				if (canPair(RNA[h],RNA[l])==0) continue;
-				if(h==(i+1) && l==(j-1)) continue;
-				my_up_val = my_up_val + (get_up(h,l) * myExp(-((double)eL_new(i,j,h,l))/RT));
-			}
-			up_val = up_val + my_up_val;
+		if (g_LIMIT_DISTANCE && j-i > g_contactDistance){
+			set_up(i,j,0.0);
 		}
-		up_val = up_val + myExp(-((double)eH_new(i,j))/RT );
-		up_val = up_val + (myExp(-((double)eS_new(i,j))/RT ) * get_up(i+1,j-1));
-		up_val = up_val + get_upm(i,j);
-		set_up(i, j, up_val);
-		//printUPprobabilities(i,j);
+		else {
+			int h;
+			/*#ifdef _OPENMP
+        	        #pragma omp parallel for private (h) schedule(guided) reduction(+ : up_val)
+            	    #endif*/
+			for (h = i+1; h < j-1 ; h++) {
+				int l;
+				MyDouble my_up_val(0.0);
+				for (l = h+1; l < j; l++) {
+					if (canPair(RNA[h],RNA[l])==0) continue;
+					if(h==(i+1) && l==(j-1)) continue;
+					my_up_val = my_up_val + (get_up(h,l) * myExp(-((double)eL_new(i,j,h,l))/RT));
+				}
+				up_val = up_val + my_up_val;
+			}
+			up_val = up_val + myExp(-((double)eH_new(i,j))/RT );
+			up_val = up_val + (myExp(-((double)eS_new(i,j))/RT ) * get_up(i+1,j-1));
+			up_val = up_val + get_upm(i,j);
+			set_up(i, j, up_val);
+			//printUPprobabilities(i,j);
+		}
 	}
 	else  {
 		set_up(i, j, 0.0);
@@ -612,6 +627,10 @@ void PartitionFunctionD2::calc_up_parallel_and_approximate(int i, int j)
         MyDouble up_val(0.0);
         if (canPair(RNA[i],RNA[j]))
         {
+        	if (g_LIMIT_DISTANCE && j-i > g_contactDistance){
+				set_up(i,j,0.0);
+			}
+			else {
                 int p;
 		/*#ifdef _OPENMP
                 #pragma omp parallel for private (p) schedule(guided) reduction(+ : up_val)
@@ -634,6 +653,7 @@ void PartitionFunctionD2::calc_up_parallel_and_approximate(int i, int j)
                 up_val = up_val + get_upm(i,j);
                 set_up(i, j, up_val);
                 //printUPprobabilities(i,j);
+            }
         }
         else  {
                 set_up(i, j, 0.0);

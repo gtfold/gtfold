@@ -7,6 +7,7 @@
 #include "global.h"
 #include "utils.h"
 #include<omp.h>
+
 double ** u;
 double ** up;
 double ** upm;
@@ -51,6 +52,7 @@ static void set_u1d(int i, int j, double val);
 static void set_s1(int i, int j, double val);
 static void set_s2(int i, int j, double val);
 static void set_s3(int i, int j, double val);
+
 void errorAndExit(char* msg, int i, int j, double oldVal, double newVal){
 	printf("%s\n", msg);
 	printf("i=%d,j=%d,oldVal=%0.1f,newVal=%0.1f\n",i,j,oldVal,newVal);
@@ -622,19 +624,24 @@ void calc_up(int i, int j)
 	double up_val = 0.0;
 	if (canPair(RNA[i],RNA[j]))
 	{
-		int h,l;
-		for (h = i+1; h < j ; h++) {
-			for (l = h+1; l < j; l++) {
-				if (canPair(RNA[h],RNA[l])==0) continue;
-				if(h==(i+1) && l==(j-1)) continue;
-				up_val += (get_up(h,l) * myExp(-((double)eL_new(i,j,h,l))/RT));
-			}
+		if (g_LIMIT_DISTANCE && j-i > g_contactDistance){
+			set_up(i,j,0.0);
 		}
-		up_val = up_val + myExp(-((double)eH_new(i,j))/RT );
-		up_val = up_val + (myExp(-((double)eS_new(i,j))/RT ) * get_up(i+1,j-1));
-		up_val = up_val + get_upm(i,j);
-		set_up(i, j, up_val);
-		//printUPprobabilities(i,j);
+		else {
+			int h,l;
+			for (h = i+1; h < j ; h++) {
+				for (l = h+1; l < j; l++) {
+					if (canPair(RNA[h],RNA[l])==0) continue;
+					if(h==(i+1) && l==(j-1)) continue;
+					up_val += (get_up(h,l) * myExp(-((double)eL_new(i,j,h,l))/RT));
+				}
+			}
+			up_val = up_val + myExp(-((double)eH_new(i,j))/RT );
+			up_val = up_val + (myExp(-((double)eS_new(i,j))/RT ) * get_up(i+1,j-1));
+			up_val = up_val + get_upm(i,j);
+			set_up(i, j, up_val);
+			//printUPprobabilities(i,j);
+		}
 	}
 	else  {
 		set_up(i, j, 0.0);
@@ -645,24 +652,29 @@ void calc_up_parallel(int i, int j)
 	double up_val = 0.0;
 	if (canPair(RNA[i],RNA[j]))
 	{
-		int h,l;
-		#ifdef _OPENMP
-		#pragma omp parallel for private (h,l) schedule(guided) reduction(+ : up_val)
-		#endif
-		for (h = i+1; h < j ; h++) {
-			double my_up_val=0.0;
-			for (l = h+1; l < j; l++) {
-				if (canPair(RNA[h],RNA[l])==0) continue;
-				if(h==(i+1) && l==(j-1)) continue;
-				my_up_val += (get_up(h,l) * myExp(-((double)eL_new(i,j,h,l))/RT));
-			}
-			up_val += my_up_val;
+		if (g_LIMIT_DISTANCE && j-i > g_contactDistance){
+			set_up(i,j,0.0);
 		}
-		up_val = up_val + myExp(-((double)eH_new(i,j))/RT );
-		up_val = up_val + (myExp(-((double)eS_new(i,j))/RT ) * get_up(i+1,j-1));
-		up_val = up_val + get_upm(i,j);
-		set_up(i, j, up_val);
-		//printUPprobabilities(i,j);
+		else {
+			int h,l;
+			#ifdef _OPENMP
+			#pragma omp parallel for private (h,l) schedule(guided) reduction(+ : up_val)
+			#endif
+			for (h = i+1; h < j ; h++) {
+				double my_up_val=0.0;
+				for (l = h+1; l < j; l++) {
+					if (canPair(RNA[h],RNA[l])==0) continue;
+					if(h==(i+1) && l==(j-1)) continue;
+					my_up_val += (get_up(h,l) * myExp(-((double)eL_new(i,j,h,l))/RT));
+				}
+				up_val += my_up_val;
+			}
+			up_val = up_val + myExp(-((double)eH_new(i,j))/RT );
+			up_val = up_val + (myExp(-((double)eS_new(i,j))/RT ) * get_up(i+1,j-1));
+			up_val = up_val + get_upm(i,j);
+			set_up(i, j, up_val);
+			//printUPprobabilities(i,j);
+		}
 	}
 	else  {
 		set_up(i, j, 0.0);

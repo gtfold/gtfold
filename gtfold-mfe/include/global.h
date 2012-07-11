@@ -23,6 +23,9 @@ extern int g_prefilter2;
 
 extern unsigned int chPairKey;
 
+extern int g_LIMIT_DISTANCE;
+extern int g_contactDistance;
+
 // The possible base pairs are (A,U), (U,A), (C,G), (G,C), (G,U) 
 //  and (U,G). 
 #define checkPair(i, j) (((((i)-(j)) % 2) == 1 || (((i)-(j)) % 2)== -1) && (!( ((i)==BASE_A && (j)==BASE_C) || ((i)==BASE_C && (j)==BASE_A) )))

@@ -51,6 +51,9 @@ static string stochastic_summery_file_name = "stochaSampleSummary.txt";
 static int num_rnd = 0;
 static int ss_verbose_global = 0;
 
+static bool LIMIT_DISTANCE = false;
+static int contactDistance = -1;
+
 static void help() {
 	printf("Usage: gtboltzmann [OPTION]... FILE\n\n");
 
@@ -67,8 +70,10 @@ static void help() {
 	printf("   --sample   INT -dS      Sample number of structures equal to INT  using -dS reccurences.\n");
 	printf("   --sample   INT -d2 [--approxUP] [--scatterPlot] [--uniformSample energy1] [--check-fraction] [--bpp-probability] [--counts-parallel] [--one-sample-parallel]    Sample number of structures equal to INT  using -d2 reccurences, if --approxUP used then use approximate calculation of UP, if --scatterPlot used then collect frequency of all structures and calculate estimate probability and boltzmann probability for scatter plot, if --uniformSample used then samples with Energy energy1 will only be sampled, if --check-fraction used then enable test of check fraction, if --bpp-probability option used then calculate bppProbabilities, if --counts-parallel used then parallelize INT sample counts, if --one-sample-parallel used then parallelize one sample.\n");
 	printf("   --sample   INT  --dump [--dump_dir dump_dir_path] [--dump_summary dump_summery_file_name] -dS|-d2 [--approxUP]     Sample number of structures equal to INT and dump each structure to a ct file in dump_dir_path directory (if no value provided then use current directory value for this purpose) and also create a summary file with name stochastic_summery_file_name in dump_dir_path directory (if no value provided, use stochaSampleSummary.txt value for this purpose), if --approxUP used then use approximate calculation of UP which is working only for d2 case as of now.\n");
-	printf("   --pfcount           Calculate the structure count using partition function and zero energy value.\n");
+	printf("   --pfcount            Calculate the structure count using partition function and zero energy value.\n");
 	printf("   --bpp                Calculate base pair probabilities.\n");
+	printf("   -l|--limitCD  INT    Set a maximum base pair contact distance to INT. If no\n");
+    printf(" 		                limit is given, base pairs can be over any distance.\n");
 	printf("\n");
 	printf("   -o, --output NAME    Write output files with prefix given in NAME\n");
 	printf("   -p  --paramdir DIR   Path to directory from which parameters are to be read\n");
@@ -158,8 +163,14 @@ static void parse_options(int argc, char** argv) {
 						}
 					}
 				}
+			} else if (strcmp(argv[i],"--limitCD") == 0 || strcmp(argv[i], "-l") == 0) {
+				if(i < argc) {
+					LIMIT_DISTANCE = true;
+					contactDistance = atoi(argv[++i]);
+				}
+				else
+					help();
 			}
-
 		} else {
 			seqfile = argv[i];
 		}
@@ -218,8 +229,17 @@ int boltzmann_main(int argc, char** argv) {
 	}
 	parse_mfe_options(argc, argv);
 	init_fold(seq.c_str());
+	g_LIMIT_DISTANCE = LIMIT_DISTANCE;
+	g_contactDistance = contactDistance;
 
 	readThermodynamicParameters(paramDir.c_str(), PARAM_DIR, 0, 0, 0);
+	
+	if (LIMIT_DISTANCE) {
+		if (strlen(seq.c_str()) < contactDistance) 
+			printf("\nContact distance limit is higher than the sequence length. Continuing without restraining contact distance.\n");
+		else printf("\nLimiting contact distance to %d\n",contactDistance);
+	}
+	
 	if (CALC_PART_FUNC == true && CALC_PF_DS == true) {
 		int pf_count_mode = 0;
 		if(PF_COUNT_MODE) pf_count_mode=1;
