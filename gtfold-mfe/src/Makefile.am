@@ -28,7 +28,6 @@ gtfold_SOURCES = \
 	partition-func.c\
 	partition-func-d2.cc\
 	shapereader.cc\
-
 gtfold_LDFLAGS = 
 
 gtfold_LDADD = -lm

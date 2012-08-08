@@ -3,6 +3,8 @@
 
 #include "pf-shel-check.h"
 #include <iostream>
+#include <fstream>
+#include<stdio.h>
 #include <stack>
 #include <stdlib.h>
 #include "partition-func-d2.h"
@@ -55,7 +57,8 @@ public:
 		enum {U=0,UP,U1};
 		//int* structure;
 		PartitionFunctionD2 pf_d2;
-		int ss_verbose;
+		int print_energy_decompose;
+		FILE* energy_decompose_outfile;
 		//std::stack<base_pair> g_stack;
 		//double energy;
 		int length;
@@ -100,12 +103,14 @@ public:
 		double rnd_structure(int* structure);
 		double rnd_structure_parallel(int* structure, int threads_for_one_sample);
 		void updateBppFreq(std::string struc_str, int struc_freq, int ** bpp_freq, int length, int& total_bpp_freq);
-
+		void printEnergyAndStructureInDotBracketAndTripletNotation(int* structure, std::string ensemble, int length, double energy, ostream& outfile);
+		string getStructureStringInTripletNotation(int* structure, int length);
+		string getStructureStringInTripletNotation(const char* ensemble, int length);
 	public:
-		void initialize(int length1, int PF_COUNT_MODE1, int NO_DANGLE_MODE1, int ss_verbose1, bool PF_D2_UP_APPROX_ENABLED, bool checkFraction1);
+		void initialize(int length1, int PF_COUNT_MODE1, int NO_DANGLE_MODE1, int print_energy_decompose, bool PF_D2_UP_APPROX_ENABLED, bool checkFraction1, string energy_decompose_output_file);
 		void free_traceback();
-		void batch_sample(int num_rnd, bool ST_D2_ENABLE_SCATTER_PLOT, bool ST_D2_ENABLE_ONE_SAMPLE_PARALLELIZATION, bool ST_D2_ENABLE_UNIFORM_SAMPLE, double ST_D2_UNIFORM_SAMPLE_ENERGY, bool ST_D2_ENABLE_BPP_PROBABILITY);
-		void batch_sample_parallel(int num_rnd, bool ST_D2_ENABLE_SCATTER_PLOT, bool ST_D2_ENABLE_ONE_SAMPLE_PARALLELIZATION, bool ST_D2_ENABLE_BPP_PROBABILITY);
+		void batch_sample(int num_rnd, bool ST_D2_ENABLE_SCATTER_PLOT, bool ST_D2_ENABLE_ONE_SAMPLE_PARALLELIZATION, bool ST_D2_ENABLE_UNIFORM_SAMPLE, double ST_D2_UNIFORM_SAMPLE_ENERGY, bool ST_D2_ENABLE_BPP_PROBABILITY, string sampleOutFile, string estimateBppOutputFile, string scatterPlotOutputFile);
+		void batch_sample_parallel(int num_rnd, bool ST_D2_ENABLE_SCATTER_PLOT, bool ST_D2_ENABLE_ONE_SAMPLE_PARALLELIZATION, bool ST_D2_ENABLE_BPP_PROBABILITY, string sampleOutFile, string estimateBppOutputFile, string scatterPlotOutputFile);
 		void batch_sample_and_dump(int num_rnd, std::string ctFileDumpDir, std::string stochastic_summery_file_name, std::string seq, std::string seqfile);
 };
 #endif

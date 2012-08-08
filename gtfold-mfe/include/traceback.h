@@ -26,7 +26,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-	void trace(int len); //, int vv, int mode, int mismatch);
+	void trace(int len, int print_energy_decompose, const char* energy_decompose_output_file); //, int vv, int mode, int mismatch);
 #ifdef __cplusplus
 }
 #endif

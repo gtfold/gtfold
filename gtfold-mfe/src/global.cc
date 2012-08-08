@@ -14,11 +14,12 @@ int g_nthreads;
 int g_dangles;
 int g_unamode;
 int g_mismatch;
-int g_verbose;
+int g_verbose = 0;
 int g_prefilter_mode;
 int g_prefilter1;
 int g_prefilter2;
 
+int SHAPE_ENABLED = 0;
 int g_LIMIT_DISTANCE;
 int g_contactDistance;
 
@@ -137,6 +138,10 @@ void print_header() {
 	printf("GTfold: A Scalable Multicore Code for RNA Secondary Structure Prediction\n");
 	printf("(c) 2007-2011  D.A. Bader, C.E. Heitsch, S.C. Harvey\n");
 	printf("Georgia Institute of Technology\n\n");
+}
+
+void print_gtfold_usage_help() {
+	printf("There are three programs provided by GTfold. \n 1. gtmfe: Program implementing and supporting various options for calculating minimum free energy and MFE structure for a given sequence.\n 2. gtboltzmann: Program implementing and supporting various options and features for sampling structures for a sequence stochastically with help of partition function.\n 3. gtsubopt: Program implementing and supporting vcarious options and features for getting sub-optimal structures for a given sequence.\n\n");
 }
 
 

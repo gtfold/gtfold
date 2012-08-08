@@ -188,7 +188,10 @@ MyDouble PartitionFunctionD2::calculate_partition(int len, int pf_count_mode, in
 	create_partition_arrays();
 	init_partition_arrays();
 	fill_partition_arrays();
-	//printAllMatrixes();//TODO uncomment it
+	if(g_verbose==1){
+		printf("Printing partition function table...\n");
+		printAllMatrixes();
+	}
 	//printf("%4.4f\n",u[1][part_len]);
 	(u[1][part_len]).print();
 	printf("\n");

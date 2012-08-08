@@ -13,11 +13,21 @@
 #include<time.h>
 
 //Basic utility functions
-void StochasticTracebackD2::initialize(int length1, int PF_COUNT_MODE1, int NO_DANGLE_MODE1, int ss_verbose1, bool PF_D2_UP_APPROX_ENABLED1, bool checkFraction1){
+void StochasticTracebackD2::initialize(int length1, int PF_COUNT_MODE1, int NO_DANGLE_MODE1, int print_energy_decompose1, bool PF_D2_UP_APPROX_ENABLED1, bool checkFraction1, string energy_decompose_output_file){
 	checkFraction = checkFraction1;
 	length = length1;
 	//if(checkFraction) fraction = pf_shel_check(length);
-	ss_verbose = ss_verbose1; 
+	print_energy_decompose = print_energy_decompose1; 
+	if(print_energy_decompose==1){
+		//open file handler with file energy_decompose_output_file
+		//FILE* energy_decompose_outfile;
+        	energy_decompose_outfile = fopen(energy_decompose_output_file.c_str(), "w");
+        	if(energy_decompose_outfile==NULL){
+                	cerr<<"Error in opening file: "<<energy_decompose_output_file<<endl;
+                	exit(-1);
+        	}
+		printf("\nEnergy decomposition for Stochastically sampled structure will be saved to %s\n\n", energy_decompose_output_file.c_str());
+	}
 	//energy = 0.0;
 	//structure = new int[length+1];
 	//std::stack<base_pair> g_stack;
@@ -29,6 +39,9 @@ void StochasticTracebackD2::initialize(int length1, int PF_COUNT_MODE1, int NO_D
 
 void StochasticTracebackD2::free_traceback(){
 	pf_d2.free_partition();
+	if(print_energy_decompose==1){
+		fclose(energy_decompose_outfile);
+	}
 	//delete[] structure;
 }
 
@@ -140,9 +153,10 @@ void StochasticTracebackD2::rnd_u(int i, int j, int* structure, double & energy,
 				fraction.add(0, i, j, false);
 			}
 			double e2 = ( (pf_d2.ED5_new(h,j,h-1)) + (pf_d2.ED3_new(h,j,j+1)) + (pf_d2.auPenalty_new(h,j)) );
-			if (ss_verbose == 1) {
-				printf(" (pf_d2.ED5_new(h,j,h-1))=%f, (pf_d2.ED3_new(h,j,j+1))=%f, (pf_d2.auPenalty_new(h,j))=%f\n", (pf_d2.ED5_new(h,j,h-1))/100.0, (pf_d2.ED3_new(h,j,j+1))/100.0, (pf_d2.auPenalty_new(h,j))/100.0);
-				printf(" U_ihj(i=%d,h=%d,j=%d)= %lf\n",i,h,j, e2/100.0);
+			if (print_energy_decompose == 1) {
+				fprintf(energy_decompose_outfile, " (pf_d2.ED5_new(h,j,h-1))=%f, (pf_d2.ED3_new(h,j,j+1))=%f, (pf_d2.auPenalty_new(h,j))=%f\n", (pf_d2.ED5_new(h,j,h-1))/100.0, (pf_d2.ED3_new(h,j,j+1))/100.0, (pf_d2.auPenalty_new(h,j))/100.0);
+				fprintf(energy_decompose_outfile, " U_ihj(i=%d,h=%d,j=%d)= %lf\n",i,h,j, e2/100.0);
+				
 			}
 			energy += e2;
 			base_pair bp(h,j,UP);
@@ -190,9 +204,9 @@ void StochasticTracebackD2::rnd_s1(int i, int h, int j, int* structure, double &
 				fraction.add(2, h, j, false);
 			}
 			double e2 = (pf_d2.ED5_new(h,l,h-1))+ (pf_d2.auPenalty_new(h,l)) + (pf_d2.ED3_new(h,l,l+1));
-			if (ss_verbose == 1) {
-				printf("(pf_d2.ED5_new(h,l,h-1))=%f, (pf_d2.auPenalty_new(h,l))=%f, (pf_d2.ED3_new(h,l,l+1))=%f\n",(pf_d2.ED5_new(h,l,h-1)), (pf_d2.auPenalty_new(h,l)), (pf_d2.ED3_new(h,l,l+1)));
-				printf("(%d %d) %lf\n",i,j, e2/100.0);
+			if (print_energy_decompose == 1) {
+				fprintf(energy_decompose_outfile, "(pf_d2.ED5_new(h,l,h-1))=%f, (pf_d2.auPenalty_new(h,l))=%f, (pf_d2.ED3_new(h,l,l+1))=%f\n",(pf_d2.ED5_new(h,l,h-1))/100.0, (pf_d2.auPenalty_new(h,l))/100.0, (pf_d2.ED3_new(h,l,l+1))/100.0);
+				fprintf(energy_decompose_outfile, "(%d %d) %lf\n",i,j, e2/100.0);
 			}
 			energy += e2;
 			base_pair bp1(h,l,UP);
@@ -230,8 +244,8 @@ void StochasticTracebackD2::rnd_up(int i, int j, int* structure, double & energy
 					fraction.add(1, i, j, false);
 				}
 				double e2 = (pf_d2.eL_new(i,j,h,l));
-				if (ss_verbose == 1) 
-					printf("IntLoop(%d %d) %lf\n",i,j, e2/100.0);
+				if (print_energy_decompose == 1) 
+					fprintf(energy_decompose_outfile, "IntLoop(%d %d) %lf\n",i,j, e2/100.0);
 				energy += e2;
 				base_pair bp(h,l,UP);
 				g_stack.push(bp);
@@ -249,8 +263,8 @@ void StochasticTracebackD2::rnd_up(int i, int j, int* structure, double & energy
 			fraction.add(1, i, j, false);
 		}
 		double e2 = (pf_d2.eH_new(i,j));
-		if (ss_verbose == 1) 
-			printf("Hairpin(%d %d) %lf\n",i,j, e2/100.0);
+		if (print_energy_decompose == 1) 
+			fprintf(energy_decompose_outfile, "Hairpin(%d %d) %lf\n",i,j, e2/100.0);
 		energy += e2;
 		//set_single_stranded(i+1,j-1,structure);
 		
@@ -267,8 +281,8 @@ void StochasticTracebackD2::rnd_up(int i, int j, int* structure, double & energy
 			fraction.add(1, i, j, false);
 		}
 		double e2 = (pf_d2.eS_new(i,j));
-		if (ss_verbose == 1) 
-			printf("Stack(%d %d) %lf\n",i,j, e2/100.0);
+		if (print_energy_decompose == 1) 
+			fprintf(energy_decompose_outfile, "Stack(%d %d) %lf\n",i,j, e2/100.0);
 		energy+=e2;
 		base_pair bp(i+1,j-1,UP);
 		g_stack.push(bp);
@@ -303,8 +317,8 @@ void StochasticTracebackD2::rnd_up(int i, int j, int* structure, double & energy
 					fraction.add(1, i, j, false);
 				}
 				double e2 = (pf_d2.eL_new(i,j,h,l));
-				if (ss_verbose == 1) 
-					printf("IntLoop(%d %d) %lf\n",i,j, e2/100.0);
+				if (print_energy_decompose == 1) 
+					fprintf(energy_decompose_outfile, "IntLoop(%d %d) %lf\n",i,j, e2/100.0);
 				energy += e2;
 				base_pair bp(h,l,UP);
 				g_stack.push(bp);
@@ -341,8 +355,8 @@ void StochasticTracebackD2::rnd_up_approximate(int i, int j, int* structure, dou
                                         fraction.add(1, i, j, false);
                                 }
 				double e2 = (pf_d2.eL_new(i,j,p,q));
-				if (ss_verbose == 1) 
-					printf("IntLoop(%d %d) %lf\n",i,j, e2/100.0);
+				if (print_energy_decompose == 1) 
+					fprintf(energy_decompose_outfile, "IntLoop(%d %d) %lf\n",i,j, e2/100.0);
 			
 				energy += e2;
 				base_pair bp(p,q,UP);
@@ -361,8 +375,8 @@ void StochasticTracebackD2::rnd_up_approximate(int i, int j, int* structure, dou
                         fraction.add(1, i, j, false);
                 }
 		double e2 = (pf_d2.eH_new(i,j));
-		if (ss_verbose == 1) 
-			printf("Hairpin(%d %d) %lf\n",i,j, e2/100.0);
+		if (print_energy_decompose == 1) 
+			fprintf(energy_decompose_outfile, "Hairpin(%d %d) %lf\n",i,j, e2/100.0);
 		energy += e2;
 		//set_single_stranded(i+1,j-1,structure);
 		return ;
@@ -378,8 +392,8 @@ void StochasticTracebackD2::rnd_up_approximate(int i, int j, int* structure, dou
 			fraction.add(1, i, j, false);
 		}
 		double e2 = (pf_d2.eS_new(i,j));
-		if (ss_verbose == 1) 
-			printf("Stack(%d %d) %lf\n",i,j, e2/100.0);
+		if (print_energy_decompose == 1) 
+			fprintf(energy_decompose_outfile, "Stack(%d %d) %lf\n",i,j, e2/100.0);
 		energy+=e2;
 		base_pair bp(i+1,j-1,UP);
 		g_stack.push(bp);
@@ -422,9 +436,9 @@ void StochasticTracebackD2::rnd_u1(int i, int j, int* structure, double & energy
 				fraction.add(6, i, j, false);
 			}
 			double e2 = (pf_d2.EC_new()) + (h-i)*(pf_d2.EB_new());
-			if (ss_verbose == 1){ 
-				printf("(pf_d2.EC_new())=%f (h-i)*(pf_d2.EB_new())=%f\n",(pf_d2.EC_new())/100.0, (h-i)*(pf_d2.EB_new())/100.0);
-				printf("U1_s3_ihj(%d %d %d) %lf\n",i,h,j, e2/100.0);
+			if (print_energy_decompose == 1){ 
+				fprintf(energy_decompose_outfile, "(pf_d2.EC_new())=%f (h-i)*(pf_d2.EB_new())=%f\n",(pf_d2.EC_new())/100.0, (h-i)*(pf_d2.EB_new())/100.0);
+				fprintf(energy_decompose_outfile, "U1_s3_ihj(%d %d %d) %lf\n",i,h,j, e2/100.0);
 			}
 			energy += e2;
 			h1 = h;
@@ -452,9 +466,9 @@ void StochasticTracebackD2::rnd_s3(int i, int h, int j, int* structure, double &
 				fraction.add(5, h, j, false);
 			}
 			double e2 = ((pf_d2.auPenalty_new(h,l)) + (pf_d2.ED5_new(h,l,h-1)) + (pf_d2.ED3_new(h,l,l+1)));
-			if (ss_verbose == 1) {
-				printf("(pf_d2.auPenalty_new(h,l))=%f, (pf_d2.ED5_new(h,l,h-1))=%f, (pf_d2.ED3_new(h,l,l+1))=%f\n",(pf_d2.auPenalty_new(h,l))/100.0, (pf_d2.ED5_new(h,l,h-1))/100.0, (pf_d2.ED3_new(h,l,l+1))/100.0);
-				printf("S3_ihlj(%d %d %d %d) %lf\n",i,h,l,j,e2/100.0);
+			if (print_energy_decompose == 1) {
+				fprintf(energy_decompose_outfile, "(pf_d2.auPenalty_new(h,l))=%f, (pf_d2.ED5_new(h,l,h-1))=%f, (pf_d2.ED3_new(h,l,l+1))=%f\n",(pf_d2.auPenalty_new(h,l))/100.0, (pf_d2.ED5_new(h,l,h-1))/100.0, (pf_d2.ED3_new(h,l,l+1))/100.0);
+				fprintf(energy_decompose_outfile, "S3_ihlj(%d %d %d %d) %lf\n",i,h,l,j,e2/100.0);
 			}
 			energy += e2;
 			base_pair bp(h,l,UP);
@@ -479,8 +493,9 @@ void StochasticTracebackD2::rnd_s3_mb(int i, int h, int l, int j, int* structure
 		}
 		double tt =  0;//(j == l)? 0 : (pf_d2.ED3_new(h,l,l+1));//this term is corresponding to f(j+1,h,l)
 		double e2 = tt + (j-l)*(pf_d2.EB_new());
-		if (ss_verbose == 1){
-			printf("j=%d,l=%d,tt=(j == l)?0:(pf_d2.ED3_new(h,l,l+1))=%f,(j-l)*(pf_d2.EB_new())=%f\n",j,l,tt/100.0,(j-l)*(pf_d2.EB_new())/100.0);				printf("S3_MB_ihlj(%d %d %d %d) %lf\n",i,h,l,j, e2/100.0);
+		if (print_energy_decompose == 1){
+			fprintf(energy_decompose_outfile, "j=%d,l=%d,tt=(j == l)?0:(pf_d2.ED3_new(h,l,l+1))=%f,(j-l)*(pf_d2.EB_new())=%f\n",j,l,tt/100.0,(j-l)*(pf_d2.EB_new())/100.0);
+			fprintf(energy_decompose_outfile, "S3_MB_ihlj(%d %d %d %d) %lf\n",i,h,l,j, e2/100.0);
 		}
 		energy += e2;
 		
@@ -498,8 +513,8 @@ void StochasticTracebackD2::rnd_upm(int i, int j, int* structure, double & energ
 {
 	MyDouble rnd = randdouble();
 	MyDouble cum_prob(0.0);
-	if (ss_verbose == 1)
-		printf("Multiloop (%d %d)\n",i,j);
+	if (print_energy_decompose == 1)
+		fprintf(energy_decompose_outfile, "Multiloop (%d %d)\n",i,j);
 
 	int h1 = -1;
 	for (int h = i+1; h < j-1; ++h)
@@ -517,10 +532,10 @@ void StochasticTracebackD2::rnd_upm(int i, int j, int* structure, double & energ
 			//double e2 = (pf_d2.EA_new()) + 2*(pf_d2.EC_new()) + (h-i-1)*(pf_d2.EB_new()) + (pf_d2.auPenalty_new(i,j)) + (pf_d2.ED5_new(i,j,j-1)) + (pf_d2.ED3_new(i,j,i+1));//TODO New impl using ed3(i,j( instead of ed3(j,i)
 			energy += e2;
 			h1 = h;
-			if (ss_verbose == 1) {
-				printf("(pf_d2.EA_new())=%f, (pf_d2.EC_new())=%f, (pf_d2.EB_new())=%f\n",(pf_d2.EA_new())/100.0, (pf_d2.EC_new())/100.0, (pf_d2.EB_new())/100.0);
-				printf("(pf_d2.EA_new()) + 2*(pf_d2.EC_new()) + (h-i-1)*(pf_d2.EB_new())=%f, (pf_d2.auPenalty_new(i,j))=%f, (pf_d2.ED5_new(j,i,j-1))=%f, (pf_d2.ED3_new(j,i,i+1))=%f\n",((pf_d2.EA_new()) + 2*(pf_d2.EC_new()) + (h-i-1)*(pf_d2.EB_new()))/100.0, (pf_d2.auPenalty_new(i,j))/100.0, (pf_d2.ED5_new(j,i,j-1))/100.0, (pf_d2.ED3_new(j,i,i+1))/100.0);
-				printf("%s(%d %d %d) %lf\n", "UPM_S2_ihj",i,h1,j,e2/100.0);
+			if (print_energy_decompose == 1) {
+				fprintf(energy_decompose_outfile, "(pf_d2.EA_new())=%f, (pf_d2.EC_new())=%f, (pf_d2.EB_new())=%f\n",(pf_d2.EA_new())/100.0, (pf_d2.EC_new())/100.0, (pf_d2.EB_new())/100.0);
+				fprintf(energy_decompose_outfile, "(pf_d2.EA_new()) + 2*(pf_d2.EC_new()) + (h-i-1)*(pf_d2.EB_new())=%f, (pf_d2.auPenalty_new(i,j))=%f, (pf_d2.ED5_new(j,i,j-1))=%f, (pf_d2.ED3_new(j,i,i+1))=%f\n",((pf_d2.EA_new()) + 2*(pf_d2.EC_new()) + (h-i-1)*(pf_d2.EB_new()))/100.0, (pf_d2.auPenalty_new(i,j))/100.0, (pf_d2.ED5_new(j,i,j-1))/100.0, (pf_d2.ED3_new(j,i,i+1))/100.0);
+				fprintf(energy_decompose_outfile, "%s(%d %d %d) %lf\n", "UPM_S2_ihj",i,h1,j,e2/100.0);
 			}
 			rnd_s2(i,h1,j, structure, energy, g_stack);
 			return;
@@ -547,9 +562,9 @@ void StochasticTracebackD2::rnd_s2(int i, int h, int j, int* structure, double &
 			}
 			double e2 = (pf_d2.auPenalty_new(h,l)) + (pf_d2.ED5_new(h,l,h-1)) + (pf_d2.ED3_new(h,l,l+1));       
 			energy += e2;
-			if (ss_verbose == 1){
-				printf("(pf_d2.auPenalty_new(h,l))=%f, (pf_d2.ED5_new(h,l,h-1))=%f, (pf_d2.ED3_new(h,l,l+1))=%f\n",(pf_d2.auPenalty_new(h,l))/100.0, (pf_d2.ED5_new(h,l,h-1))/100.0, (pf_d2.ED3_new(h,l,l+1))/100.0);
-				printf("%s(%d %d %d %d) %lf\n"," S2_ihlj",i,h,l,j, e2/100.0);
+			if (print_energy_decompose == 1){
+				fprintf(energy_decompose_outfile, "(pf_d2.auPenalty_new(h,l))=%f, (pf_d2.ED5_new(h,l,h-1))=%f, (pf_d2.ED3_new(h,l,l+1))=%f\n",(pf_d2.auPenalty_new(h,l))/100.0, (pf_d2.ED5_new(h,l,h-1))/100.0, (pf_d2.ED3_new(h,l,l+1))/100.0);
+				fprintf(energy_decompose_outfile, "%s(%d %d %d %d) %lf\n"," S2_ihlj",i,h,l,j, e2/100.0);
 			}
 			base_pair bp1(h,l,UP);
 			base_pair bp2(l+1,j-1,U1);
@@ -741,9 +756,17 @@ delete [] structure;
 }
  */
 
-void StochasticTracebackD2::batch_sample(int num_rnd, bool ST_D2_ENABLE_SCATTER_PLOT, bool ST_D2_ENABLE_ONE_SAMPLE_PARALLELIZATION ,bool ST_D2_ENABLE_UNIFORM_SAMPLE, double ST_D2_UNIFORM_SAMPLE_ENERGY, bool ST_D2_ENABLE_BPP_PROBABILITY)
+void StochasticTracebackD2::batch_sample(int num_rnd, bool ST_D2_ENABLE_SCATTER_PLOT, bool ST_D2_ENABLE_ONE_SAMPLE_PARALLELIZATION ,bool ST_D2_ENABLE_UNIFORM_SAMPLE, double ST_D2_UNIFORM_SAMPLE_ENERGY, bool ST_D2_ENABLE_BPP_PROBABILITY, string samplesOutputFile, string estimateBppOutputFile, string scatterPlotOutputFile)
 {cout<<"ST_D2_ENABLE_UNIFORM_SAMPLE="<<ST_D2_ENABLE_UNIFORM_SAMPLE<<",ST_D2_UNIFORM_SAMPLE_ENERGY="<<ST_D2_UNIFORM_SAMPLE_ENERGY<<endl;
 	MyDouble U;
+	
+	ofstream outfile;
+        outfile.open(samplesOutputFile.c_str());
+	if(!outfile.good()){
+                cerr<<"Error in opening file: "<<samplesOutputFile<<endl;
+                exit(-1);
+        }
+
 	/*if(PF_D2_UP_APPROX_ENABLED){
 	  double t1 = get_seconds();
 	  PartitionFunctionD2 pf_d2_exact_up;
@@ -816,16 +839,26 @@ void StochasticTracebackD2::batch_sample(int num_rnd, bool ST_D2_ENABLE_SCATTER_
 				if(ST_D2_ENABLE_SCATTER_PLOT) uniq_structs.insert(make_pair(ensemble.substr(1),std::pair<int,double>(1,energy))); 
 			}
 
-			if(!ST_D2_ENABLE_SCATTER_PLOT) std::cout << ensemble.substr(1) << ' ' << energy << std::endl;
+			//if(!ST_D2_ENABLE_SCATTER_PLOT){
+				//std::cout << ensemble.substr(1) << ' ' << energy << std::endl;
+				printEnergyAndStructureInDotBracketAndTripletNotation(structure, ensemble, (int)length, energy, outfile);
+			//}
 		}
 		//std::cout << nsamples << std::endl;
 		if(ST_D2_ENABLE_SCATTER_PLOT && !ST_D2_ENABLE_BPP_PROBABILITY){
+			FILE* scatterPlotoutfile;
+			scatterPlotoutfile = fopen(scatterPlotOutputFile.c_str(), "w");
+                	if(scatterPlotoutfile==NULL){
+                        	cerr<<"Error in opening file: "<<scatterPlotOutputFile<<endl;
+                        	exit(-1);
+                	}
+
 			int pcount = 0;
 			int maxCount = 0; std::string bestStruct;
 			double bestE = INFINITY;
-			printf("nsamples=%d\n",nsamples);
-			printf("%s,%s,%s","structure","energy","boltzman_probability");
-			printf(",%s,%s\n","estimated_probability","frequency");
+			fprintf(scatterPlotoutfile, "nsamples=%d\n",nsamples);
+			fprintf(scatterPlotoutfile, "%s,%s,%s","structure in dot bracket notation","energy","boltzman_probability");
+                        fprintf(scatterPlotoutfile, ",%s,%s\t%s\n","estimated_probability","frequency","structure in triplet notation");
 			std::map<std::string,std::pair<int,double> >::iterator iter ;
 			for (iter = uniq_structs.begin(); iter != uniq_structs.end();  ++iter)
 			{
@@ -837,8 +870,10 @@ void StochasticTracebackD2::batch_sample(int num_rnd, bool ST_D2_ENABLE_SCATTER_
 				//MyDouble actual_p = (pf_d2.myExp(-(energy)/(RT_)))/U;
 				MyDouble actual_p = (pf_d2.myExp(-(energy*100)/(RT)))/U;
 				//MyDouble actual_p(-(energy)/(RT_));///U;
-				printf("%s,%f,",ss.c_str(),energy);actual_p.print();
-				printf(",%f,%d\n",estimated_p,pp.first);
+				fprintf(scatterPlotoutfile, "%s,%f,",ss.c_str(),energy);actual_p.print(scatterPlotoutfile);
+				fprintf(scatterPlotoutfile, ",%f,%d,\t",estimated_p,pp.first);
+                                string tripletNotationStructureString = getStructureStringInTripletNotation(ss.c_str(), length);
+                                fprintf(scatterPlotoutfile, "%s\n", tripletNotationStructureString.c_str());
 
 				//printf("%s %lf\n",ss.c_str(),energy);actual_p.print();
 				//printf("%lf %d\n",estimated_p,pp.first);
@@ -851,12 +886,21 @@ void StochasticTracebackD2::batch_sample(int num_rnd, bool ST_D2_ENABLE_SCATTER_
 				}
 			}
 			assert(num_rnd == pcount);
-			printf("\nMax frequency structure : \n%s e=%lf freq=%d p=%lf\n",bestStruct.c_str(),bestE,maxCount,(double)maxCount/(double)num_rnd);
+			fprintf(scatterPlotoutfile, "\nMax frequency structure : \n%s e=%lf freq=%d p=%lf\n",bestStruct.c_str(),bestE,maxCount,(double)maxCount/(double)num_rnd);
+			printf("\nScatter plot frequency data for stochastic samples, saved to %s\n", scatterPlotOutputFile.c_str());
+			fclose(scatterPlotoutfile);
 		}
 		else{
 			printf("nsamples=%d\n",nsamples);
 		}
 		if(ST_D2_ENABLE_BPP_PROBABILITY){
+			ofstream estimateBppoutfile;
+                        estimateBppoutfile.open(estimateBppOutputFile.c_str());
+                        if(!estimateBppoutfile.good()){
+                                cerr<<"Error in opening file: "<<estimateBppOutputFile<<endl;
+                                exit(-1);
+                        }
+			
 			int** bpp_freq = new int*[length+1];
 			for(int p=1; p<=length; ++p) bpp_freq[p] = new int[length+1];
 			for(int p=1; p<=length; ++p) for(int q=p+1; q<=length; ++q) bpp_freq[p][q]=0;
@@ -871,17 +915,21 @@ void StochasticTracebackD2::batch_sample(int num_rnd, bool ST_D2_ENABLE_SCATTER_
 				updateBppFreq(struc_str, struc_freq, bpp_freq, length, total_bpp_freq);
 			}
 			//cout<<"\nBPP Probabilities are\ni,j,bppFreq,totalBppFreq\n";
-			cout<<"\nBPP Probabilities are\ni,j,bppFreq,totalSamples\n";
+			estimateBppoutfile<<"BPP Probabilities are\ni,j,bppFreq,totalSamples\n";
 			for(int p=1; p<=length; ++p) for(int q=p+1; q<=length; ++q){
 				//if(bpp_freq[p][q]>0) cout<<p<<","<<q<<","<<bpp_freq[p][q]<<","<<total_bpp_freq<<endl;
-				if(bpp_freq[p][q]>0) cout<<p<<","<<q<<","<<bpp_freq[p][q]<<","<<num_rnd<<endl;
+				if(bpp_freq[p][q]>0) estimateBppoutfile<<p<<","<<q<<","<<bpp_freq[p][q]<<","<<num_rnd<<endl;
 			}
 			for(int p=1; p<=length; ++p) delete[] bpp_freq[p];
 			delete[] bpp_freq;
+			printf("\nEstimated base pair probabilities for stochastic samples, saved to %s\n", estimateBppOutputFile.c_str());
+			estimateBppoutfile.close();
 		}
 
 	}
 	delete[] structure;
+	printf("\nStochastic samples saved to %s\n", samplesOutputFile.c_str());
+        outfile.close();
 }
 
 void StochasticTracebackD2::updateBppFreq(std::string struc_str, int struc_freq, int** bpp_freq, int length, int& total_bpp_freq){
@@ -904,10 +952,16 @@ void StochasticTracebackD2::updateBppFreq(std::string struc_str, int struc_freq,
 	//cout<<"Exiting updateBppFreq\n";
 }
 
-void StochasticTracebackD2::batch_sample_parallel(int num_rnd, bool ST_D2_ENABLE_SCATTER_PLOT, bool ST_D2_ENABLE_ONE_SAMPLE_PARALLELIZATION, bool ST_D2_ENABLE_BPP_PROBABILITY)
+void StochasticTracebackD2::batch_sample_parallel(int num_rnd, bool ST_D2_ENABLE_SCATTER_PLOT, bool ST_D2_ENABLE_ONE_SAMPLE_PARALLELIZATION, bool ST_D2_ENABLE_BPP_PROBABILITY, string samplesOutputFile, string estimateBppOutputFile, string scatterPlotOutputFile)
 {
 	//MyDouble U = pf_d2.get_u(1,length);
 	MyDouble U;
+	ofstream outfile;
+        outfile.open(samplesOutputFile.c_str());
+	if(!outfile.good()){
+		cerr<<"Error in opening file: "<<samplesOutputFile<<endl;
+		exit(-1);
+	}
 	/*if(PF_D2_UP_APPROX_ENABLED){
 	  double t1 = get_seconds();
 	  PartitionFunctionD2 pf_d2_exact_up;
@@ -1050,7 +1104,11 @@ void StochasticTracebackD2::batch_sample_parallel(int num_rnd, bool ST_D2_ENABLE
 				//uniq_structs_thread[thdId].insert(make_pair(ensemble.substr(1),std::pair<int,double>(1,energy))); 
 			}
 
-			if(!ST_D2_ENABLE_SCATTER_PLOT) std::cout << ensemble.substr(1) << ' ' << energy << std::endl;
+			//if(!ST_D2_ENABLE_SCATTER_PLOT){
+				//std::cout << ensemble.substr(1) << ' ' << energy << std::endl;
+				//printEnergyAndStructureInDotBracketAndTripletNotation(structure, ensemble, (int)length, energy, std::cout);
+				printEnergyAndStructureInDotBracketAndTripletNotation(structure, ensemble, (int)length, energy, outfile);
+			//}
 		}
 
 		if(ST_D2_ENABLE_SCATTER_PLOT){
@@ -1079,13 +1137,19 @@ void StochasticTracebackD2::batch_sample_parallel(int num_rnd, bool ST_D2_ENABLE
 			}
 		}
 		if(ST_D2_ENABLE_SCATTER_PLOT && !ST_D2_ENABLE_BPP_PROBABILITY){
+			FILE* scatterPlotoutfile;
+                        scatterPlotoutfile = fopen(scatterPlotOutputFile.c_str(), "w");
+                        if(scatterPlotoutfile==NULL){
+                                cerr<<"Error in opening file: "<<scatterPlotOutputFile<<endl;
+                                exit(-1);
+                        }
 			//std::cout << nsamples << std::endl;
 			int pcount = 0;
 			int maxCount = 0; std::string bestStruct;
 			double bestE = INFINITY;
-			printf("nsamples=%d\n",num_rnd);
-			printf("%s,%s,%s","structure","energy","boltzman_probability");
-			printf(",%s,%s\n","estimated_probability","frequency");
+			fprintf(scatterPlotoutfile, "nsamples=%d\n",num_rnd);
+			fprintf(scatterPlotoutfile, "%s,%s,%s","structure in dot bracket notation","energy","boltzman_probability");
+			fprintf(scatterPlotoutfile, ",%s,%s\t%s\n","estimated_probability","frequency","structure in triplet notation");
 			std::map<std::string,std::pair<int,double> >::iterator iter ;
 			for (iter = uniq_structs.begin(); iter != uniq_structs.end();  ++iter)
 			{
@@ -1098,9 +1162,10 @@ void StochasticTracebackD2::batch_sample_parallel(int num_rnd, bool ST_D2_ENABLE
 				MyDouble actual_p;
 				actual_p = (pf_d2.myExp(-(energy*100)/(RT)))/U;
 				//MyDouble actual_p(-(energy)/(RT_));///U;
-				printf("%s,%f,",ss.c_str(),energy);actual_p.print();
-				printf(",%f,%d\n",estimated_p,pp.first);
-
+				fprintf(scatterPlotoutfile, "%s,%f,",ss.c_str(),energy);actual_p.print(scatterPlotoutfile);
+				fprintf(scatterPlotoutfile, ",%f,%d,\t",estimated_p,pp.first);
+				string tripletNotationStructureString = getStructureStringInTripletNotation(ss.c_str(), length);
+				fprintf(scatterPlotoutfile, "%s\n", tripletNotationStructureString.c_str());
 				//printf("%s %lf\n",ss.c_str(),energy);actual_p.print();
 				//printf("%lf %d\n",estimated_p,pp.first);
 				pcount += pp.first;
@@ -1112,12 +1177,21 @@ void StochasticTracebackD2::batch_sample_parallel(int num_rnd, bool ST_D2_ENABLE
 				}
 			}
 			assert(num_rnd == pcount);
-			printf("\nMax frequency structure : \n%s e=%lf freq=%d p=%lf\n",bestStruct.c_str(),bestE,maxCount,(double)maxCount/(double)num_rnd);
+			fprintf(scatterPlotoutfile, "\nMax frequency structure : \n%s e=%lf freq=%d p=%lf\n",bestStruct.c_str(),bestE,maxCount,(double)maxCount/(double)num_rnd);
+			printf("\nScatter plot frequency data for stochastic samples, saved to %s\n", scatterPlotOutputFile.c_str());
+                        fclose(scatterPlotoutfile);	
 		}
 		else{
 			printf("nsamples=%d\n",num_rnd);
 		}
 		if(ST_D2_ENABLE_BPP_PROBABILITY){
+			ofstream estimateBppoutfile;
+        		estimateBppoutfile.open(estimateBppOutputFile.c_str());
+        		if(!estimateBppoutfile.good()){
+                		cerr<<"Error in opening file: "<<estimateBppOutputFile<<endl;
+        	        	exit(-1);
+        		}
+
                         int** bpp_freq = new int*[length+1];
                         for(int p=1; p<=length; ++p) bpp_freq[p] = new int[length+1];
                         for(int p=1; p<=length; ++p) for(int q=p+1; q<=length; ++q) bpp_freq[p][q]=0;
@@ -1132,18 +1206,21 @@ void StochasticTracebackD2::batch_sample_parallel(int num_rnd, bool ST_D2_ENABLE
                                 updateBppFreq(struc_str, struc_freq, bpp_freq, length, total_bpp_freq);
                         }
                         //cout<<"\nBPP Probabilities are\ni,j,bppFreq,totalBppFreq\n";
-                        cout<<"\nBPP Probabilities are\ni,j,bppFreq,totalSamples\n";
+                        estimateBppoutfile<<"BPP Probabilities are\ni,j,bppFreq,totalSamples\n";
                         for(int p=1; p<=length; ++p) for(int q=p+1; q<=length; ++q){
                                 //if(bpp_freq[p][q]>0) cout<<p<<","<<q<<","<<bpp_freq[p][q]<<","<<total_bpp_freq<<endl;
-                                if(bpp_freq[p][q]>0) cout<<p<<","<<q<<","<<bpp_freq[p][q]<<","<<num_rnd<<endl;
+                                if(bpp_freq[p][q]>0) estimateBppoutfile<<p<<","<<q<<","<<bpp_freq[p][q]<<","<<num_rnd<<endl;
                         }
                         for(int p=1; p<=length; ++p) delete[] bpp_freq[p];
                         delete[] bpp_freq;
+			printf("\nEstimated base pair probabilities for stochastic samples, saved to %s\n", estimateBppOutputFile.c_str());
+			estimateBppoutfile.close();
                 }
-
 	}
 	delete [] structures_thread;
 	delete [] uniq_structs_thread;
+	printf("\nStochastic samples saved to %s\n", samplesOutputFile.c_str());
+        outfile.close();
 }
 
 
@@ -1274,4 +1351,74 @@ void StochasticTracebackD2::set_base_pair(int i, int j, int* structure)
 	assert(cond);
 	structure[i] = j;
 	structure[j] = i;
+}
+
+void StochasticTracebackD2::printEnergyAndStructureInDotBracketAndTripletNotation(int* structure, std::string ensemble, int length, double energy, ostream & outfile){
+	//std::cout << ensemble.substr(1) << ' ' << energy << std::endl;
+	//ssobj << energy << "\t";	
+	string tripletNotationStructureString = getStructureStringInTripletNotation(structure, length);
+
+	outfile << ensemble.substr(1) << "\t" << energy << "\t" << tripletNotationStructureString<<endl;
+	if(print_energy_decompose==1){
+		fprintf(energy_decompose_outfile, "%s\t%f\t%s\n\n\n", ensemble.substr(1).c_str(), energy, tripletNotationStructureString.c_str());
+	}
+}
+
+string StochasticTracebackD2::getStructureStringInTripletNotation(int* structure, int length){
+	stringstream ssobj;
+	int i=1;
+        while( i <= (int)length ) {
+                int myI = i;
+                int myJ = structure[i];
+                int myCount = 1;
+                if (myJ > 0 && myI<myJ)
+                {
+                        for(int tempI=myI+1; tempI <= (int)length; ++tempI){
+                                int tempJ = structure[tempI];
+                                if(tempJ>0  && tempI<tempJ  && (tempI-myI)==(myJ-tempJ)){
+                                        myCount++;
+                                        i = tempI+1;
+                                }
+                                else{
+                                        //std::cout<<myI<<" "<<myJ<<" "<<myCount<<", "; 
+                                        ssobj<<myI<<" "<<myJ<<" "<<myCount<<", ";
+                                        i = tempI;
+                                        break;
+                                }
+                        }
+                }
+                else{
+                        i++;
+                }
+        }
+        return ssobj.str();
+}
+
+string StochasticTracebackD2::getStructureStringInTripletNotation(const char* ensemble, int length){
+	std::stack<int> openBracketStack;
+	int* structure = new int[length+1];
+	for(int j=0; j<=length; ++j) structure[j]=-1;
+	int i=0;
+	while(i<length){
+		if(ensemble[i]=='('){
+			openBracketStack.push(i);
+		}
+		else if(ensemble[i]==')'){
+			if(openBracketStack.empty()){
+				printf("%s structure is not a valid structure in dot-bracket notation, exiting...\n\n", ensemble);
+				exit(-1);
+			}
+			int openingBracketIndexForI = openBracketStack.top();
+			openBracketStack.pop();
+			structure[i+1]=openingBracketIndexForI+1;
+			structure[openingBracketIndexForI+1]=i+1;
+		}
+		i++;
+	}
+	if(!openBracketStack.empty()){
+        	printf("%s structure is not a valid structure in dot-bracket notation, exiting...\n\n", ensemble);
+        	exit(-1);
+        }
+
+	return getStructureStringInTripletNotation(structure, length);
 }

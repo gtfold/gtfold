@@ -13,7 +13,7 @@ bool BPP_ENABLED;
 bool SUBOPT_ENABLED;
 bool CONS_ENABLED = false;
 bool VERBOSE = false;
-bool SHAPE_ENABLED = false;
+//bool SHAPE_ENABLED = false;
 bool T_MISMATCH = false;
 bool UNAMODE = false;
 bool RNAMODE = false;

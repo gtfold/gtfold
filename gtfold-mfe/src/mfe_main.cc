@@ -47,7 +47,11 @@ static bool PARAM_DIR = false;
 //static bool LIMIT_DISTANCE;
 static bool CONS_ENABLED = false;
 static bool VERBOSE = false;
-static bool SHAPE_ENABLED = false;
+
+//static bool SHAPE_ENABLED = false;
+
+//extern int SHAPE_ENABLED;
+
 static bool T_MISMATCH = false;
 static bool UNAMODE = false;
 static bool RNAMODE = false;
@@ -57,6 +61,7 @@ static string seqfile = "";
 static string constraintsFile = "";
 static string outputPrefix = "";
 static string outputFile = "";
+static string energyDecomposeOutFile = "";
 static string outputDir = "";
 static string shapeFile = "";
 static string paramDir; // default value
@@ -64,6 +69,7 @@ static string paramDir; // default value
 static int dangles=-1;
 static int prefilter1=2;
 static int prefilter2=2;
+static int print_energy_decompose = 0;
 
 static int nThreads = -1;
 static int contactDistance = -1;
@@ -191,7 +197,7 @@ int mfe_main(int argc, char** argv) {
 	printf("- MFE runtime: %9.6f seconds\n", t1);
 
 	t1 = get_seconds();
-	trace(seq.length());
+	trace(seq.length(), print_energy_decompose, energyDecomposeOutFile.c_str());
 	t1 = get_seconds() - t1;
 	
 	printf("\n");
@@ -255,7 +261,7 @@ void parse_mfe_options(int argc, char** argv) {
         }
         else
           help();
-      }else if(strcmp(argv[i], "--prefix") == 0 || strcmp(argv[i], "-o") == 0) {
+      }else if(strcmp(argv[i], "--output") == 0 || strcmp(argv[i], "-o") == 0) {
         if(i < argc)
           outputPrefix = argv[++i];
         else
@@ -307,11 +313,14 @@ void parse_mfe_options(int argc, char** argv) {
           help();	
       } else if (strcmp(argv[i], "--verbose") == 0 || strcmp(argv[i], "-v") == 0) {
         VERBOSE = true;
+      } else if (strcmp(argv[i], "--energy") == 0 || strcmp(argv[i], "-e") == 0) {
+	print_energy_decompose = 1;
       }
-      else if (strcmp(argv[i], "--useSHAPE") == 0){
+      else if (strcmp(argv[i], "--useSHAPE") == 0  || strcmp(argv[i], "-s") == 0){
         if( i < argc){
           shapeFile = argv[++i];
-          SHAPE_ENABLED = true;
+          //SHAPE_ENABLED = true;
+          SHAPE_ENABLED = 1;
         }
         else
           help();
@@ -347,10 +356,16 @@ void parse_mfe_options(int argc, char** argv) {
   if (!outputDir.empty()) {
     outputFile += outputDir;
     outputFile += "/";
+ 	energyDecomposeOutFile += outputDir;
+	energyDecomposeOutFile += "/";
+
   }
   // ... and append the .ct
   outputFile += outputPrefix;
   outputFile += ".ct";
+
+  energyDecomposeOutFile += outputPrefix;
+  energyDecomposeOutFile += ".energy";
 
 }
 
@@ -431,7 +446,7 @@ static void help() {
     printf("                        implementation.\n");
 
     printf("   -s, --useSHAPE FILE  Use SHAPE constraints from FILE.\n");      
-
+    printf("   -e, --energy         prints energy decomposition for sampled structures to file with extention '.energy'.\n");
     printf("\nConstraint syntax:\n");
     printf("\tF i j k  # force (i,j)(i+1,j-1),.......,(i+k-1,j-k+1) pairs.\n");
     printf("\tP i j k  # prohibit (i,j)(i+1,j-1),.......,(i+k-1,j-k+1) pairs.\n");

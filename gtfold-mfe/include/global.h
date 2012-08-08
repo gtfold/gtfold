@@ -20,9 +20,9 @@ extern int g_verbose;
 extern int g_prefilter_mode;
 extern int g_prefilter1;
 extern int g_prefilter2;
-
 extern unsigned int chPairKey;
 
+extern int SHAPE_ENABLED;//0 means false and 1 means true
 extern int g_LIMIT_DISTANCE;
 extern int g_contactDistance;
 
@@ -39,6 +39,7 @@ void free_global_params();
 void print_sequence(int len); 
 void print_structure(int len); 
 void print_header() ;
+void print_gtfold_usage_help();
 #ifdef __cplusplus
 }
 #endif

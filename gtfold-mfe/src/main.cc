@@ -48,6 +48,8 @@ int main(int argc, char** argv) {
     subopt_main(argc,argv);
   } else if (cmd.find("gtboltzmann") != std::string::npos) {
     boltzmann_main(argc,argv);
+  } else{
+	print_gtfold_usage_help();
   }
 
 	return EXIT_SUCCESS;

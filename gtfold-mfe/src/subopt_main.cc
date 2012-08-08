@@ -18,7 +18,7 @@ using namespace std;
 
 static string seqfile = "";
 static string suboptFile = "";
-static double suboptDelta = 0;
+static double suboptDelta = 0.0;
 static string outputPrefix = "";
 static string outputFile = "";
 static string outputDir = "";
@@ -47,6 +47,7 @@ void save_subopt_file(string outputFile, ss_map_t& ss_data,
 
 void parse_options(int argc, char** argv) {
   int i;
+  g_dangles = 2;
 
   for(i=1; i<argc; i++) {
     if(argv[i][0] == '-') {
@@ -63,7 +64,7 @@ void parse_options(int argc, char** argv) {
           help();
         }
       }
-      else if(strcmp(argv[i], "--subopt") == 0) {
+      else if(strcmp(argv[i], "--suboptDeltaEnergy") == 0) {
         g_dangles = 2;
         if(i < argc)
           suboptDelta = atof(argv[++i]);
@@ -72,7 +73,18 @@ void parse_options(int argc, char** argv) {
       }
       else if(strcmp(argv[i], "-o") == 0) {
 		outputPrefix.assign(argv[++i]);
-	  }
+      }
+      else if (strcmp(argv[i], "--dangle") == 0 || strcmp(argv[i], "-d") == 0) {
+        std::string cmd = argv[i];
+	if(i < argc) {
+          g_dangles = atoi(argv[++i]);
+          if (g_dangles != 2) {
+            g_dangles = 2;
+            printf("Ignoring %s option as it accepts only 2 and program will continue with dangles value as 2\n", cmd.c_str());
+          }
+        } else
+          help();
+      }  
     } else {
       seqfile = argv[i];
     }
@@ -121,9 +133,10 @@ static void help() {
     printf("   FILE is an RNA sequence file containing only the sequence or in FASTA format.\n\n");
 
     printf("OPTIONS\n");
-    printf("   --subopt NUM         Calculate suboptimal structures within NUM kcal/mol\n");
+    printf("   --suboptDeltaEnergy DOUBLE         Calculate suboptimal structures within DOUBLE kcal/mol\n");
     printf("                        of the MFE. (Uses -d 2 treatment of dangling energies.)\n");
     printf("\n"); 
+    printf("   -d, --dangle INT     Restricts treatment of dangling energies (INT=2),\n");
     printf("   -o, --output NAME    Write output files with prefix given in NAME\n");
     printf("   -p  --paramdir DIR   Path to directory from which parameters are to be read\n");
     printf("   -h, --help           Output help (this message) and exit.\n");
