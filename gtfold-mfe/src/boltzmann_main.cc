@@ -21,7 +21,7 @@
 
 using namespace std;
 
-static bool CALC_PART_FUNC = false;
+static bool CALC_PART_FUNC = true;
 static bool PF_COUNT_MODE = false;
 static bool BPP_ENABLED = false;
 static bool PARAM_DIR = false;
@@ -61,7 +61,7 @@ static bool LIMIT_DISTANCE = false;
 static int contactDistance = -1;
 
 
-static void help() {
+static void print_usage() {
 	printf("Usage: gtboltzmann [OPTION]... FILE\n\n");
 
 	printf("   FILE is an RNA sequence file containing only the sequence or in FASTA format.\n\n");
@@ -74,14 +74,14 @@ static void help() {
 	printf("   --partition		Calculate the partition function (default is using d2 dangling mode).\n");
 	printf("   --exact-internal-loop	Do the exact internal loop calculation while calculating partition function and traceback without any short internal loop approximation)\n");
 	printf("   -dS			Calculate the partition function using sfold reccurences and use them in traceback.\n");
-	printf("   --sample   INT	Sample number of structures equal to INT.\n");
+	printf("   -s|--sample   INT	Sample number of structures equal to INT.\n");
 	printf("   --scatterPlot	While sampling structures, Collect frequency of all structures and calculate estimate probability and boltzmann probability for scatter plot.\n");
 	printf("   --uniformSample energy1	While sampling structures, Samples with Energy energy1 will only be sampled.\n");
 	printf("   --check-fraction	While sampling structures, enable test of check fraction.\n");
 	printf("   --estimate-bpp	While sampling structures, Calculate base pair probabilities.\n");
 	printf("   --counts-parallel	While sampling structures, parallelize INT sample counts among available threads (this is also a default behaviour of sampling).\n");
 	printf("   --one-sample-parallel	While sampling structures, parallelize the processing of one sample (useful when sampling large sequence with number of samples being less than available threads).\n");
-	printf("   --sample   INT  --dump [--dump_dir dump_dir_path] [--dump_summary dump_summery_file_name]	Sample number of structures equal to INT and dump each structure to a ct file in dump_dir_path directory (if no value provided then use current directory value for this purpose) and also create a summary file with name stochastic_summery_file_name in dump_dir_path directory (if no value provided, use stochaSampleSummary.txt value for this purpose).\n");
+	printf("   -s|--sample   INT  --dump [--dump_dir dump_dir_path] [--dump_summary dump_summery_file_name]	Sample number of structures equal to INT and dump each structure to a ct file in dump_dir_path directory (if no value provided then use current directory value for this purpose) and also create a summary file with name stochastic_summery_file_name in dump_dir_path directory (if no value provided, use stochaSampleSummary.txt value for this purpose).\n");
 	printf("   --pfcount		Calculate the structure count using partition function and zero energy value.\n");
 	printf("   --bpp		Calculate base pair probabilities.\n");
 	printf("   -l|--limitCD  INT	Set a maximum base pair contact distance to INT. If no\n");
@@ -90,20 +90,30 @@ static void help() {
 	printf("   -p  --paramdir DIR   Path to directory from which parameters are to be read\n");
 	printf("   -h, --help           Output help (this message) and exit.\n");
 	printf("   --detailed-help      Output help (this message) with detailed options and examples, and exit.\n");
-	printf("   -e, --energy         prints energy decomposition for sampled structures to file with extention '.energy' (should be used with '-t 1' option, as otherwise all threads in parallel, will write to file and output will be intermixed from all threads).\n");
+	printf("   -e, --energydetail         prints energy decomposition for sampled structures to file with extention '.energy' (should be used with '-t 1' option, as otherwise all threads in parallel, will write to file and output will be intermixed from all threads).\n");
 	printf("   -w, --workdir DIR    Path of directory where output files will be written.\n");
+}
+
+static void help() {
+	print_usage();
 	exit(-1);
 }
-static void detailed_help(){
+
+static void print_examples(){
         printf("\n\nEXAMPLES:\n\n");
-        printf("1. Calculate Partition function:\n");
-        printf("gtboltzmann --partition [[-d 0|2]|[-dS]] [-t 1|2|...|N] [-o outputPrefix] [--exact-internal-loop] [-v] [-p DIR] [-p DIR] [-l] <seq_file>\n\n");
-        printf("2. Sample structures stochastically:\n");
-        printf("gtboltzmann --sample INT [[-d 0|2]|[-dS]] [-t 1|2|...|N] [-o outputPrefix] [--exact-internal-loop] [-v] [--scatterPlot] [--uniformSample DOUBLE] [--estimate-bpp] [--one-sample-parallel] [-p DIR] [-l] <seq_file>\n\n");
-        printf("gtboltzmann --sample INT [[-d 0|2]|[-dS]] -t 1 [-o outputPrefix] [--exact-internal-loop] [-v] [--scatterPlot] [--uniformSample DOUBLE] [-e] [--check-fraction] [--estimate-bpp] [--one-sample-parallel] [-p DIR] [-l] <seq_file>\n\n");
-        printf("gtboltzmann --sample INT --dump [--dump_dir dump_dir_path] [--dump_summary dump_summery_file_name] [-d 2] [--exact-internal-loop] [-v] [-p DIR] [-l] <seq_file>\n\n");
+        printf("1. Calculate Partition function:\n\n");
+        printf("gtboltzmann --partition [[-d 0|2]|[-dS]] [-t 1|2|...|N] [-o outputPrefix] [--exact-internal-loop] [-v] [-p DIR] [-w DIR] [-l] <seq_file>\n\n");
+        printf("2. Sample structures stochastically:\n\n");
+        printf("gtboltzmann [-s INT] [[-d 0|2]|[-dS]] [-t 1|2|...|N] [-o outputPrefix] [--exact-internal-loop] [-v] [--scatterPlot] [--uniformSample DOUBLE] [--estimate-bpp] [--one-sample-parallel] [-p DIR] [-w DIR] [-l] <seq_file>\n\n");
+        printf("gtboltzmann [-s INT] [[-d 0|2]|[-dS]] -t 1 [-o outputPrefix] [--exact-internal-loop] [-v] [--scatterPlot] [--uniformSample DOUBLE] [-e] [--check-fraction] [--estimate-bpp] [--one-sample-parallel] [-p DIR] [-w DIR] [-l] <seq_file>\n\n");
+        printf("gtboltzmann [-s] INT --dump [--dump_dir dump_dir_path] [--dump_summary dump_summery_file_name] [-d 2] [--exact-internal-loop] [-v] [-p DIR] [-w DIR] [-l] <seq_file>\n\n");
         printf("\n\n");
-        help();
+}
+
+static void detailed_help(){
+	print_usage();
+	print_examples();
+	exit(-1);
 }
 
 static void validate_options(){
@@ -140,7 +150,7 @@ static void validate_options(){
 		//nothing to check
         }
 	else if(CALC_PART_FUNC && RND_SAMPLE){//both partition function and sample
-        	printf("Program proceeding with sampling as both partition function calculation and sampling calculation option are used.\n\n");
+        	//printf("Program proceeding with sampling as both partition function calculation and sampling calculation option are used.\n\n");
         	CALC_PART_FUNC = false;
         }
 	else if(!CALC_PART_FUNC && !RND_SAMPLE){//neither partition function nor sample
@@ -157,8 +167,7 @@ static void parse_options(int argc, char** argv) {
 		if(argv[i][0] == '-') {
 			if(strcmp(argv[i], "--help") == 0 || strcmp(argv[i], "-h") == 0) {
 				help(); 
-			}
-			if(strcmp(argv[i], "--detailed-help") == 0 ) {
+			} else if(strcmp(argv[i], "--detailed-help") == 0 ) {
                                 detailed_help();
                         } else if (strcmp(argv[i], "--paramdir") == 0 || strcmp(argv[i], "-p") == 0) {
 				if(i < argc) {
@@ -191,7 +200,7 @@ static void parse_options(int argc, char** argv) {
 			} else if (strcmp(argv[i], "--verbose") == 0 || strcmp(argv[i], "-v") == 0) {
 				g_verbose = 1;
       			}
-			else if (strcmp(argv[i], "--energy") == 0 || strcmp(argv[i], "-e") == 0) {
+			else if (strcmp(argv[i], "--energydetail") == 0 || strcmp(argv[i], "-e") == 0) {
                                 print_energy_decompose = 1;
                         }
 			else if (strcmp(argv[i], "--dangle") == 0 || strcmp(argv[i], "-d") == 0) {
@@ -234,7 +243,7 @@ static void parse_options(int argc, char** argv) {
 			} else if (strcmp(argv[i],"--pfcount") == 0) {
 				CALC_PART_FUNC = true;
 				PF_COUNT_MODE = true;
-			} else if (strcmp(argv[i],"--sample") == 0) {
+			} else if (strcmp(argv[i],"--sample") == 0 || strcmp(argv[i], "-s") == 0) {
 				RND_SAMPLE = true;
 				if(i < argc)
 					num_rnd = atoi(argv[++i]);

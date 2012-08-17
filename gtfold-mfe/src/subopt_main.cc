@@ -25,6 +25,7 @@ static string outputDir = "";
 static string paramDir = "";
 static bool PARAM_DIR = false;
 static void help();
+static void detailed_help();
 
 void save_subopt_file(string outputFile, ss_map_t& ss_data, 
 		const string& seq, int energy)
@@ -54,6 +55,8 @@ void parse_options(int argc, char** argv) {
       if(strcmp(argv[i], "--help") == 0 || 
           strcmp(argv[i], "-h") == 0) {
         help(); 
+      } else if(strcmp(argv[i], "--detailed-help") == 0 ) {
+	detailed_help();
       } else if (strcmp(argv[i], "--paramdir") == 0 || 
           strcmp(argv[i], "-p") == 0) {
         if(i < argc) {
@@ -64,7 +67,7 @@ void parse_options(int argc, char** argv) {
           help();
         }
       }
-      else if(strcmp(argv[i], "--suboptDeltaEnergy") == 0) {
+      else if(strcmp(argv[i], "--delta") == 0) {
         g_dangles = 2;
         if(i < argc)
           suboptDelta = atof(argv[++i]);
@@ -127,21 +130,39 @@ void parse_options(int argc, char** argv) {
 	printf("Output: %s %s %s\n", outputPrefix.c_str(), outputFile.c_str(), suboptFile.c_str());
 }
 
-static void help() {
+static void print_usage() {
     printf("Usage: gtsubopt [OPTION]... FILE\n\n");
 
     printf("   FILE is an RNA sequence file containing only the sequence or in FASTA format.\n\n");
 
     printf("OPTIONS\n");
-    printf("   --suboptDeltaEnergy DOUBLE         Calculate suboptimal structures within DOUBLE kcal/mol\n");
+    printf("   --delta DOUBLE         Calculate suboptimal structures within DOUBLE kcal/mol\n");
     printf("                        of the MFE. (Uses -d 2 treatment of dangling energies.)\n");
     printf("\n"); 
     printf("   -d, --dangle INT     Restricts treatment of dangling energies (INT=2),\n");
     printf("   -o, --output NAME    Write output files with prefix given in NAME\n");
     printf("   -p  --paramdir DIR   Path to directory from which parameters are to be read\n");
     printf("   -h, --help           Output help (this message) and exit.\n");
+    printf("   --detailed-help      Output help (this message) with detailed options and examples, and exit.\n");
     printf("   -w, --workdir DIR    Path of directory where output files will be written.\n");
-    exit(-1);
+}
+
+static void help() {
+        print_usage();
+        exit(-1);
+}
+
+static void print_examples(){
+        printf("\n\nEXAMPLES:\n\n");
+        printf("1. Calculate Suboptimal Structures:\n");
+        printf("gtsubopt --delta DOUBLE [-d 2] [-o outputPrefix] [-v] [-w DIR] [-p DIR] <seq_file>\n\n");
+        printf("\n\n");
+}
+
+static void detailed_help(){
+        print_usage();
+        print_examples();
+        exit(-1);
 }
 
 void subopt_main(int argc, char** argv) {

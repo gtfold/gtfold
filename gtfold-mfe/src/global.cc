@@ -141,7 +141,7 @@ void print_header() {
 }
 
 void print_gtfold_usage_help() {
-	printf("There are three programs provided by GTfold. \n 1. gtmfe: Program implementing and supporting various options for calculating minimum free energy and MFE structure for a given sequence.\n 2. gtboltzmann: Program implementing and supporting various options and features for sampling structures for a sequence stochastically with help of partition function.\n 3. gtsubopt: Program implementing and supporting vcarious options and features for getting sub-optimal structures for a given sequence.\n\n");
+	printf("There are three programs provided by GTfold. \n 1. gtmfe: Program implementing and supporting various options for calculating minimum free energy and MFE structure for a given sequence. Run 'gtmfe --help' for more help on this.\n 2. gtboltzmann: Program implementing and supporting various options and features for sampling structures for a sequence stochastically with help of partition function. Run 'gtboltzmann --help' for more help on this.\n 3. gtsubopt: Program implementing and supporting vcarious options and features for getting sub-optimal structures for a given sequence. Run 'gtsubopt --help' for more help on this.\n\nPlease visit our sourceforge page for more details,\nhttp://gtfold.sourceforge.net/\n\n");
 }
 
 

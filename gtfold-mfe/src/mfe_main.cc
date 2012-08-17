@@ -75,6 +75,7 @@ static int nThreads = -1;
 static int contactDistance = -1;
 
 static void help();
+static void detailed_help();
 void printRunConfiguration(string seq);
 void parse_mfe_options(int argc, char** argv);
 
@@ -239,6 +240,8 @@ void parse_mfe_options(int argc, char** argv) {
     if(argv[i][0] == '-') {
       if(strcmp(argv[i], "--help") == 0 || strcmp(argv[i], "-h") == 0) {
         help();
+      } else if(strcmp(argv[i], "--detailed-help") == 0 ) {
+	detailed_help();
       } else if(strcmp(argv[i], "--constraints") == 0 || strcmp(argv[i], "-c") == 0) {
         if(i < argc) {
           constraintsFile = argv[++i];
@@ -313,10 +316,10 @@ void parse_mfe_options(int argc, char** argv) {
           help();	
       } else if (strcmp(argv[i], "--verbose") == 0 || strcmp(argv[i], "-v") == 0) {
         VERBOSE = true;
-      } else if (strcmp(argv[i], "--energy") == 0 || strcmp(argv[i], "-e") == 0) {
+      } else if (strcmp(argv[i], "--energydetail") == 0 || strcmp(argv[i], "-e") == 0) {
 	print_energy_decompose = 1;
       }
-      else if (strcmp(argv[i], "--useSHAPE") == 0  || strcmp(argv[i], "-s") == 0){
+      else if (strcmp(argv[i], "--useSHAPE") == 0){
         if( i < argc){
           shapeFile = argv[++i];
           //SHAPE_ENABLED = true;
@@ -417,7 +420,7 @@ void printRunConfiguration(string seq) {
 	printf("- output file: %s\n", outputFile.c_str());
 }
 
-static void help() {
+static void print_usage() {
     printf("Usage: gtmfe [OPTION]... FILE\n\n");
 
     printf("   FILE is an RNA sequence file containing only the sequence or in FASTA format.\n\n");
@@ -428,6 +431,7 @@ static void help() {
     printf("   -d, --dangle INT     Restricts treatment of dangling energies (INT=0,2),\n"); 
     printf("                        see below for details.\n");
     printf("   -h, --help           Output help (this message) and exit.\n");
+    printf("   --detailed-help      Output help (this message) with detailed options and examples, and exit.\n");
     printf("   -l, --limitCD INT    Set a maximum base pair contact distance to INT. If no\n");
     printf("                        limit is given, base pairs can be over any distance.\n");
     printf("   -m  --mismatch       Enable terminal mismatch calculations\n");
@@ -445,8 +449,8 @@ static void help() {
     printf("   --unafold            Run as UNAfold default mode (version 3.8), subject to traceback\n");
     printf("                        implementation.\n");
 
-    printf("   -s, --useSHAPE FILE  Use SHAPE constraints from FILE.\n");      
-    printf("   -e, --energy         prints energy decomposition for sampled structures to file with extention '.energy'.\n");
+    printf("   --useSHAPE FILE  Use SHAPE constraints from FILE.\n");      
+    printf("   -e, --energydetail         prints energy decomposition for sampled structures to file with extention '.energy'.\n");
     printf("\nConstraint syntax:\n");
     printf("\tF i j k  # force (i,j)(i+1,j-1),.......,(i+k-1,j-k+1) pairs.\n");
     printf("\tP i j k  # prohibit (i,j)(i+1,j-1),.......,(i+k-1,j-k+1) pairs.\n");
@@ -457,6 +461,24 @@ static void help() {
     printf("\tINT=2 dangling energies are added for nucleotides on either\n");
     printf("\tside of each branch in multi-loops and external loops.\n");
     printf("\tAll other values for INT are ignored.\n");
-    exit(-1);
 }
 
+static void help(){
+	print_usage();
+	exit(-1);
+}
+
+static void print_examples(){
+        printf("\n\nEXAMPLES:\n\n");
+        printf("1. Calculate Minimum Free Energy Structure:\n\n");
+        printf("gtmfe [-c FILE] [-d 0|2] [-t 1|2|...|N] [-o outputPrefix] [-v] [-p DIR] [-w DIR] [-l] [-m] [--prefilter INT] [--useSHAPE FILE] [-e] <seq_file>\n\n");
+        printf("gtmfe [--rnafold] [-c FILE] [-d 0|2] [-t 1|2|...|N] [-o outputPrefix] [-v] [-p DIR] [-w DIR] [-l] [-m] [--prefilter INT] [--useSHAPE FILE] [-e] <seq_file>\n\n");
+        printf("gtmfe [--unafold] [-c FILE] [-d 0|2] [-t 1|2|...|N] [-o outputPrefix] [-v] [-p DIR] [-w DIR] [-l] [-m] [--prefilter INT] [--useSHAPE FILE] [-e] <seq_file>\n\n");
+        printf("\n\n");
+}
+
+static void detailed_help(){
+        print_usage();
+        print_examples();
+        exit(-1);
+}
