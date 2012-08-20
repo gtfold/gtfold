@@ -71,17 +71,9 @@ static void print_usage() {
 	printf("   -t|--threads INT	Limit number of threads used to INT.\n");
 	printf("   -v, --verbose	Run in verbose mode (includes partition function table printing.)\n");
 	printf("   -d, --dangle INT	Restricts treatment of dangling energies (INT=0,2),\n");
-	printf("   --partition		Calculate the partition function (default is using d2 dangling mode).\n");
-	printf("   --exact-internal-loop	Do the exact internal loop calculation while calculating partition function and traceback without any short internal loop approximation)\n");
-	printf("   -dS			Calculate the partition function using sfold reccurences and use them in traceback.\n");
+        printf("   -dS                  Calculate the partition function using sfold reccurences and use them in traceback.\n");
 	printf("   -s|--sample   INT	Sample number of structures equal to INT.\n");
-	printf("   --scatterPlot	While sampling structures, Collect frequency of all structures and calculate estimate probability and boltzmann probability for scatter plot.\n");
-	printf("   --uniformSample energy1	While sampling structures, Samples with Energy energy1 will only be sampled.\n");
-	printf("   --check-fraction	While sampling structures, enable test of check fraction.\n");
 	printf("   --estimate-bpp	While sampling structures, Calculate base pair probabilities.\n");
-	printf("   --counts-parallel	While sampling structures, parallelize INT sample counts among available threads (this is also a default behaviour of sampling).\n");
-	printf("   --one-sample-parallel	While sampling structures, parallelize the processing of one sample (useful when sampling large sequence with number of samples being less than available threads).\n");
-	printf("   -s|--sample   INT  --dump [--dump_dir dump_dir_path] [--dump_summary dump_summery_file_name]	Sample number of structures equal to INT and dump each structure to a ct file in dump_dir_path directory (if no value provided then use current directory value for this purpose) and also create a summary file with name stochastic_summery_file_name in dump_dir_path directory (if no value provided, use stochaSampleSummary.txt value for this purpose).\n");
 	printf("   --pfcount		Calculate the structure count using partition function and zero energy value.\n");
 	printf("   --bpp		Calculate base pair probabilities.\n");
 	printf("   -l|--limitCD  INT	Set a maximum base pair contact distance to INT. If no\n");
@@ -89,30 +81,69 @@ static void print_usage() {
 	printf("   -o, --output NAME    Write output files with prefix given in NAME\n");
 	printf("   -p  --paramdir DIR   Path to directory from which parameters are to be read\n");
 	printf("   -h, --help           Output help (this message) and exit.\n");
-	printf("   --detailed-help      Output help (this message) with detailed options and examples, and exit.\n");
+	printf("   --detailedhelp      Output help (this message) with detailed options and examples, and exit.\n");
 	printf("   -e, --energydetail         prints energy decomposition for sampled structures to file with extention '.energy' (should be used with '-t 1' option, as otherwise all threads in parallel, will write to file and output will be intermixed from all threads).\n");
 	printf("   -w, --workdir DIR    Path of directory where output files will be written.\n");
 }
 
-static void help() {
-	print_usage();
-	exit(-1);
+static void print_usage_developer_options() {
+	printf("\n\nDeveloper OPTIONS\n");
+        printf("   --partition          Calculate the partition function (default is using d2 dangling mode).\n");
+        printf("   --exact-internal-loop        Do the exact internal loop calculation while calculating partition function and traceback without any short internal loop approximation)\n");
+	printf("   --check-fraction	While sampling structures, enable test of check fraction.\n");
+        printf("   --scatterPlot        While sampling structures, Collect frequency of all structures and calculate estimate probability and boltzmann probability for scatter plot.\n");
+        printf("   --uniformSample energy1      While sampling structures, Samples with Energy energy1 will only be sampled.\n");
+        //printf("   --counts-parallel  While sampling structures, parallelize INT sample counts among available threads (this is also a default behaviour of sampling).\n");
+        printf("   --one-sample-parallel        While sampling structures, parallelize the processing of one sample (useful when sampling large sequence with number of samples being less than available threads).\n");
+        printf("   -s|--sample   INT  --dump [--dump_dir dump_dir_path] [--dump_summary dump_summery_file_name] Sample number of structures equal to INT and dump each structure to a ct file in dump_dir_path directory (if no value provided then use current directory value for this purpose) and also create a summary file with name stochastic_summery_file_name in dump_dir_path directory (if no value provided, use stochaSampleSummary.txt value for this purpose).\n");
+
+    printf("\nSetting default parameter directory:\n");
+    printf("\tTo run properly, GTfold requires access to a set of parameter files. If you are using one of the prepackaged binaries, you may need (or chose) to \n");
+    printf("\tset the GTFOLDDATADIR environment variable to specify the directory in whihc GTfold should look to find default parameter files. In a terminal \n");
+    printf("\twindow, use either the command \n");
+    printf("\t\texport GTFOLDDATADIR=DIR\n");
+    printf("\t\tfor BASH shell users, or \n");
+    printf("\t\tsetenv GTFOLDDATADIR=DIR\n");
+    printf("\t\tfor tcsh shell users. Alternatively, you may use the --paramdir option described above. \n");
+    printf("\tGTfold will by default look for parameter files in the following directories: \n");
+    printf("\t\t(1)      The directory pointed to by environment variable GTFOLDDATADIR \n");
+    printf("\t\t(2)      The install directory (eg. /usr/local/share/gtfold), if (1) fails. \n");
+    printf("\t\t(3)      The subdirectory 'data' of the current directory, if (1) and (2) fail. \n");
+    printf("\n");
 }
 
 static void print_examples(){
         printf("\n\nEXAMPLES:\n\n");
+        printf("1. Sample structures stochastically:\n\n");
+        printf("gtboltzmann [-s INT] [[-d 0|2]|[-dS]] [-t n] [-o outputPrefix] [-v] [--estimate-bpp] [-p DIR] [-w DIR] [-l] <seq_file>\n\n");
+        printf("2. Calculate base pair probabilities:\n\n");
+	printf("gtboltzmann --bpp [-d 2] [-o outputPrefix] [-v] [-p DIR] [-w DIR] [-l] <seq_file>\n\n");
+        printf("\n\n");
+}
+
+static void print_examples_developer_options(){
+        printf("\n\nDeveloper Options EXAMPLES:\n\n");
         printf("1. Calculate Partition function:\n\n");
-        printf("gtboltzmann --partition [[-d 0|2]|[-dS]] [-t 1|2|...|N] [-o outputPrefix] [--exact-internal-loop] [-v] [-p DIR] [-w DIR] [-l] <seq_file>\n\n");
+        printf("gtboltzmann --partition [[-d 0|2]|[-dS]] [-t n] [-o outputPrefix] [--exact-internal-loop] [-v] [-p DIR] [-w DIR] [-l] <seq_file>\n\n");
         printf("2. Sample structures stochastically:\n\n");
-        printf("gtboltzmann [-s INT] [[-d 0|2]|[-dS]] [-t 1|2|...|N] [-o outputPrefix] [--exact-internal-loop] [-v] [--scatterPlot] [--uniformSample DOUBLE] [--estimate-bpp] [--one-sample-parallel] [-p DIR] [-w DIR] [-l] <seq_file>\n\n");
+        printf("gtboltzmann [-s INT] [[-d 0|2]|[-dS]] [-t n] [-o outputPrefix] [--exact-internal-loop] [-v] [--scatterPlot] [--uniformSample DOUBLE] [--estimate-bpp] [--one-sample-parallel] [-p DIR] [-w DIR] [-l] <seq_file>\n\n");
         printf("gtboltzmann [-s INT] [[-d 0|2]|[-dS]] -t 1 [-o outputPrefix] [--exact-internal-loop] [-v] [--scatterPlot] [--uniformSample DOUBLE] [-e] [--check-fraction] [--estimate-bpp] [--one-sample-parallel] [-p DIR] [-w DIR] [-l] <seq_file>\n\n");
         printf("gtboltzmann [-s] INT --dump [--dump_dir dump_dir_path] [--dump_summary dump_summery_file_name] [-d 2] [--exact-internal-loop] [-v] [-p DIR] [-w DIR] [-l] <seq_file>\n\n");
         printf("\n\n");
 }
 
+
+static void help() {
+	print_usage();
+	print_examples();
+	exit(-1);
+}
+
 static void detailed_help(){
 	print_usage();
 	print_examples();
+	print_usage_developer_options();
+	print_examples_developer_options();
 	exit(-1);
 }
 
@@ -167,7 +198,7 @@ static void parse_options(int argc, char** argv) {
 		if(argv[i][0] == '-') {
 			if(strcmp(argv[i], "--help") == 0 || strcmp(argv[i], "-h") == 0) {
 				help(); 
-			} else if(strcmp(argv[i], "--detailed-help") == 0 ) {
+			} else if(strcmp(argv[i], "--detailedhelp") == 0 ) {
                                 detailed_help();
                         } else if (strcmp(argv[i], "--paramdir") == 0 || strcmp(argv[i], "-p") == 0) {
 				if(i < argc) {

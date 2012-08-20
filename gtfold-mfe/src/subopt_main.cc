@@ -55,7 +55,7 @@ void parse_options(int argc, char** argv) {
       if(strcmp(argv[i], "--help") == 0 || 
           strcmp(argv[i], "-h") == 0) {
         help(); 
-      } else if(strcmp(argv[i], "--detailed-help") == 0 ) {
+      } else if(strcmp(argv[i], "--detailedhelp") == 0 ) {
 	detailed_help();
       } else if (strcmp(argv[i], "--paramdir") == 0 || 
           strcmp(argv[i], "-p") == 0) {
@@ -130,6 +130,23 @@ void parse_options(int argc, char** argv) {
 	printf("Output: %s %s %s\n", outputPrefix.c_str(), outputFile.c_str(), suboptFile.c_str());
 }
 
+static void print_usage_developer_options() {
+    printf("\nSetting default parameter directory:\n");
+    printf("\tTo run properly, GTfold requires access to a set of parameter files. If you are using one of the prepackaged binaries, you may need (or chose) to \n");
+    printf("\tset the GTFOLDDATADIR environment variable to specify the directory in whihc GTfold should look to find default parameter files. In a terminal \n");
+    printf("\twindow, use either the command \n");
+    printf("\t\texport GTFOLDDATADIR=DIR\n");
+    printf("\t\tfor BASH shell users, or \n");
+    printf("\t\tsetenv GTFOLDDATADIR=DIR\n");
+    printf("\t\tfor tcsh shell users. Alternatively, you may use the --paramdir option described above. \n");
+    printf("\tGTfold will by default look for parameter files in the following directories: \n");
+    printf("\t\t(1)      The directory pointed to by environment variable GTFOLDDATADIR \n");
+    printf("\t\t(2)      The install directory (eg. /usr/local/share/gtfold), if (1) fails. \n");
+    printf("\t\t(3)      The subdirectory 'data' of the current directory, if (1) and (2) fail. \n");
+    printf("\n");
+}
+
+
 static void print_usage() {
     printf("Usage: gtsubopt [OPTION]... FILE\n\n");
 
@@ -143,13 +160,9 @@ static void print_usage() {
     printf("   -o, --output NAME    Write output files with prefix given in NAME\n");
     printf("   -p  --paramdir DIR   Path to directory from which parameters are to be read\n");
     printf("   -h, --help           Output help (this message) and exit.\n");
-    printf("   --detailed-help      Output help (this message) with detailed options and examples, and exit.\n");
+    printf("   --detailedhelp      Output help (this message) with detailed options and examples, and exit.\n");
     printf("   -w, --workdir DIR    Path of directory where output files will be written.\n");
-}
-
-static void help() {
-        print_usage();
-        exit(-1);
+    printf("   -v, --verbose        Run in verbose mode.\n");
 }
 
 static void print_examples(){
@@ -159,9 +172,16 @@ static void print_examples(){
         printf("\n\n");
 }
 
+static void help() {
+        print_usage();
+        print_examples();
+        exit(-1);
+}
+
 static void detailed_help(){
         print_usage();
         print_examples();
+	print_usage_developer_options();
         exit(-1);
 }
 
