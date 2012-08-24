@@ -47,7 +47,7 @@ static bool PARAM_DIR = false;
 //static bool LIMIT_DISTANCE;
 static bool CONS_ENABLED = false;
 static bool VERBOSE = false;
-
+static bool SILENT = false;
 //static bool SHAPE_ENABLED = false;
 
 //extern int SHAPE_ENABLED;
@@ -101,12 +101,12 @@ void init_fold(const char* seq) {
   }
 
   if (UNAMODE) {
-    if (T_MISMATCH) printf("Ignoring -m option, using --unafold\n");
-    if (PARAM_DIR) printf("Ignoring -p option, using --unafold\n");
+    if (T_MISMATCH) if(!SILENT) printf("Ignoring -m option, using --unafold\n");
+    if (PARAM_DIR) if(!SILENT) printf("Ignoring -p option, using --unafold\n");
     if (dangles == 0 || dangles == 1 || dangles == 2) 
-      printf("Ignoring -d option, using --unafold\n");
+      if(!SILENT) printf("Ignoring -d option, using --unafold\n");
     if (b_prefilter == 1) 
-      printf("Ignoring --prefilter option, using --unafold\n");
+      if(!SILENT) printf("Ignoring --prefilter option, using --unafold\n");
     T_MISMATCH = false;
     PARAM_DIR = false;
     dangles = -1;
@@ -114,12 +114,12 @@ void init_fold(const char* seq) {
   }
 
   if (RNAMODE) {
-    if (T_MISMATCH) printf("Ignoring -m option, using --rnafold\n");
-    if (PARAM_DIR) printf("Ignoring -p option, using --rnafold\n");
+    if (T_MISMATCH) if(!SILENT) printf("Ignoring -m option, using --rnafold\n");
+    if (PARAM_DIR) if(!SILENT) printf("Ignoring -p option, using --rnafold\n");
     if (dangles == 0 || dangles == 1 || dangles == 2) 
-      printf("Ignoring -d option, using --rnafold\n");
+      if(!SILENT) printf("Ignoring -d option, using --rnafold\n");
     if (b_prefilter == 1) 
-      printf("Ignoring --prefilter option, using --rnafold\n");
+      if(!SILENT) printf("Ignoring --prefilter option, using --rnafold\n");
     T_MISMATCH = false;
     PARAM_DIR = false;
     dangles = -1;
@@ -127,10 +127,10 @@ void init_fold(const char* seq) {
   }
 
   if ((dangles == 0 || dangles == 1 ||dangles == 2) && !UNAMODE && !RNAMODE) {
-    if (T_MISMATCH) printf("Ignoring -m option, using -d option\n");
+    if (T_MISMATCH) if(!SILENT) printf("Ignoring -m option, using -d option\n");
     T_MISMATCH = false;
   } else {
-    if (dangles != -1 && !UNAMODE && !RNAMODE) printf("Ignoring -d as it accept 0 1 or 2 only\n");	
+    if (dangles != -1 && !UNAMODE && !RNAMODE) if(!SILENT) printf("Ignoring -d as it accept 0 1 or 2 only\n");	
     dangles = -1;
   }
   if(dangles==1) dangles=-1;
@@ -145,11 +145,11 @@ void init_fold(const char* seq) {
   g_dangles = dangles;
 
 #ifdef DEBUG
-  printf("g_nthreads = %d\n", g_nthreads);
-  printf("g_unamode = %d\n", g_unamode);
-  printf("g_mismatch = %d\n", g_mismatch);
-  printf("g_prefilter_mode = %d\n", g_prefilter_mode);
-  printf("g_dangles = %d\n", g_dangles);
+  if(!SILENT) printf("g_nthreads = %d\n", g_nthreads);
+  if(!SILENT) printf("g_unamode = %d\n", g_unamode);
+  if(!SILENT) printf("g_mismatch = %d\n", g_mismatch);
+  if(!SILENT) printf("g_prefilter_mode = %d\n", g_prefilter_mode);
+  if(!SILENT) printf("g_dangles = %d\n", g_dangles);
 
 #endif
 
@@ -172,6 +172,8 @@ int mfe_main(int argc, char** argv) {
 	int energy;
 	
 	parse_mfe_options(argc, argv);
+	
+	//if(!SILENT) print_header();
 
 	if (read_sequence_file(seqfile.c_str(), seq) == FAILURE) {
 		printf("Failed to open sequence file: %s.\n\n", seqfile.c_str());
@@ -184,15 +186,15 @@ int mfe_main(int argc, char** argv) {
   readThermodynamicParameters(paramDir.c_str(), PARAM_DIR, UNAMODE, RNAMODE, T_MISMATCH);
 	printRunConfiguration(seq);
 
-	printf("\nComputing minimum free energy structure...\n");
+	if(!SILENT) printf("\nComputing minimum free energy structure...\n");
 	fflush(stdout);
 
 	double t1 = get_seconds();
 	energy = calculate(seq.length()) ; 
 	t1 = get_seconds() - t1;
 	
-	printf("Done.\n\n");
-	printf("Results:\n");
+	if(!SILENT) printf("Done.\n\n");
+	if(!SILENT) printf("Results:\n");
 	if (energy >= MAXENG)	
 		printf("- Minimum Free Energy: %12.4f kcal/mol\n", 0.00);
 	else
@@ -217,7 +219,7 @@ int mfe_main(int argc, char** argv) {
 	printf("\nMFE structure saved in .ct format to %s\n", outputFile.c_str());
 
 	if(CONS_ENABLED && VERBOSE){
-		printf("Verifying that structure fulfills constraint criteria... ");
+		if(!SILENT) printf("Verifying that structure fulfills constraint criteria... ");
 		if(verify_structure()){
 			printf("OK\n");
 		}
@@ -318,6 +320,8 @@ void parse_mfe_options(int argc, char** argv) {
           help();	
       } else if (strcmp(argv[i], "--verbose") == 0 || strcmp(argv[i], "-v") == 0) {
         VERBOSE = true;
+      } else if (strcmp(argv[i], "--silent") == 0) {
+        SILENT = true;
       } else if (strcmp(argv[i], "--energydetail") == 0 || strcmp(argv[i], "-e") == 0) {
 	print_energy_decompose = 1;
       }
@@ -378,47 +382,47 @@ void parse_mfe_options(int argc, char** argv) {
 void printRunConfiguration(string seq) {
 	bool standardRun = true;
 
-	printf("Run Configuration:\n");
+	if(!SILENT) printf("Run Configuration:\n");
 	if (RNAMODE == true) {
-		printf("+ running in rnafold mode\n");
+		if(!SILENT) printf("+ running in rnafold mode\n");
 		standardRun = false;
 	} 
 	if (UNAMODE == true) {
-		printf("+ running in unafold mode\n");
+		if(!SILENT) printf("+ running in unafold mode\n");
 		standardRun = false;
 	}
 	if (dangles == 0 || dangles == 1 || dangles == 2) {
-		printf("+ running in dangle %d mode\n", dangles);
+		if(!SILENT) printf("+ running in dangle %d mode\n", dangles);
 		standardRun = false;
 	} 
 	if (T_MISMATCH == true) {
-		printf("+ enabled terminal mismatch calculations\n");
+		if(!SILENT) printf("+ enabled terminal mismatch calculations\n");
 		standardRun = false;
 	}
 	if (b_prefilter == true) {
-		printf("+ running with prefilter value = %d\n",prefilter1);
+		if(!SILENT) printf("+ running with prefilter value = %d\n",prefilter1);
 		standardRun = false;
 	}
 
 	if(!constraintsFile.empty()) {
-		printf("- using constraint file: %s\n", constraintsFile.c_str());
+		if(!SILENT) printf("- using constraint file: %s\n", constraintsFile.c_str());
 		standardRun = false;
 	}
 
 	if(!shapeFile.empty()){
-		printf("- using SHAPE data file: %s\n", shapeFile.c_str());
+		if(!SILENT) printf("- using SHAPE data file: %s\n", shapeFile.c_str());
 	}
 	if (contactDistance != -1) {
-		printf("- maximum contact distance: %d\n", contactDistance);
+		if(!SILENT) printf("- maximum contact distance: %d\n", contactDistance);
 		standardRun = false;
 	}
 
 	if(standardRun)
-		printf("- standard\n");
+		if(!SILENT) printf("- standard\n");
 
-	printf("- thermodynamic parameters: %s\n", EN_DATADIR.c_str());
-	printf("- input file: %s\n", seqfile.c_str());
-	printf("- sequence length: %d\n", (int)seq.length());
+	if(!SILENT) printf("- thermodynamic parameters: %s\n", EN_DATADIR.c_str());
+	if(!SILENT) printf("- input file: %s\n", seqfile.c_str());
+	if(!SILENT) printf("- sequence length: %d\n", (int)seq.length());
 	printf("- output file: %s\n", outputFile.c_str());
 }
 
@@ -458,6 +462,7 @@ static void print_usage() {
     printf("   -p  --paramdir DIR   Path to directory from which parameters are to be read\n");
     printf("   -t, --threads INT    Limit number of threads used to INT.\n");
     printf("   -v, --verbose        Run in verbose mode (includes confirmation of constraints satisfied).\n");
+    //printf("   --silent		    Run in silent mode.\n");
     printf("   -w, --workdir DIR    Path of directory where output files will be written.\n");
     printf("   --prefilter INT      Prohibits any basepair which does not have appropriate\n");
     printf("                        neighboring nucleotides such that it could be part of\n");
