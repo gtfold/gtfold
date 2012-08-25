@@ -1491,3 +1491,7 @@ string StochasticTracebackD2::getStructureStringInTripletNotation(const char* en
 
 	return getStructureStringInTripletNotation(structure, length);
 }
+
+void StochasticTracebackD2::printPfMatrixesToFile(string pfArraysOutputFile){
+	pf_d2.printAllMatrixesToFile(pfArraysOutputFile);
+}

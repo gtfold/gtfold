@@ -21,6 +21,7 @@
 
 using namespace std;
 
+static bool SILENT = false;
 static bool CALC_PART_FUNC = true;
 static bool PF_COUNT_MODE = false;
 static bool BPP_ENABLED = false;
@@ -31,6 +32,7 @@ static bool CALC_PF_DO = false;
 static bool CALC_PF_DS = false;
 static bool CALC_PF_D2 = true;//making D2 mode as default option
 static bool PF_D2_UP_APPROX_ENABLED = true;//making short internal loop code to run as default
+static bool PF_PRINT_ARRAYS_ENABLED = false;//making short internal loop code to run as default
 static bool ST_D2_ENABLE_COUNTS_PARALLELIZATION = true;//making parallelization of sample counts as default
 static bool ST_D2_ENABLE_ONE_SAMPLE_PARALLELIZATION = false;
 static bool ST_D2_ENABLE_SCATTER_PLOT = false;
@@ -49,6 +51,7 @@ static string sampleOutFile = "";
 static string energyDecomposeOutFile = "";
 static string estimateBppOutputFile = "";
 static string scatterPlotOutputFile = "";
+static string pfArraysOutFile = "";
 static string ctFileDumpDir = "";
 static string stochastic_summery_file_name = "stochaSampleSummary.txt";
 
@@ -59,6 +62,8 @@ static int dangles=2;//making dangle default value as 2
 
 static bool LIMIT_DISTANCE = false;
 static int contactDistance = -1;
+
+static void printRunConfiguration(string seq);
 
 
 static void print_usage() {
@@ -89,6 +94,7 @@ static void print_usage() {
 static void print_usage_developer_options() {
 	printf("\n\nDeveloper OPTIONS\n");
         printf("   --partition          Calculate the partition function (default is using d2 dangling mode).\n");
+        printf("   --print-arrays       Print the partition function arrays to outputPrefix.pfarrays file.\n");
         printf("   --exact-internal-loop        Do the exact internal loop calculation while calculating partition function and traceback without any short internal loop approximation)\n");
 	printf("   --check-fraction	While sampling structures, enable test of check fraction.\n");
         printf("   --scatterPlot        While sampling structures, Collect frequency of all structures and calculate estimate probability and boltzmann probability for scatter plot.\n");
@@ -147,34 +153,78 @@ static void detailed_help(){
 	exit(-1);
 }
 
-static void validate_options(){
+static void printRunConfiguration(string seq) {
+
+        if(!SILENT) printf("\nRun Configuration:\n");
+
+	if (PF_COUNT_MODE == true) {
+                if(!SILENT) printf("+ running with --pfcount option\n");
+        }
+        if (BPP_ENABLED == true) {
+                if(!SILENT) printf("+ running with --bpp option\n");
+        }
+        if(dangles==0 && !PF_COUNT_MODE){//if (CALC_PF_DO && !CALC_PF_DS && !CALC_PF_D2 && !PF_COUNT_MODE) {
+                if(!SILENT) printf("+ running in dangle d0 mode\n");
+        }
+        if(dangles==-1 && CALC_PF_DS){//if (!CALC_PF_DO && CALC_PF_DS && !CALC_PF_D2) {
+                if(!SILENT) printf("+ running in dangle dS mode\n");
+        }
+        if(dangles==2 && !PF_COUNT_MODE){//if (!CALC_PF_DO && !CALC_PF_DS && CALC_PF_D2) {
+                if(!SILENT) printf("- running in dangle d2 mode\n");
+        }
+        if (PARAM_DIR == true) {
+                if(!SILENT) printf("+ running with customized param dir: %s\n",paramDir.c_str());
+        }
+        if (RND_SAMPLE == true) {
+                if(!SILENT) printf("- running to calculate %d samples\n", num_rnd);
+        }
+        if (contactDistance != -1) {
+                if(!SILENT) printf("- maximum contact distance: %d\n", contactDistance);
+        }
+        if(!SILENT) printf("- thermodynamic parameters: %s\n", EN_DATADIR.c_str());
+        if(!SILENT) printf("- input sequence file: %s\n", seqfile.c_str());
+        if(!SILENT) printf("- sequence length: %d\n", (int)seq.length());
+        //if(!SILENT) printf("- output file: %s\n", outputFile.c_str());
+        if(RND_SAMPLE) if(!SILENT) printf("- samples output file: %s\n", sampleOutFile.c_str());
+        if(BPP_ENABLED) if(!SILENT) printf("- bpp output file: %s\n", bppOutFile.c_str());
+        if(PF_PRINT_ARRAYS_ENABLED) if(!SILENT) printf("+ partition function array print output file: %s\n", pfArraysOutFile.c_str());
+        if(print_energy_decompose==1) if(!SILENT) printf("+ energy decompose output file: %s\n", energyDecomposeOutFile.c_str());
+
+	printf("\n");
+}
+
+static void validate_options(string seq){
+        if(!SILENT) printf("\nValidating Options:\n");
 	if(PF_COUNT_MODE){
 		if(RND_SAMPLE){
-			printf("Ignoring --sample Option with --pfcount option and Program will continue with --pfcount option only.\n\n");
+			if(!SILENT) printf("Ignoring --sample Option with --pfcount option and Program will continue with --pfcount option only.\n\n");
 			RND_SAMPLE = false;
 		}
 	}
-	if(CALC_PART_FUNC && !RND_SAMPLE){//partition function
+	if(BPP_ENABLED){
+		//do nothing
+	}
+	else if(CALC_PART_FUNC && !RND_SAMPLE){//partition function
 		if(print_energy_decompose==1){
-			printf("Ignoring the option -e or --energy, as it will be valid with --sample option.\n\n");	
+			if(!SILENT) printf("Ignoring the option -e or --energy, as it will be valid with --sample option.\n\n");	
 		}
 		if(ST_D2_ENABLE_SCATTER_PLOT){
-			printf("Ignoring the option --scatterPlot, as it will be valid with --sample option.\n\n");
+			if(!SILENT) printf("Ignoring the option --scatterPlot, as it will be valid with --sample option.\n\n");
 		}
 		if(ST_D2_ENABLE_UNIFORM_SAMPLE){
-                        printf("Ignoring the option --uniformSample, as it will be valid with --sample option.\n\n");
+                        if(!SILENT) printf("Ignoring the option --uniformSample, as it will be valid with --sample option.\n\n");
                 }
 		if(ST_D2_ENABLE_CHECK_FRACTION){
-                        printf("Ignoring the option --check-fraction, as it will be valid with --sample option.\n\n");
+                        if(!SILENT) printf("Ignoring the option --check-fraction, as it will be valid with --sample option.\n\n");
                 }
 		if(ST_D2_ENABLE_BPP_PROBABILITY){
-                        printf("Ignoring the option --estimate-bpp, as it will be valid with --sample option.\n\n");
+                        if(!SILENT) printf("Ignoring the option --estimate-bpp, as it will be valid with --sample option.\n\n");
                 }
 		//if(ST_D2_ENABLE_COUNTS_PARALLELIZATION){
                   //      printf("Ignoring the option --counts-parallel, as it will be valid with --sample option.\n\n");
                 //}
 		if(ST_D2_ENABLE_ONE_SAMPLE_PARALLELIZATION){
-                        printf("Ignoring the option --one-sample-parallel, as it will be valid with --sample option.\n\n");
+                        if(!SILENT) printf("Ignoring the option --one-sample-parallel, as it will be valid with --sample option.\n\n");
                 }
 	}
 	else if(!CALC_PART_FUNC && RND_SAMPLE){//sample
@@ -189,6 +239,8 @@ static void validate_options(){
 		help();
         	exit(-1);	
         }
+
+	printf("\n");
 }
 
 static void parse_options(int argc, char** argv) {
@@ -225,10 +277,12 @@ static void parse_options(int argc, char** argv) {
 					help();
 			} else if(strcmp(argv[i], "--bpp") == 0) {
 				BPP_ENABLED = true;
-			}
-			else if (strcmp(argv[i],"--partition") == 0) {
+				CALC_PART_FUNC = false;
+			} else if (strcmp(argv[i],"--partition") == 0) {
 				CALC_PART_FUNC = true;
-			} else if (strcmp(argv[i], "--verbose") == 0 || strcmp(argv[i], "-v") == 0) {
+			} else if (strcmp(argv[i],"--print-arrays") == 0) {
+                                PF_PRINT_ARRAYS_ENABLED = true;
+                        } else if (strcmp(argv[i], "--verbose") == 0 || strcmp(argv[i], "-v") == 0) {
 				g_verbose = 1;
       			}
 			else if (strcmp(argv[i], "--energydetail") == 0 || strcmp(argv[i], "-e") == 0) {
@@ -249,11 +303,14 @@ static void parse_options(int argc, char** argv) {
       			}
 			else if (strcmp(argv[i],"-dS") == 0) {
 				CALC_PF_DS = true;  
+				dangles=-1;
 			} else if (strcmp(argv[i],"-d0") == 0) {
-				CALC_PF_DO = true;  
+				CALC_PF_DO = true;
+				dangles=0;  
 			} else if (strcmp(argv[i],"-d2") == 0) {
 				//help();
 				CALC_PF_D2 = true;
+				dangles=2;
 			} else if(strcmp(argv[i],"--exact-internal-loop") == 0){ 
 				PF_D2_UP_APPROX_ENABLED = false;
 			} else if(strcmp(argv[i],"--scatterPlot") == 0){
@@ -348,6 +405,9 @@ static void parse_options(int argc, char** argv) {
 		estimateBppOutputFile += "/";
 		scatterPlotOutputFile += outputDir;
 		scatterPlotOutputFile += "/";
+		pfArraysOutFile += outputDir;
+                pfArraysOutFile += "/";
+
 	}
 	// ... and append the .ct
 	outputFile += outputPrefix;
@@ -367,6 +427,10 @@ static void parse_options(int argc, char** argv) {
 
 	scatterPlotOutputFile += outputPrefix;	
 	scatterPlotOutputFile += ".frequency";
+
+	pfArraysOutFile += outputPrefix;
+        pfArraysOutFile += ".pfarrays";
+
 }
 /*
    double get_seconds() {
@@ -379,7 +443,7 @@ int boltzmann_main(int argc, char** argv) {
 	std::string seq;
 	double t1;
 	parse_options(argc, argv);
-	validate_options();
+	validate_options(seqfile);
 	if (read_sequence_file(seqfile.c_str(), seq) == FAILURE) {
 		printf("Failed to open sequence file: %s.\n\n", seqfile.c_str());
 		exit(-1);
@@ -390,6 +454,7 @@ int boltzmann_main(int argc, char** argv) {
 	g_contactDistance = contactDistance;
 
 	readThermodynamicParameters(paramDir.c_str(), PARAM_DIR, 0, 0, 0);
+	printRunConfiguration(seqfile);
 	
 	if (LIMIT_DISTANCE) {
 		if (strlen(seq.c_str()) < contactDistance) 
@@ -402,7 +467,8 @@ int boltzmann_main(int argc, char** argv) {
 		if(PF_COUNT_MODE) pf_count_mode=1;
 		int no_dangle_mode = 0;
 		if(CALC_PF_DO) no_dangle_mode=1;
-		printf("\nComputing partition function in -dS mode ..., pf_count_mode=%d, no_dangle_mode=%d\n", pf_count_mode, no_dangle_mode);
+		//printf("\nComputing partition function in -dS mode ..., pf_count_mode=%d, no_dangle_mode=%d\n", pf_count_mode, no_dangle_mode);
+		printf("\nComputing partition function...\n");
 		t1 = get_seconds();
 		calculate_partition(seq.length(),pf_count_mode,no_dangle_mode);
 		t1 = get_seconds() - t1;
@@ -415,17 +481,20 @@ int boltzmann_main(int argc, char** argv) {
 		if(PF_COUNT_MODE) pf_count_mode=1;
 		int no_dangle_mode = 0;
 		if(CALC_PF_DO) no_dangle_mode=1;
-		printf("\nComputing partition function in -d2 mode ..., pf_count_mode=%d, no_dangle_mode=%d, PF_D2_UP_APPROX_ENABLED=%d\n", pf_count_mode, no_dangle_mode,PF_D2_UP_APPROX_ENABLED);
+		//printf("\nComputing partition function in -d2 mode ..., pf_count_mode=%d, no_dangle_mode=%d, PF_D2_UP_APPROX_ENABLED=%d\n", pf_count_mode, no_dangle_mode,PF_D2_UP_APPROX_ENABLED);
+		printf("\nComputing partition function...\n");
 		t1 = get_seconds();
 		PartitionFunctionD2 pf_d2;
 		pf_d2.calculate_partition(seq.length(),pf_count_mode,no_dangle_mode,PF_D2_UP_APPROX_ENABLED);
 		t1 = get_seconds() - t1;
 		printf("partition function computation running time: %9.6f seconds\n", t1);
 		//calculate_partition(seq.length(),0,0);
+		if(PF_PRINT_ARRAYS_ENABLED) pf_d2.printAllMatrixesToFile(pfArraysOutFile);
 		pf_d2.free_partition();
 	}  
 	else if (CALC_PART_FUNC == true && CALC_PF_DO == true) {
-		printf("\nCalculating partition function in -d0 mode ...\n");
+		//printf("\nCalculating partition function in -d0 mode ...\n");
+		printf("\nCalculating partition function...\n");
 		/*
 		//Below method is not correct method for d0 mdoe partition function computation as discussed by Shel
 		double ** Q,  **QM, **QB, **P;
@@ -459,14 +528,14 @@ int boltzmann_main(int argc, char** argv) {
 		printf("partition function computation running time: %9.6f seconds\n", t1);
 		free_partition();
 	} else if (RND_SAMPLE == true) {
-		printf("\nComputing partition function...\n");
 		int pf_count_mode = 0;
 		if(PF_COUNT_MODE) pf_count_mode=1;
 		int no_dangle_mode = 0;
 		if(CALC_PF_DO) no_dangle_mode=1;
 		  
 		if(CALC_PF_D2 == true){
-			printf("\nComputing stochastic traceback in -d2 mode ..., pf_count_mode=%d, no_dangle_mode=%d, PF_D2_UP_APPROX_ENABLED=%d\n", pf_count_mode, no_dangle_mode,PF_D2_UP_APPROX_ENABLED);
+			//printf("\nComputing stochastic traceback in -d2 mode ..., pf_count_mode=%d, no_dangle_mode=%d, PF_D2_UP_APPROX_ENABLED=%d\n", pf_count_mode, no_dangle_mode,PF_D2_UP_APPROX_ENABLED);
+			printf("\nComputing stochastic traceback...\n");
 			StochasticTracebackD2 st_d2;
 			t1 = get_seconds();
                         st_d2.initialize(seq.length(), pf_count_mode, no_dangle_mode, print_energy_decompose, PF_D2_UP_APPROX_ENABLED,ST_D2_ENABLE_CHECK_FRACTION, energyDecomposeOutFile);
@@ -481,10 +550,12 @@ int boltzmann_main(int argc, char** argv) {
                         else  st_d2.batch_sample_and_dump(num_rnd, ctFileDumpDir, stochastic_summery_file_name, seq, seqfile);
 			t1 = get_seconds() - t1;
                         printf("D2 Traceback computation running time: %9.6f seconds\n", t1);
+			if(PF_PRINT_ARRAYS_ENABLED) st_d2.printPfMatrixesToFile(pfArraysOutFile);
 			st_d2.free_traceback();
 		}
 		else{//if(CALC_PF_DS == true){//TODO here it is making dS by default
-			printf("\nComputing stochastic traceback in -dS mode ..., pf_count_mode=%d, no_dangle_mode=%d\n", pf_count_mode, no_dangle_mode);
+			//printf("\nComputing stochastic traceback in -dS mode ..., pf_count_mode=%d, no_dangle_mode=%d\n", pf_count_mode, no_dangle_mode);
+			printf("\nComputing stochastic traceback...\n");
 			double U = calculate_partition(seq.length(),pf_count_mode,0);
 			t1 = get_seconds();
 			if(DUMP_CT_FILE==false) batch_sample(num_rnd, seq.length(), U);
@@ -518,5 +589,6 @@ int boltzmann_main(int argc, char** argv) {
 	}
 
 	free_fold(seq.length());
+	printf("\n");
 	return EXIT_SUCCESS;
 }

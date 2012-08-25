@@ -76,7 +76,7 @@ static int contactDistance = -1;
 
 static void help();
 static void detailed_help();
-void printRunConfiguration(string seq);
+static void printRunConfiguration(string seq);
 void parse_mfe_options(int argc, char** argv);
 
 void init_fold(const char* seq) {
@@ -379,7 +379,7 @@ void parse_mfe_options(int argc, char** argv) {
 }
 
 
-void printRunConfiguration(string seq) {
+static void printRunConfiguration(string seq) {
 	bool standardRun = true;
 
 	if(!SILENT) printf("Run Configuration:\n");
@@ -450,7 +450,7 @@ static void print_usage() {
     printf("OPTIONS\n");
     printf("   -c, --constraints FILE\n");
     printf("                        Load constraints from FILE.  See Constraint syntax below.\n");
-    printf("   -d, --dangle INT     Restricts treatment of dangling energies (INT=0,1,2),\n"); 
+    printf("   -d, --dangle INT     Restricts treatment of dangling energies (INT=0,1,2), (with -d option, call to -m option will be ignored)\n"); 
     printf("                        see below for details.\n");
     printf("   -h, --help           Output help (this message) and exit.\n");
     printf("   --detailedhelp      Output help (this message) with detailed options and examples, and exit.\n");

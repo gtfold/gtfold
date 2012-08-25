@@ -112,5 +112,6 @@ public:
 		void batch_sample(int num_rnd, bool ST_D2_ENABLE_SCATTER_PLOT, bool ST_D2_ENABLE_ONE_SAMPLE_PARALLELIZATION, bool ST_D2_ENABLE_UNIFORM_SAMPLE, double ST_D2_UNIFORM_SAMPLE_ENERGY, bool ST_D2_ENABLE_BPP_PROBABILITY, string sampleOutFile, string estimateBppOutputFile, string scatterPlotOutputFile);
 		void batch_sample_parallel(int num_rnd, bool ST_D2_ENABLE_SCATTER_PLOT, bool ST_D2_ENABLE_ONE_SAMPLE_PARALLELIZATION, bool ST_D2_ENABLE_BPP_PROBABILITY, string sampleOutFile, string estimateBppOutputFile, string scatterPlotOutputFile);
 		void batch_sample_and_dump(int num_rnd, std::string ctFileDumpDir, std::string stochastic_summery_file_name, std::string seq, std::string seqfile);
+		void printPfMatrixesToFile(string pfArraysOutputFile);
 };
 #endif

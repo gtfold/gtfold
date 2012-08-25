@@ -26,7 +26,8 @@ MyDouble PartitionFunctionD2::myExp(double arg){
 	//Varifed it, working correctly
 	return MyDouble(exp(arg));
 }
-void PartitionFunctionD2::printMatrix(MyDouble** u, int part_len){
+
+/*void PartitionFunctionD2::printMatrix(MyDouble** u, int part_len){
 	int i,j;
 	for (i = 0; i <= part_len+1; ++i)
 	{
@@ -36,6 +37,19 @@ void PartitionFunctionD2::printMatrix(MyDouble** u, int part_len){
 			printf(",");
 		}
 		printf("\n");
+	}
+}*/
+
+void PartitionFunctionD2::printMatrix(MyDouble** u, int part_len, FILE* pfarraysoutfile){
+	int i,j;
+	for (i = 0; i <= part_len+1; ++i)
+	{
+		for (j = 0; j <= part_len+1; ++j){
+			//printf("%0.1f ",u[i][j]);
+			u[i][j].print(pfarraysoutfile);
+			fprintf(pfarraysoutfile, ",");
+		}
+		fprintf(pfarraysoutfile, "\n");
 	}
 }
 
@@ -152,19 +166,47 @@ MyDouble PartitionFunctionD2::f(int j, int h, int l){
 //Functions to calculate partition, and other partition function related utilities exposed to outside world
 void PartitionFunctionD2::printAllMatrixes(){
 	printf("\n\nAfter calculation, u matrix:\n\n");
-	printMatrix(u,part_len);
+	printMatrix(u,part_len,stdout);
 	printf("\n\nAfter calculation, up matrix:\n\n");
-	printMatrix(up,part_len);
+	printMatrix(up,part_len,stdout);
 	printf("\n\nAfter calculation, upm matrix:\n\n");
-	printMatrix(upm,part_len);
+	printMatrix(upm,part_len,stdout);
 	printf("\n\nAfter calculation, u1 matrix:\n\n");
-	printMatrix(u1,part_len);
+	printMatrix(u1,part_len,stdout);
 	printf("\n\nAfter calculation, s1 matrix:\n\n");
-	printMatrix(s1,part_len);
+	printMatrix(s1,part_len,stdout);
 	printf("\n\nAfter calculation, s2 matrix:\n\n");
-	printMatrix(s2,part_len);
+	printMatrix(s2,part_len,stdout);
 	printf("\n\nAfter calculation, s3 matrix:\n\n");
-	printMatrix(s3,part_len);
+	printMatrix(s3,part_len,stdout);
+}
+
+void PartitionFunctionD2::printAllMatrixesToFile(string pfArraysOutputFile){
+	FILE* pfarraysoutfile = fopen(pfArraysOutputFile.c_str(), "w");
+        if(pfarraysoutfile==NULL){
+        	cerr<<"Error in opening file: "<<pfarraysoutfile<<endl;
+                exit(-1);
+        }
+	
+	fprintf(pfarraysoutfile, "u matrix:\n\n");
+        printMatrix(u,part_len,pfarraysoutfile);
+        fprintf(pfarraysoutfile, "\n\nup matrix:\n\n");
+        printMatrix(up,part_len,pfarraysoutfile);
+        fprintf(pfarraysoutfile, "\n\nupm matrix:\n\n");
+        printMatrix(upm,part_len,pfarraysoutfile);
+        fprintf(pfarraysoutfile, "\n\nu1 matrix:\n\n");
+        printMatrix(u1,part_len,pfarraysoutfile);
+        fprintf(pfarraysoutfile, "\n\ns1 matrix:\n\n");
+        printMatrix(s1,part_len,pfarraysoutfile);
+        fprintf(pfarraysoutfile, "\n\ns2 matrix:\n\n");
+        printMatrix(s2,part_len,pfarraysoutfile);
+        fprintf(pfarraysoutfile, "\n\ns3 matrix:\n\n");
+        printMatrix(s3,part_len,pfarraysoutfile);
+
+	fclose(pfarraysoutfile);
+        printf("\nPartition function arrays are printed to file %s\n\n", pfArraysOutputFile.c_str());
+
+
 }
 MyDouble PartitionFunctionD2::calculate_partition(int len, int pf_count_mode, int no_dangle_mode, bool PF_D2_UP_APPROX_ENABLED1)
 {
@@ -188,12 +230,12 @@ MyDouble PartitionFunctionD2::calculate_partition(int len, int pf_count_mode, in
 	create_partition_arrays();
 	init_partition_arrays();
 	fill_partition_arrays();
-	if(g_verbose==1){
+	/*if(g_verbose==1){
 		printf("Printing partition function table...\n");
 		printAllMatrixes();
-	}
+	}*/
 	//printf("%4.4f\n",u[1][part_len]);
-	(u[1][part_len]).print();
+	printf("Partition Function Value: ");(u[1][part_len]).print();
 	printf("\n");
 	return u[1][part_len];
 

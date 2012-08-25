@@ -13,9 +13,9 @@
 #include "utils.h"
 #include "mfe_main.h"
 
-
 using namespace std;
 
+static bool SILENT = false;
 static string seqfile = "";
 static string suboptFile = "";
 static double suboptDelta = 0.0;
@@ -26,6 +26,7 @@ static string paramDir = "";
 static bool PARAM_DIR = false;
 static void help();
 static void detailed_help();
+static void printRunConfiguration(string seq);
 
 void save_subopt_file(string outputFile, ss_map_t& ss_data, 
 		const string& seq, int energy)
@@ -66,6 +67,11 @@ void parse_options(int argc, char** argv) {
         else {
           help();
         }
+      } else if (strcmp(argv[i], "--workdir") == 0 || strcmp(argv[i], "-w") == 0) {
+        if(i < argc)
+          outputDir = argv[++i];
+        else
+          help();
       }
       else if(strcmp(argv[i], "--delta") == 0) {
         g_dangles = 2;
@@ -197,24 +203,47 @@ void subopt_main(int argc, char** argv) {
   init_fold(seq.c_str());
   g_dangles = 2;  
   readThermodynamicParameters(paramDir.c_str(), PARAM_DIR, 0, 1, 0);
+  printRunConfiguration(seq);
 
-	int energy = calculate(seq.length()) ; 
+  int energy = calculate(seq.length()) ; 
   
   double t1 = get_seconds();
   ss_map_t subopt_data = subopt_traceback(seq.length(), 100.0*suboptDelta);
   t1 = get_seconds() - t1;
   
-  printf("- thermodynamic parameters: %s\n", EN_DATADIR.c_str());
-	printf("- input file: %s\n", seqfile.c_str());
-	printf("- sequence length: %d\n", (int)seq.length());
-  printf("\n");
+  //printf("- thermodynamic parameters: %s\n", EN_DATADIR.c_str());
+//	printf("- input file: %s\n", seqfile.c_str());
+//	printf("- sequence length: %d\n", (int)seq.length());
+  //printf("\n");
   printf("Subopt traceback running time: %9.6f seconds\n", t1);
 
   printf("Subopt structures saved in %s\n", suboptFile.c_str());
   save_subopt_file(suboptFile, subopt_data, seq, energy);	
 
-  printf("+ calculating suboptimal structures within %f kcal/mol of MFE\n", suboptDelta);
-  printf("+ suboptimal structures file: %s\n", suboptFile.c_str());
+  //printf("+ calculating suboptimal structures within %f kcal/mol of MFE\n", suboptDelta);
+  //printf("+ suboptimal structures file: %s\n", suboptFile.c_str());
 
 	free_fold(seq.length());
+	printf("\n");
 }
+
+static void printRunConfiguration(string seq) {
+
+        if(!SILENT) printf("\nRun Configuration:\n");
+        
+        if (g_dangles == 2) {
+                if(!SILENT) printf("+ running in dangle %d mode\n", g_dangles);
+        }
+        
+
+        if(!SILENT) printf("- thermodynamic parameters: %s\n", EN_DATADIR.c_str());
+        if(!SILENT) printf("- input file: %s\n", seqfile.c_str());
+        if(!SILENT) printf("- sequence length: %d\n", (int)seq.length());
+	if(!SILENT) printf("+ calculating suboptimal structures within %f kcal/mol of MFE\n", suboptDelta);
+	if(!SILENT) printf("+ suboptimal structures file: %s\n", suboptFile.c_str());
+        //printf("- output file: %s\n", outputFile.c_str());
+	printf("\n");
+}
+
+
+

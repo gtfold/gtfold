@@ -52,7 +52,8 @@ class PartitionFunctionD2{
 		//general utility functions
 		MyDouble **mallocTwoD(int r, int c);
 		void freeTwoD(MyDouble** arr, int r, int c);
-		void printMatrix(MyDouble** u, int part_len);
+		//void printMatrix(MyDouble** u, int part_len);
+		void printMatrix(MyDouble** u, int part_len, FILE* pfarraysoutputfile);//pfarraysoutputfile can be stdin in order to make it to print to standard output
 	public:
 		//Functions providing general utilities related to energy
 		MyDouble myExp(double arg);
@@ -78,7 +79,7 @@ class PartitionFunctionD2{
 		MyDouble calculate_partition(int len, int pf_count_mode, int no_dangle_mode, bool PF_D2_UP_APPROX_ENABLED);
 		void free_partition();
 		void printAllMatrixes();
-
+		void printAllMatrixesToFile(string pfArraysOutputFile);
 };
 /*
 #ifdef __cplusplus

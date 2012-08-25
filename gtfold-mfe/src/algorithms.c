@@ -129,7 +129,8 @@ int calculate(int len) {
 #ifdef _OPENMP
 #pragma omp parallel
 #pragma omp master
-  if (g_verbose) fprintf(stdout,"Thread count: %3d \n",omp_get_num_threads());
+  //if (g_verbose) fprintf(stdout,"Thread count: %3d \n",omp_get_num_threads());
+  fprintf(stdout,"Thread count: %3d \n",omp_get_num_threads());
 #endif
 
   initializeMatrix(len);

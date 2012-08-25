@@ -239,7 +239,7 @@ double calculate_partition(int len, int pf_count_mode, int no_dangle_mode)
 	init_partition_arrays();
 	fill_partition_arrays();
 	//printAllMatrixes();//TODO uncomment it
-	printf("%4.4f\n",u[1][part_len]);
+	printf("Partition Function value is: ");printf("%4.4f\n",u[1][part_len]);printf("\n");
 	return u[1][part_len];
 
 }
