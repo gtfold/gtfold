@@ -600,7 +600,8 @@ int boltzmann_main(int argc, char** argv) {
 
 		fill_partition_fn_arrays(seq.length(), Q, QB, QM);
 		fillBasePairProbabilities(seq.length(), Q, QB, QM, P);
-		printBasePairProbabilities(seq.length(), structure, P, bppOutFile.c_str());
+		//printBasePairProbabilities(seq.length(), structure, P, bppOutFile.c_str());
+		printBasePairProbabilitiesDetail(seq.length(), structure, P, bppOutFile.c_str());
 		printf("Saved BPP output in %s\n",bppOutFile.c_str());
 
 		freeTwoD(Q, seq.length() + 1, seq.length() + 1);
