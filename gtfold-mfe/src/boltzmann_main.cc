@@ -3,8 +3,11 @@
 #include <cstdlib>
 #include <string>
 #include <cstring>
+#include<sstream>
 //#include <sys/time.h>
 //#include <time.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #include "global.h"
 #include "loader.h"
@@ -208,7 +211,7 @@ static void validate_options(string seq){
 		if(print_energy_decompose==1){
 			if(!SILENT) printf("Ignoring the option -e or --energy, as it will be valid with --sample option.\n\n");	
 		}
-		if(ST_D2_ENABLE_SCATTER_PLOT){
+		if(ST_D2_ENABLE_SCATTER_PLOT && !ST_D2_ENABLE_BPP_PROBABILITY){
 			if(!SILENT) printf("Ignoring the option --scatterPlot, as it will be valid with --sample option.\n\n");
 		}
 		if(ST_D2_ENABLE_UNIFORM_SAMPLE){
@@ -242,6 +245,19 @@ static void validate_options(string seq){
 
 	printf("\n");
 }
+/*
+static bool is_int(char const* p)
+{
+    return strcmp(itoa(atoi(p)), p, 10) == 0;
+}*/
+static bool isNumeric( const char* pszInput)
+{
+	int nNumberBase = 10;
+	string base = "0123456789ABCDEF";
+	string input = pszInput;
+ 
+	return (input.find_first_not_of(base.substr(0, nNumberBase)) == string::npos);
+}
 
 static void parse_options(int argc, char** argv) {
 	int i;
@@ -251,8 +267,8 @@ static void parse_options(int argc, char** argv) {
 			if(strcmp(argv[i], "--help") == 0 || strcmp(argv[i], "-h") == 0) {
 				help(); 
 			} else if(strcmp(argv[i], "--detailedhelp") == 0 ) {
-                                detailed_help();
-                        } else if (strcmp(argv[i], "--paramdir") == 0 || strcmp(argv[i], "-p") == 0) {
+				detailed_help();
+			} else if (strcmp(argv[i], "--paramdir") == 0 || strcmp(argv[i], "-p") == 0) {
 				if(i < argc) {
 					paramDir = argv[++i];
 					PARAM_DIR = true;
@@ -281,26 +297,26 @@ static void parse_options(int argc, char** argv) {
 			} else if (strcmp(argv[i],"--partition") == 0) {
 				CALC_PART_FUNC = true;
 			} else if (strcmp(argv[i],"--print-arrays") == 0) {
-                                PF_PRINT_ARRAYS_ENABLED = true;
-                        } else if (strcmp(argv[i], "--verbose") == 0 || strcmp(argv[i], "-v") == 0) {
+				PF_PRINT_ARRAYS_ENABLED = true;
+			} else if (strcmp(argv[i], "--verbose") == 0 || strcmp(argv[i], "-v") == 0) {
 				g_verbose = 1;
-      			}
+			}
 			else if (strcmp(argv[i], "--energydetail") == 0 || strcmp(argv[i], "-e") == 0) {
-                                print_energy_decompose = 1;
-                        }
+				print_energy_decompose = 1;
+			}
 			else if (strcmp(argv[i], "--dangle") == 0 || strcmp(argv[i], "-d") == 0) {
-        			std::string cmd = argv[i];
-        			if(i < argc) {
-          				dangles = atoi(argv[++i]);
-          				if (!(dangles == 0 || dangles == 2)) {
-            					dangles = 2;
-            					printf("Ignoring %s option as it accepts either 0 or 2, proceeding with taking value for dangle as 2\n", cmd.c_str());
-          				}
+				std::string cmd = argv[i];
+				if(i < argc) {
+					dangles = atoi(argv[++i]);
+					if (!(dangles == 0 || dangles == 2)) {
+						dangles = 2;
+						printf("Ignoring %s option as it accepts either 0 or 2, proceeding with taking value for dangle as 2\n", cmd.c_str());
+					}
 					if(dangles==0) CALC_PF_DO = true;
 					else if(dangles==2) CALC_PF_D2 = true;
-        			} else
-          			help();
-      			}
+				} else
+					help();
+			}
 			else if (strcmp(argv[i],"-dS") == 0) {
 				CALC_PF_DS = true;  
 				dangles=-1;
@@ -333,8 +349,16 @@ static void parse_options(int argc, char** argv) {
 				PF_COUNT_MODE = true;
 			} else if (strcmp(argv[i],"--sample") == 0 || strcmp(argv[i], "-s") == 0) {
 				RND_SAMPLE = true;
-				if(i < argc)
-					num_rnd = atoi(argv[++i]);
+				if(i < argc){
+					//if(is_int(argv[i+1])){		
+					if(isNumeric(argv[i+1])){		
+						num_rnd = atoi(argv[++i]);
+					}
+					else {
+						printf("Error: %s is not a valid integer.\n\n",argv[i+1]);
+						help();
+					}
+				}
 				else
 					help();
 				if(i < argc){//--dump [--dump_dir dump_dir_name] [--dump_summary dump_summery_file_name]
@@ -406,7 +430,7 @@ static void parse_options(int argc, char** argv) {
 		scatterPlotOutputFile += outputDir;
 		scatterPlotOutputFile += "/";
 		pfArraysOutFile += outputDir;
-                pfArraysOutFile += "/";
+		pfArraysOutFile += "/";
 
 	}
 	// ... and append the .ct
@@ -429,7 +453,7 @@ static void parse_options(int argc, char** argv) {
 	scatterPlotOutputFile += ".frequency";
 
 	pfArraysOutFile += outputPrefix;
-        pfArraysOutFile += ".pfarrays";
+	pfArraysOutFile += ".pfarrays";
 
 }
 /*

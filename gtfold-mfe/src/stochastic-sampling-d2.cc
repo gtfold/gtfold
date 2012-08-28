@@ -1061,7 +1061,7 @@ void StochasticTracebackD2::batch_sample_parallel(int num_rnd, bool ST_D2_ENABLE
 		for(int ind=0; ind<threads_for_counts; ind++) countArr[ind]=0;
 		#ifdef _OPENMP
 		//#pragma omp parallel for private (count) shared(structures_thread) schedule(guided) num_threads(threads_for_counts)
-		#pragma omp parallel for private (count) shared(structures_thread) schedule(dynamic) num_threads(threads_for_counts)
+		#pragma omp parallel for private (count) shared(structures_thread, countArr, uniq_structs_thread, outfile) schedule(guided) num_threads(threads_for_counts)
 		#endif
 		for (count = 1; count <= num_rnd; ++count) 
 		{
@@ -1094,21 +1094,21 @@ void StochasticTracebackD2::batch_sample_parallel(int num_rnd, bool ST_D2_ENABLE
 			if (fabs(energy-myEnegry)>0.0001){ count--;continue;} //TODO: debug
 			 */
 
-			std::map<std::string,std::pair<int,double> >::iterator iter ;
-			if ((iter =uniq_structs_thread[thdId].find(ensemble.substr(1))) != uniq_structs_thread[thdId].end())
-			{
-				std::pair<int,double>& pp = iter->second;
-				pp.first++;
-				//cout<<"energy="<<energy<<",pp.second="<<pp.second<<endl;
-				assert(energy==pp.second);
-			}
-			else {
-				if(ST_D2_ENABLE_SCATTER_PLOT){
+			if(ST_D2_ENABLE_SCATTER_PLOT){
+				std::map<std::string,std::pair<int,double> >::iterator iter ;
+				if ((iter =uniq_structs_thread[thdId].find(ensemble.substr(1))) != uniq_structs_thread[thdId].end())
+				{
+					std::pair<int,double>& pp = iter->second;
+					pp.first++;
+					//cout<<"energy="<<energy<<",pp.second="<<pp.second<<endl;
+					assert(energy==pp.second);
+				}
+				else{
 					std::pair< std::string, std::pair<int,double> > new_pp = make_pair(ensemble.substr(1),std::pair<int,double>(1,energy));
 					uniq_structs_thread[thdId].insert(new_pp); 
 				}
-				//uniq_structs_thread[thdId].insert(make_pair(ensemble.substr(1),std::pair<int,double>(1,energy))); 
 			}
+			//uniq_structs_thread[thdId].insert(make_pair(ensemble.substr(1),std::pair<int,double>(1,energy))); 
 
 			//if(!ST_D2_ENABLE_SCATTER_PLOT){
 				//std::cout << ensemble.substr(1) << ' ' << energy << std::endl;
