@@ -305,7 +305,7 @@ static void parse_options(int argc, char** argv) {
 				else
 					help();
 			} else if (strcmp(argv[i], "--workdir") == 0 || strcmp(argv[i], "-w") == 0) {
-				if(i < argc)
+				if(i+1 < argc)//if(i < argc)
 					outputDir = argv[++i];
 				else
 					help();
@@ -324,7 +324,7 @@ static void parse_options(int argc, char** argv) {
 			}
 			else if (strcmp(argv[i], "--dangle") == 0 || strcmp(argv[i], "-d") == 0) {
 				std::string cmd = argv[i];
-				if(i < argc) {
+				if(i+1 < argc) {//if(i < argc) {
 					dangles = atoi(argv[++i]);
 					if (!(dangles == 0 || dangles == 2)) {
 						dangles = 2;
@@ -367,7 +367,7 @@ static void parse_options(int argc, char** argv) {
 				PF_COUNT_MODE = true;
 			} else if (strcmp(argv[i],"--sample") == 0 || strcmp(argv[i], "-s") == 0) {
 				RND_SAMPLE = true;
-				if(i < argc){
+				if(i+1 < argc){//if(i < argc){
 					//if(is_int(argv[i+1])){		
 					if(isNumeric(argv[i+1])){		
 						num_rnd = atoi(argv[++i]);
@@ -379,20 +379,21 @@ static void parse_options(int argc, char** argv) {
 				}
 				else
 					help();
-				if(i < argc){//--separatectfiles [--ctfilesdir dump_dir_name] [--summaryfile dump_summery_file_name]
+				if(i+1 < argc){//if(i < argc){//--separatectfiles [--ctfilesdir dump_dir_name] [--summaryfile dump_summery_file_name]
+					//printf("i=%d, argc=%d, argv[i]=%s, \n",i,argc,argv[i]);
 					if (strcmp(argv[i+1],"--separatectfiles") == 0){
 						i=i+1;
 						DUMP_CT_FILE = true;
-						if (i < argc && strcmp(argv[i+1],"--ctfilesdir") == 0){
+						if (i+1 < argc && strcmp(argv[i+1],"--ctfilesdir") == 0){//if (i < argc && strcmp(argv[i+1],"--ctfilesdir") == 0){
 							i=i+1;
-							if(i < argc)
+							if(i+1 < argc)//if(i < argc)
 								ctFileDumpDir = argv[++i];
 							else
 								help();
 						}
-						if (i < argc && strcmp(argv[i+1],"--summaryfile") == 0){
+						if (i+1 < argc && strcmp(argv[i+1],"--summaryfile") == 0){//if (i < argc && strcmp(argv[i+1],"--summaryfile") == 0){
 							i=i+1;
-							if(i < argc)
+							if(i+1 < argc)//if(i < argc)
 								stochastic_summery_file_name = argv[++i];
 							else
 								help();
@@ -400,7 +401,7 @@ static void parse_options(int argc, char** argv) {
 					}
 				}
 			} else if (strcmp(argv[i],"--limitcd") == 0 || strcmp(argv[i], "-l") == 0) {
-				if(i < argc) {
+				if(i+1 < argc) {//if(i < argc) {
 					LIMIT_DISTANCE = true;
 					contactDistance = atoi(argv[++i]);
 				}
@@ -412,8 +413,8 @@ static void parse_options(int argc, char** argv) {
 		}
 	}
 
-	if(seqfile.empty()) {
-		printf("Missing input file.\n");
+	if(seqfile.compare("")==0 || seqfile.empty()) {
+		printf("Error: Missing input file.\n");
 		help();
 	}
 
