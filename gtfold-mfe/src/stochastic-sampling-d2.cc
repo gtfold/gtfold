@@ -895,7 +895,7 @@ void StochasticTracebackD2::batch_sample(int num_rnd, bool ST_D2_ENABLE_SCATTER_
 			fclose(scatterPlotoutfile);
 		}
 		else{
-			printf("nsamples=%d\n",nsamples);
+			//printf("nsamples=%d\n",nsamples);
 		}
 		if(ST_D2_ENABLE_BPP_PROBABILITY){
 			ofstream estimateBppoutfile;
@@ -1250,7 +1250,7 @@ void StochasticTracebackD2::batch_sample_parallel(int num_rnd, bool ST_D2_ENABLE
                         fclose(scatterPlotoutfile);	
 		}
 		else{
-			printf("nsamples=%d\n",num_rnd);
+			//printf("nsamples=%d\n",num_rnd);
 		}
 		if(ST_D2_ENABLE_BPP_PROBABILITY){
 			ofstream estimateBppoutfile;
