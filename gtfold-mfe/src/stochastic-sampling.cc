@@ -9,6 +9,7 @@
 #include <map>
 #include<sstream>
 #include<fstream>
+#include<unistd.h>
 
 int ss_verbose = 0; 
 

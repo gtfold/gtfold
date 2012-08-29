@@ -11,6 +11,7 @@
 #include "utils.h"
 #include<omp.h>
 #include<time.h>
+#include<unistd.h>
 
 //Basic utility functions
 void StochasticTracebackD2::initialize(int length1, int PF_COUNT_MODE1, int NO_DANGLE_MODE1, int print_energy_decompose1, bool PF_D2_UP_APPROX_ENABLED1, bool checkFraction1, string energy_decompose_output_file){

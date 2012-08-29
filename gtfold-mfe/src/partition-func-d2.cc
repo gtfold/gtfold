@@ -235,7 +235,10 @@ MyDouble PartitionFunctionD2::calculate_partition(int len, int pf_count_mode, in
 		printAllMatrixes();
 	}*/
 	//printf("%4.4f\n",u[1][part_len]);
-	printf("Partition Function Value: ");(u[1][part_len]).print();
+	//if(pf_count_mode==1){ printf("Possible structure count: ");(u[1][part_len]).print();}
+	if(pf_count_mode==1){ printf("Possible structure count: ");(u[1][part_len]).printInt();}
+	else{ printf("Partition Function Value: ");(u[1][part_len]).print();}
+
 	printf("\n");
 	return u[1][part_len];
 
