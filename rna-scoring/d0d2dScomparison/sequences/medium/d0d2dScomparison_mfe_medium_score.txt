@@ -1,0 +1,45 @@
+$easyseq1=$seqDir."/medium/japonica.ct";
+generateResult($easyseq1,$easyoutfilepath);
+
+$easyseq1=$seqDir."/medium/norvegicus.ct";
+generateResult($easyseq1,$easyoutfilepath);
+
+$easyseq1=$seqDir."/medium/sanguinea.ct";
+generateResult($easyseq1,$easyoutfilepath);
+
+$easyseq1=$seqDir."/medium/taurus.ct";
+generateResult($easyseq1,$easyoutfilepath);
+
+$easyseq1=$seqDir."/medium/waltl.ct";
+generateResult($easyseq1,$easyoutfilepath);
+
+sub generateResult{
+ my($seq,$out)=@_;
+ #my $str="Score is\n";
+ #`echo $str`;
+ `$scoreCalcPrg -d0 $seq >> $out`;
+ `$scoreCalcPrg $seq >> $out`;
+ `$scoreCalcPrg -dS $seq >> $out`;
+ `$scoreCalcPrg -d2 $seq >> $out`;
+}
+
+d0d2dScomparison_mfe_medium.txt:10:Tree score is -48.10
+d0d2dScomparison_mfe_medium.txt:20:Tree score is -49.50
+d0d2dScomparison_mfe_medium.txt:30:Tree score is -49.50
+d0d2dScomparison_mfe_medium.txt:40:Tree score is -52.10
+d0d2dScomparison_mfe_medium.txt:50:Tree score is -53.00
+d0d2dScomparison_mfe_medium.txt:60:Tree score is -54.40
+d0d2dScomparison_mfe_medium.txt:70:Tree score is -54.40
+d0d2dScomparison_mfe_medium.txt:80:Tree score is -57.00
+d0d2dScomparison_mfe_medium.txt:90:Tree score is -48.10
+d0d2dScomparison_mfe_medium.txt:100:Tree score is -49.50
+d0d2dScomparison_mfe_medium.txt:110:Tree score is -49.50
+d0d2dScomparison_mfe_medium.txt:120:Tree score is -52.10
+d0d2dScomparison_mfe_medium.txt:130:Tree score is -53.00
+d0d2dScomparison_mfe_medium.txt:140:Tree score is -54.40
+d0d2dScomparison_mfe_medium.txt:150:Tree score is -54.40
+d0d2dScomparison_mfe_medium.txt:160:Tree score is -57.00
+d0d2dScomparison_mfe_medium.txt:170:Tree score is -56.40
+d0d2dScomparison_mfe_medium.txt:180:Tree score is -59.40
+d0d2dScomparison_mfe_medium.txt:190:Tree score is -59.40
+d0d2dScomparison_mfe_medium.txt:200:Tree score is -61.80

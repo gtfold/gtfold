@@ -53,16 +53,16 @@
 #define PACKAGE_NAME "gtfold"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "gtfold 1.18"
+#define PACKAGE_STRING "gtfold 2.0"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "gtfold"
 
 /* Define to the home page for this package. */
-#define PACKAGE_URL ""
+/* #undef PACKAGE_URL */
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.18"
+#define PACKAGE_VERSION "2.0"
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
@@ -74,7 +74,7 @@
 /* #undef TM_IN_SYS_TIME */
 
 /* Version number of package */
-#define VERSION "1.18"
+#define VERSION "2.0"
 
 /* Define to empty if `const' does not conform to ANSI C. */
 /* #undef const */

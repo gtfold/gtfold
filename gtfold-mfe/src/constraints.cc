@@ -5,6 +5,8 @@
 #include <fstream>
 #include <vector>
 #include <algorithm>
+#include <map>
+#include <iterator>
 
 #include "global.h"
 #include "options.h"
@@ -12,6 +14,8 @@
 
 int* BP;
 int* ind;
+
+typedef pair<int,int> basepair_t;
 
 /*
 ZS: Explanation to BP array. 
@@ -25,10 +29,11 @@ BP(i,j) for i!=j can have one of the following values:
 
 BP(i,i) can have one of the following values: 
 0: Nothing is known about position i at all
-3: Position i is forced to be single-stranded. This implies also that
-   any pairs with i will be prohibited. 
-4: Position i is NOT single-stranded, it is forced to be in a pair. 
-5: Position i is prohibited from pairing with at least one nucleotide. 
+3: Position i is prohibited from pairing (forced to be single-stranded). This 
+   implies also that any pairs with i will be prohibited. 
+4: Position i is forced to be in a particular pair (i is not single-stranded).
+5: Position i is prohibited from pairing with at least one nucleotide.
+6: Position i is forced to be in some pair (i is not single-stranded), but no pairing partner is specified.
 */
 
 int** PBP;
@@ -37,17 +42,17 @@ int** FBP;
 int nPBP;
 int nFBP;
 
-bool compare_bp(const std::pair<int,int>& o1, 
-			   	const std::pair<int,int>& o2) {
-	return o1.first < o2.first;
-}
+static bool CONS_ENABLED = false;
+static bool LIMIT_DISTANCE = false;
+static int contactDistance = -1;
 
+void enable_constraints(int b) {CONS_ENABLED = b;}
+void enable_limit_distance(int b) {LIMIT_DISTANCE = b;}
+void set_contact_distance(int dist) {contactDistance = dist;}
 
-static int load_constraints(const char* constr_file, int verbose=0) {
+static int load_constraints(const char* constr_file, int seq_length, int verbose=0) {
 	
-
 	fprintf(stdout, "- Running with constraints\n");
-
 
 	std::ifstream cfcons;
 	cfcons.open(constr_file, std::ios::in);
@@ -107,33 +112,73 @@ static int load_constraints(const char* constr_file, int verbose=0) {
         }
     }
 
-	std::vector<std::pair<int,int> > v_fbp;
 	for(it=0; it< nFBP; it++) {
-		for(int k=1;k<= FBP[it][2];k++)
-			v_fbp.push_back(std::pair<int,int>(FBP[it][0]+k-1, FBP[it][1]-k+1));
-	}
-	
-	if(v_fbp.size()>1){
-		std::sort(v_fbp.begin(), v_fbp.end(), compare_bp);
-		for (size_t ii = 0; ii < v_fbp.size() -1 ; ++ii) {
-			if (v_fbp[ii].second!=0&&v_fbp[ii].second <= v_fbp[ii+1].second
-				&& v_fbp[ii].second >= v_fbp[ii+1].first) {
-				fprintf(stderr, "\nConstraints create pseudoknots, exiting !!!\n");
-				exit(-1);
-			}
-			
+		if (FBP[it][0] < 1 || FBP[it][0] >= seq_length - TURN) {
+			fprintf(stderr, "\nBase %d from constraint 'F %d %d %d' is out of bounds: For constraint 'F i j k' value i must be between 1 and the sequence length - %d, where the sequence length is %d \n",
+				FBP[it][0], FBP[it][0], FBP[it][1], FBP[it][2], TURN, seq_length);
+			exit(1);
+		}
+		if (FBP[it][1] != 0 && (FBP[it][1] <= FBP[it][0] + TURN 
+								|| FBP[it][1] > seq_length)) {
+			fprintf(stderr, "\nBase %d from constraint 'F %d %d %d' has an illegal value: For constraint 'F i j k' value j must be either 0 or between i + %d and the sequence length of %d \n",
+				FBP[it][1], FBP[it][0], FBP[it][1], FBP[it][2], TURN, seq_length);
+			exit(1);
+		}
+		if (FBP[it][2] < 1) {
+			fprintf(stderr, "\nValue %d from constraint 'F %d %d %d' is too small: For constraint 'F i j k' value k must be at least 1\n",
+				FBP[it][1], FBP[it][0], FBP[it][1], seq_length);
+			exit(1);
+		}
+		if (FBP[it][1] != 0 && (FBP[it][1] - FBP[it][0] - 2*FBP[it][2] + 2 <= TURN)) {
+			fprintf(stderr, "\nValue %d from constraint 'F %d %d %d' is too large: For constraint 'F i j k' the values must satisfy the inequality (j-k+1)-(i+k-1) > %d \n",
+				FBP[it][2], FBP[it][0], FBP[it][1], FBP[it][2], TURN);
+			exit(1);
+		}
+		if (FBP[it][1] == 0 && (FBP[it][0] + FBP[it][2] - 1 > seq_length)) {
+			fprintf(stderr, "\nValue %d from constraint 'F %d %d %d' is too large: For constraint 'F i 0 k' the value i + k  - 1 can be at most the sequence length, in this case %d \n",
+				FBP[it][2], FBP[it][0],FBP[it][1],FBP[it][2], seq_length);
+			exit(1);
 		}
 	}
-
-  
-    return 0;
+	
+	for(it=0; it< nPBP; it++) {
+		if (PBP[it][0] < 1 || (PBP[it][1] != 0 && PBP[it][0] >= seq_length - TURN)) {
+			fprintf(stderr, "\nBase %d from constraint 'P %d %d %d' is out of bounds: For constraint 'P i j k' value i must be between 1 and the sequence length - %d, where the sequence length is %d \n",
+				PBP[it][0], PBP[it][0], PBP[it][1], PBP[it][2], TURN, seq_length);
+			exit(1);
+		}
+		if (PBP[it][1] != 0 && (PBP[it][1] <= PBP[it][0] + TURN 
+								|| PBP[it][1] > seq_length)) {
+			fprintf(stderr, "\nBase %d from constraint 'P %d %d %d' has an illegal value: For constraint 'P i j k' value j must be either 0 or between i + %d and the sequence length of %d \n",
+				PBP[it][1], PBP[it][0], PBP[it][1], PBP[it][2], TURN, seq_length);
+			exit(1);
+		}
+		if (PBP[it][2] < 1) {
+			fprintf(stderr, "\nValue %d from constraint 'P %d %d %d' is too small: For constraint 'P i j k' value k must be at least 1\n",
+				PBP[it][1], PBP[it][0], PBP[it][1], seq_length);
+			exit(1);
+		}
+		if (PBP[it][1] != 0 && (PBP[it][1] - PBP[it][0] - 2*PBP[it][2] + 2 <= TURN)) {
+			fprintf(stderr, "\nValue %d from constraint 'P %d %d %d' is too large: For constraint 'P i j k' the values must satisfy the inequality (j-k+1)-(i+k-1) > %d \n",
+				PBP[it][2], PBP[it][0], PBP[it][1], PBP[it][2], TURN);
+			exit(1);
+		}
+		if (PBP[it][1] == 0 && (PBP[it][0] + PBP[it][2] - 1 > seq_length)) {
+			fprintf(stderr, "\nValue %d from constraint 'P %d %d %d' is too large: For constraint 'P i 0 k' the value i + k  - 1 can be at most the sequence length, in this case %d \n",
+				PBP[it][2], PBP[it][0],PBP[it][1],PBP[it][2], seq_length);
+			exit(1);
+		}
+	}
+	
+	return 0;
 }
 
 int init_constraints(const char* constr_file,int length) {
-	load_constraints(constr_file);
+  enable_constraints(true);
+  load_constraints(constr_file, length);
+  
 
-
-	int i,j,it,k;
+	int i,j,it,k,a,b;
 	ind = (int*) malloc((length+1) * sizeof(int));
 	if (ind == NULL) {
 		perror("Cannot allocate variable 'ind'");
@@ -145,10 +190,10 @@ int init_constraints(const char* constr_file,int length) {
 
 
 	BP = (int*) malloc((((length+1)*(length))/2+1)*sizeof(int));
-	    if (BP == NULL) {
-        	perror("Cannot allocate variable 'constraints'");
-	        exit(-1);
-	    }
+	if (BP == NULL) {
+       	perror("Cannot allocate variable 'constraints'");
+	    exit(-1);
+	}
 	
 	int LLL = length*(length+1)/2 + 1;
 
@@ -159,7 +204,7 @@ int init_constraints(const char* constr_file,int length) {
 	}
 
 	
-	//ZS: for noncanonical bases (right now this only handles 'N'), force single-stranded. 
+	//ZS: for ambiguous bases (right now this only handles 'N'), force single-stranded. 
 	for(i = 1; i <= length; i++){
 		if(RNA[i]=='N'){
 			//force single-stranded
@@ -170,113 +215,138 @@ int init_constraints(const char* constr_file,int length) {
 			}
 		}
 	}
-
 	
-	//ZS: set prohibited basepairs
-	if(nPBP != 0){
-		int temp;
-		//Make sure smallest one is first 
-		for(it = 0; it < nPBP; it++){
-			if(PBP[it][0] > PBP[it][1]){
-				temp = PBP[it][0];	
-				PBP[it][0] = PBP[it][1];
-				PBP[it][1] = temp;
+	//CM: set forced basepairs
+	for (it = 0; it < nFBP; it++){
+		
+		if(FBP[it][1] == 0){	// F i 0 k
+			// For bases i through i+k-1, say they must be in some pair
+			for (i = FBP[it][0]; i < FBP[it][0]+FBP[it][2]; i++) {
+				if(BP(i,i) == 0){
+					BP(i,i) = 6;
+				}
+				//If BP(i,i) == 4 or 6, ignore
 			}
 		}
-
-		for(it = 0; it < nPBP; it++){
-			if(PBP[it][2] < 1 || PBP[it][1] == 0){
-				printf("Invalid entry (P: %d %d %d)\n", PBP[it][0], PBP[it][1], PBP[it][2]);
-				continue;
+		
+		else {	// F i j k, j != 0
+			// Require the stack from (i,j) to (i+k-1,j-k+1)
+			
+			for (k = 1; k <= FBP[it][2]; k++) {
+				
+				i = FBP[it][0] + k - 1;
+				j = FBP[it][1] - k + 1;
+				
+				if (BP(i,i) == 4 && BP(i,j) != 1) {	// Base i is already in a pair
+					printf("Constraint 'F %d %d %d' is trying to force the pair (%d,%d), but base %d is forced to be in a different pair by a previous 'F i j k' constraint\n",
+						FBP[it][0],FBP[it][1],FBP[it][2],i,j,i);
+					exit(1); // FIX THIS !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+				}
+				else if (BP(j,j) == 4 && BP(i,j) != 1) { // Base j is already in a pair
+					printf("Constraint 'F %d %d %d' is trying to force the pair (%d,%d), but base %d is forced to be in a different pair by a previous 'F i j k' constraint\n",
+						FBP[it][0],FBP[it][1],FBP[it][2],i,j,j);
+					exit(1);
+				}
+				else if (BP(i,j) == 2) {	// Pseudoknot!
+					printf("Constraint 'F %d %d %d' is trying to force the pair (%d,%d), but this pair conflicts with a previous 'F i j k' constraint\n",
+						FBP[it][0],FBP[it][1],FBP[it][2],i,j);
+					printf("\n");
+					exit(1);
+				}
+				else if (!canPair(RNA[i], RNA[j])) {
+					printf("Constraint 'F %d %d %d' is trying to force the pair (%d,%d), but the pair is non-canonical\n",
+						FBP[it][0],FBP[it][1],FBP[it][2],i,j);
+					exit(1);
+				}
+				else {
+					
+					// Require the pair (i,j)
+					BP(i,i) = 4;
+					BP(j,j) = 4;
+					BP(i,j) = 1;
+					
+					// Nothing else can pair with i or j, and no pseudoknots
+					for (b = i+1; b < j; b++) {
+						BP(i,b) = 2;
+						BP(b,j) = 2;
+					}
+					// To avoid rewriting, these only need to be set for k = 1
+					if (k == 1) {
+						for (a = 1; a < i; a++) {
+							for (b = i; b <= j; b++) {
+								BP(a,b) = 2;
+							}
+						}
+						for (a = i; a <= j; a++) {
+							for (b = j+1; b <= length; b++) {
+								BP(a,b) = 2;
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	
+	
+	//CM: set prohibited basepairs
+	for (it = 0; it < nPBP; it++){
+	
+		if (PBP[it][1] != 0) { // P i j k, j != 0
+			// Prohibit the stack (i,j) to (i+k-1,j-k+1)
+			
+			for (k = 1; k <= PBP[it][2]; k++) {
+				
+				i = PBP[it][0] + k - 1;
+				j = PBP[it][1] - k + 1;
+				
+				// Pair (i,j) is required by some constraint
+				if (BP(i,j) == 1) {
+					printf("Constraint 'P %d %d %d' is trying to prohibit pair (%d,%d), but this pair is required by a 'F i j k' constraint\n",
+						PBP[it][0],PBP[it][1],PBP[it][2],i,j);
+					exit(1);
+				}
+				
+				else {
+					
+					BP(i,j) = 2;
+					BP(i,i) = 5;	// This is only for the sake of print_constraints
+					BP(j,j) = 5;	// This is only for the sake of print_constraints
+					
+				}
+				
 			}
 		
-			for(k = 1; k <= PBP[it][2]; k++){
+		
+		}
+	
+		else { // P i 0 k
+			// For bases i to i+k-1, say they must be single-stranded
+			for (i = PBP[it][0]; i < PBP[it][0] + PBP[it][2]; i++) {
 				
-				BP(PBP[it][0]+k-1, PBP[it][1]-(k-1)) = 2;
-
-				//Mark that these two nucleotides are involved in a prohibited pair (only used for for printing out)
-				BP(PBP[it][0]+k-1,PBP[it][0]+k-1) = 5;
-				BP(PBP[it][1]-(k-1),PBP[it][1]-(k-1)) = 5;
-			}
-		}	
-	}
-
-	//ZS: set forced basepairs and single-stranded nucleotides
-
-	if(nFBP != 0){
-		int temp; 
-		//Make sure smallest one is first, UNLESS forcing single-stranded 
-		for(it  = 0; it < nFBP; it++){
-			if(FBP[it][0] > FBP[it][1] && FBP[it][1]!=0){
-				temp = FBP[it][0];
-				FBP[it][0] = FBP[it][1];
-				FBP[it][1] = temp; 
-			}
-		}
-		for(it = 0; it<nFBP; it++){
-			if(FBP[it][2] < 1){
-				printf("Invalid entry (F: %d %d %d)\n", FBP[it][0], FBP[it][1], FBP[it][2]);
-				continue;
-			}
-
-
-			for(k = 1; k<=FBP[it][2]; k++){
-				int i1 = FBP[it][0]+k-1;
-				int j1 = FBP[it][1]-k+1;
-				if(FBP[it][1]!=0&&!canPair(RNA[FBP[it][0]+k-1], RNA[FBP[it][1]-k+1])){
-					fprintf(stderr,"Can't force (%d, %d) to pair (non-canonical) \n", FBP[it][0]+k-1, FBP[it][1]-k+1);
-					continue;			
+				// Base i is in a required pair
+				if (BP(i,i) == 4 || BP(i,i) == 6) {
+					printf("Constraint 'P %d %d %d' is trying to prohibit base %d from being paired, but this base is required to be paired by a 'F i j k' constraint\n",
+						PBP[it][0],PBP[it][1],PBP[it][2],i);
+					exit(1);
 				}
-				if(FBP[it][1]!=0&&(j1-i1 < TURN)){
-					fprintf(stderr,"Can't force (%d, %d) to pair (turn too tight) \n", FBP[it][0]+k-1, FBP[it][1]-k+1);
-					continue;
-				}
-				if(FBP[it][1] == 0){
-					//force single-stranded
-					BP(FBP[it][0]+k-1, FBP[it][0]+k-1) = 3;
-					//prohibit all pairs with that base
-					for(i = 1; i<=length; i++){
-						if(i<FBP[it][0]+k-1){
-							BP(i, FBP[it][0]+k-1) = 2;
-						}
-						if(FBP[it][0]+k-1<i){
-							BP(FBP[it][0]+k-1, i) = 2;
-						}
-					}
-				}
-				else{
-					//force pairing
-					BP(FBP[it][0]+k-1, FBP[it][1]-(k-1)) = 1;
-					//prohibit all pairs not-nested with respect to this one 
-					//(including the ones which include either of the bases)
-					for(i = 1; i<FBP[it][0]+k-1; i++){
-						for(j = FBP[it][0]+k-1; j<=FBP[it][1]-(k-1); j++){
-							BP(i,j)=2;
-						}
-					}
-					for(i = FBP[it][0]+k-1; i<=FBP[it][1]-(k-1); i++){
-						for(j = FBP[it][1]-(k-1)+1; j<=length; j++){
-							BP(i,j)=2;
-						}
-					}
-					//prohibit all remaining pairs with the pairing bases 
-					//(inside enclosed region)
-					for(i = FBP[it][0]+k; i<FBP[it][1]-(k-1); i++){
-						BP(FBP[it][0]+k-1,i) = 2;
-						BP(i,FBP[it][1]-(k-1)) = 2;
-					}
+				
+				else {
+					BP(i,i) = 3;
 					
-
-					//mark that these two nucleotides are involved in a constrained pair
-					//to avoid searching in O(N^2) time
-					BP(FBP[it][0]+k-1, FBP[it][0]+k-1) = 4;
-					BP(FBP[it][1]-(k-1), FBP[it][1]-(k-1))=4;
-					//force pairing 
-					BP(FBP[it][0]+k-1, FBP[it][1]-(k-1)) = 1;
-					
+					for (a = 1; a < i; a++) {
+						BP(a,i) = 2;
+					}
+					for (a = i+1; a <= length; a++) {
+						BP(i,a) = 2;
+					}
 				}
+				
 			}
+			
+		
 		}
+	
 	}
 
 	return 0;
@@ -399,12 +469,23 @@ void print_constraints(int len) {
 			//printf("%d not constrained\n",i);
 			printf(".");
 			break;
+		case 6:
+			printf("|");
+			break;
 		default:
 			fprintf(stderr,"ERROR in constraint value, debugging info: i=%d, BP(i,i)=%d",i,BP(i,i));break;
 	    }  
     }
     printf("\n");
  
+}
+
+int forcePaired(int i){
+//ZS: this function returns true if position i is forced to be paired, but partner is unknown.
+	if(CONS_ENABLED)
+		return BP(i,i)==6; 
+	else
+		return 0; 
 }
 
 int forcePair(int i, int j) {
@@ -461,7 +542,7 @@ int canSSregion(int i, int j){
 //(i and j are NOT included in the check)
 	if(CONS_ENABLED){
 		for(int p = i+1; p<j; p++){
-			if(BP(p,p)==4) return 0;
+			if(BP(p,p)==4||BP(p,p)==6) return 0;
 		}
 		return 1;}
 	else{ return 1; }
@@ -470,7 +551,7 @@ int canSSregion(int i, int j){
 int canSS(int i){
 	//ZS: This function returns 0 if i is forced to pair with something, 1 if it can be single stranded. 
 	if (CONS_ENABLED){
-		return BP(i,i)!=4;
+		return 1-(BP(i,i)==4||BP(i,i)==6);
 	}
 	else{
 		return 1;

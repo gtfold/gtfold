@@ -30,7 +30,9 @@
 #include <map>
 #include <vector>
 
-enum label {lW=0, lV, lVBI, lVM, lWM, lWMPrime};
+#define UNIQUE_MULTILOOP_DECOMPOSITION
+
+enum label {lW=0, lV, lVBI, lVM, lWM, lWMPrime, lM, lM1};
 extern const char* lstr[]; 
 
 struct segment 
@@ -177,7 +179,7 @@ struct pstruct
 		return st_v.empty();
 	}
 
-	void print()
+	void print() const
 	{
 		SEGSTACK st = st_segment;
 		std::cout <<'[' << ' ' ;
@@ -224,5 +226,10 @@ void traceVM(int i, int j, ps_t & ps, ps_stack_t & gs);
 void traceWM(int i, int j, ps_t &  ps, ps_stack_t & gs);
 void traceWMPrime(int i, int j, ps_t &  ps, ps_stack_t & gs);
 //void traceWM(ps_t& ps, ps_map_t& filter);
+
+#ifdef UNIQUE_MULTILOOP_DECOMPOSITION
+void traceM(int i, int j, ps_t & ps, ps_stack_t & gs);
+void traceM1(int i, int j, ps_t & ps, ps_stack_t & gs);
+#endif
 
 #endif

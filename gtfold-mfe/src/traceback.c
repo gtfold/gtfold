@@ -33,8 +33,20 @@
 int total_en = 0;
 int total_ex = 0;
 int length = 0;
+int print_energy_decompose = 0;
+FILE* energy_decompose_outfile;
 
-void trace(int len) { 
+void trace(int len, int print_energy_decompose1, const char* energy_decompose_output_file) { 
+	print_energy_decompose = print_energy_decompose1;
+        if(print_energy_decompose==1){
+		energy_decompose_outfile = fopen(energy_decompose_output_file, "w");
+                if(energy_decompose_outfile==NULL){
+                        printf("Error in opening file: %s\n", energy_decompose_output_file);
+                        exit(-1);
+                }
+                printf("\nEnergy decomposition for MFE structure will be saved to %s\n", energy_decompose_output_file);
+	}
+	
 	int i;
 	for (i = 0; i <= len; i++) structure[i] = 0;
 
@@ -47,16 +59,22 @@ void trace(int len) {
 	printf("\n");
 	
 	traceW(len);
-	printf("- sum of energy of Loops:   	  %12.2f kcal/mol\n", total_en/100.0);
-	printf("- sum of energy of External Loop: %12.2f kcal/mol\n", total_ex/100.0);
-	return;
+	if (print_energy_decompose == 1) {
+		fprintf(energy_decompose_outfile, "- sum of energy of Loops:   	  %12.2f kcal/mol\n", total_en/100.0);
+		fprintf(energy_decompose_outfile, "- sum of energy of External Loop: %12.2f kcal/mol\n", total_ex/100.0);
+  	}
+	if(print_energy_decompose==1){
+		fclose(energy_decompose_outfile);
+	}
+  	return;
 }
 
 void traceW(int j) {
 	int done = 0, i;
 	int wim1, flag = 1 ;
 	
-	assert(!(j == 0 || j == 1)); 
+  if (j == 0 || j == 1)
+    return;
 	
 	for (i = 1; i < j && !done; i++) {
 		if (j-i < TURN) continue;
@@ -68,28 +86,28 @@ void traceW(int j) {
 		if (g_unamode||g_mismatch) {
 			if ((W[j] == V(i,j) + auPenalty(i, j) + wim1 && canStack(i,j)) || forcePair(i,j)) { 
 							done = 1;
-							if (g_verbose == 1) printf("i %5d j %5d ExtLoop   %12.2f\n", i, j, auPenalty(i, j)/100.00);
+							if (print_energy_decompose == 1) fprintf(energy_decompose_outfile, "i %5d j %5d ExtLoop   %12.2f\n", i, j, auPenalty(i, j)/100.00);
 							total_ex += auPenalty(i, j);
 							traceV(i, j);
 							if (flag ) traceW(i - 1);
 							break;
 			} else if ((W[j] ==  V(i,j-1) + auPenalty(i,j-1) + Ed5(j-1,i,j) + wim1 && canSS(j) && canStack(i,j-1)) || forcePair(i, j-1)) { 	
 							done = 1;
-							if (g_verbose == 1) printf("i %5d j %5d ExtLoop   %12.2f\n", i, j-1, (auPenalty(i,j-1) + Ed5(j-1,i,j))/100.00);
+							if (print_energy_decompose == 1) fprintf(energy_decompose_outfile, "i %5d j %5d ExtLoop   %12.2f\n", i, j-1, (auPenalty(i,j-1) + Ed5(j-1,i,j))/100.00);
 							total_ex += (auPenalty(i,j-1) + Ed5(j-1,i,j));
 							traceV(i, j - 1);
 							if (flag ) traceW(i - 1);
 							break;
 			} else if ((W[j] == V(i+1,j) + auPenalty(i+1,j) + Ed3(j,i+1,i) + wim1 && canSS(i) && canStack(i+1,j)) || forcePair(i+1,j)){
 							done = 1;
-							if (g_verbose == 1) printf("i %5d j %5d ExtLoop   %12.2f\n", i+1, j, (auPenalty(i+1,j) + Ed3(j,i+1,i))/100.00);
+							if (print_energy_decompose == 1) fprintf(energy_decompose_outfile, "i %5d j %5d ExtLoop   %12.2f\n", i+1, j, (auPenalty(i+1,j) + Ed3(j,i+1,i))/100.00);
 							total_ex += (auPenalty(i+1,j) + Ed3(j,i+1,i));
 							traceV(i + 1, j);
 							if (flag ) traceW(i - 1);
 							break;
 			} else if ((W[j] == V(i+1,j-1) + auPenalty(i+1, j-1) + Estacke(j-1,i+1) + wim1 && canSS(i) && canSS(j) && canStack(i+1,j-1)) || forcePair(i+1,j-1)) { 
 							done = 1;
-							if (g_verbose == 1) printf("i %5d j %5d ExtLoop   %12.2f\n", i+1, j-1, (auPenalty(i+1, j-1) + Estacke(j-1,i+1))/100.00);
+							if (print_energy_decompose == 1) fprintf(energy_decompose_outfile, "i %5d j %5d ExtLoop   %12.2f\n", i+1, j-1, (auPenalty(i+1, j-1) + Estacke(j-1,i+1))/100.00);
 							total_ex += (auPenalty(i+1, j-1) + Estacke(j-1,i+1));
 							traceV(i + 1, j - 1);
 							if (flag ) traceW(i - 1);
@@ -101,7 +119,7 @@ void traceW(int j) {
 				if (j<length) e_dangles += Ed5(j,i,j+1);
 				if ((W[j] == V(i,j) + auPenalty(i, j) + e_dangles + wim1 && canSS(i) && canSS(j) && canStack(i+1,j-1)) || forcePair(i+1,j-1)) { 
 												done = 1;
-												if (g_verbose == 1) printf("i %5d j %5d ExtLoop   %12.2f\n", i+1, j-1, (auPenalty(i, j) + e_dangles)/100.00);
+												if (print_energy_decompose == 1) fprintf(energy_decompose_outfile, "i %5d j %5d ExtLoop   %12.2f\n", i+1, j-1, (auPenalty(i, j) + e_dangles)/100.00);
 												total_ex += (auPenalty(i, j) + e_dangles);
 												traceV(i, j);
 												if (flag ) traceW(i - 1);
@@ -110,7 +128,7 @@ void traceW(int j) {
 		}	else if (g_dangles == 0) {
 			if ((W[j] == V(i,j) + auPenalty(i, j) + wim1 && canStack(i,j)) || forcePair(i,j)) { 
 							done = 1;
-							if (g_verbose == 1) printf("i %5d j %5d ExtLoop   %12.2f\n", i, j, auPenalty(i, j)/100.00);
+							if (print_energy_decompose == 1) fprintf(energy_decompose_outfile, "i %5d j %5d ExtLoop   %12.2f\n", i, j, auPenalty(i, j)/100.00);
 							total_ex += auPenalty(i, j);
 							traceV(i, j);
 							if (flag ) traceW(i - 1);
@@ -119,28 +137,28 @@ void traceW(int j) {
 		} else { // default
 			if ((W[j] == V(i,j) + auPenalty(i, j) + wim1 && canStack(i,j)) || forcePair(i,j)) { 
 							done = 1;
-							if (g_verbose == 1) printf("i %5d j %5d ExtLoop   %12.2f\n", i, j, auPenalty(i, j)/100.00);
+							if (print_energy_decompose == 1) fprintf(energy_decompose_outfile, "i %5d j %5d ExtLoop   %12.2f\n", i, j, auPenalty(i, j)/100.00);
 							total_ex += auPenalty(i, j);
 							traceV(i, j);
 							if (flag ) traceW(i - 1);
 							break;
 			} else if ((W[j] ==  V(i,j-1) + auPenalty(i,j-1) + Ed5(j-1,i,j) + wim1 && canSS(j) && canStack(i,j-1)) || forcePair(i, j-1)) { 	
 							done = 1;
-							if (g_verbose == 1) printf("i %5d j %5d ExtLoop   %12.2f\n", i, j-1, (auPenalty(i,j-1) + Ed5(j-1,i,j))/100.00);
+							if (print_energy_decompose == 1) fprintf(energy_decompose_outfile, "i %5d j %5d ExtLoop   %12.2f\n", i, j-1, (auPenalty(i,j-1) + Ed5(j-1,i,j))/100.00);
 							total_ex += (auPenalty(i,j-1) + Ed5(j-1,i,j));
 							traceV(i, j - 1);
 							if (flag ) traceW(i - 1);
 							break;
 			} else if ((W[j] == V(i+1,j) + auPenalty(i+1,j) + Ed3(j,i+1,i) + wim1 && canSS(i) && canStack(i+1,j)) || forcePair(i+1,j)){
 							done = 1;
-							if (g_verbose == 1) printf("i %5d j %5d ExtLoop   %12.2f\n", i+1, j, (auPenalty(i+1,j) + Ed3(j,i+1,i))/100.00);
+							if (print_energy_decompose == 1) fprintf(energy_decompose_outfile, "i %5d j %5d ExtLoop   %12.2f\n", i+1, j, (auPenalty(i+1,j) + Ed3(j,i+1,i))/100.00);
 							total_ex += (auPenalty(i+1,j) + Ed3(j,i+1,i));
 							traceV(i + 1, j);
 							if (flag ) traceW(i - 1);
 							break;
 			} else if ((W[j] == V(i+1,j-1) + auPenalty(i+1, j-1) + Ed3(j-1,i+1,i) + Ed5(j-1,i+1,j) + wim1 && canSS(i) && canSS(j) && canStack(i+1,j-1)) || forcePair(i+1,j-1)) { 
 							done = 1;
-							if (g_verbose == 1) printf("i %5d j %5d ExtLoop   %12.2f\n", i+1, j-1, (auPenalty(i+1, j-1) + Ed3(j-1,i+1,i) + Ed5(j-1,i+1,j))/100.00);
+							if (print_energy_decompose == 1) fprintf(energy_decompose_outfile, "i %5d j %5d ExtLoop   %12.2f\n", i+1, j-1, (auPenalty(i+1, j-1) + Ed3(j-1,i+1,i) + Ed5(j-1,i+1,j))/100.00);
 							total_ex += (auPenalty(i+1, j-1) + Ed3(j-1,i+1,i) + Ed5(j-1,i+1,j));
 							traceV(i + 1, j - 1);
 							if (flag ) traceW(i - 1);
@@ -172,21 +190,21 @@ int traceV(int i, int j) {
 	structure[j] = i;
 
 	if (Vij == a ) { 
-		if (g_verbose == 1) printf("i %5d j %5d Hairpin   %12.2f\n", i, j, eH(i, j)/100.00);
+		if (print_energy_decompose == 1) fprintf(energy_decompose_outfile, "i %5d j %5d Hairpin   %12.2f\n", i, j, eH(i, j)/100.00);
 		total_en += eH(i,j);
 		return Vij;
 	} else if (Vij == b) { 
-		if (g_verbose == 1) printf("i %5d j %5d Stack     %12.2f\n", i, j, eS(i, j)/100.00);
+		if (print_energy_decompose == 1) fprintf(energy_decompose_outfile, "i %5d j %5d Stack     %12.2f\n", i, j, eS(i, j)/100.00);
 		total_en += eS(i,j);
 		traceV(i + 1, j - 1);
 		return Vij;
 	} else if (Vij == c) { 
-		if (g_verbose == 1) printf("i %5d j %5d IntLoop  ", i, j);
+		if (print_energy_decompose == 1) fprintf(energy_decompose_outfile, "i %5d j %5d IntLoop  ", i, j);
 		traceVBI(i, j);
 		return Vij;
 	} else if (Vij == d) { 
 		int eVM = traceVM(i, j);
-		if (g_verbose ==1) printf("i %5d j %5d MultiLoop %12.2f\n", i, j, (Vij-eVM)/100.0);
+		if (print_energy_decompose ==1) fprintf(energy_decompose_outfile, "i %5d j %5d MultiLoop %12.2f\n", i, j, (Vij-eVM)/100.0);
 		total_en += (Vij-eVM);
 		return Vij;
 	}
@@ -214,7 +232,7 @@ int traceVBI(int i, int j) {
 		if (jp != j) break;
 	}
 
-	if (g_verbose==1) printf(" %12.2f\n", eL(i, j, ifinal, jfinal)/100.00);
+	if (print_energy_decompose==1) fprintf(energy_decompose_outfile, " %12.2f\n", eL(i, j, ifinal, jfinal)/100.00);
 	total_en += eL(i, j, ifinal, jfinal);
 
 	return traceV(ifinal, jfinal);

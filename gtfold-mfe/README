@@ -1,6 +1,6 @@
 GTfold: A Scalable Multicore Code for RNA Secondary Structure Prediction
 
-(C) 2007-2011, David A. Bader
+(C) 2007-2012, David A. Bader
                 College of Computing, Georgia Institute of Technology
                Christine E. Heitsch
                 School of Mathematics, Georgia Institute of Technology
@@ -42,6 +42,11 @@ Georgia Tech graduate students Sainath Mallidi, Amrita Mathuriya,
 and Prashant Gaurav, undergraduates Joshua Anderson and Andrew Ash
 and visiting students Gregory Nou, Sonny Hernandez, Manoj Soni,
 and Zsuzsanna Sukosd.
+
+REQUIREMENTS -
+To compile and install GTfold you will need a C/C++ compiler, autotools, and GMP.
+For parallelization, the compiler needs to implement the OpenMP API. 
+(GNU gcc 4.3.2, for example, implements the OpenMP API.)
 
 INSTALLATION -
 Please execute the following commands
@@ -137,3 +142,25 @@ Version History:
             Added --subopt NUM (Beta only) to produce all suboptimal structures whose energies are within NUM of the MFE 
             Added --bpp (Beta only) which outputs basepair probabilities based on the partition function 
             Added --useShape (Beta only) which allows the user to incorporate SHAPE-type data
+3.0 29 August 2012
+			Added parallelized partition function calculation and stochastic backtracking 
+				to enable additional features related to the Boltzmann Distribution, including:
+				--sample to enable sampling from Boltzmann Distribution
+				--estimatebpp to enable base pair probability estimation based on sampling
+				--groupbyfreq to provide a more concise summary of sampled structures
+				--pfcount to enable the computation of number of possible structures for a given sequence
+				and developer options:
+				--checkfraction to check that for each structure, 
+					the probability used in stochastic sampling matches the probability 
+					of that structure according to the Boltzmann Distribution.
+				--exactintloop to include structures with abitrarily many unpaired nucleotides in internal loops
+				--parallelsample to enable paralellization the sampling of each individual structure 
+				--printarrays to print the contents of the seven partition function arrays
+				--sampleenergy enables sampling of only structures with a given energy value
+				--separatectfiles allows the user to save the sampled structures to separate files
+			Created separate executibles gtmfe, gtboltzmann, and gtsubopt for mfe computation, 
+			providing features related to the Boltzmann Distribution, 
+			and suboptimal structure generation, respectively. 
+			Added --detailedhelp to provide detailed help information
+			Added --energydetail to wirte the loop energy decomposion to a specified file 
+			Added --delta for use with new gtsubopt executible

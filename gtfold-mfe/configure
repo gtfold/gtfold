@@ -4115,6 +4115,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	  	  	  	  	  	  	  	  	  	  	  	  	  for ac_option in -fopenmp -xopenmp -openmp -mp -omp -qsmp=omp; do
 	    ac_save_CFLAGS=$CFLAGS
 	    CFLAGS="$CFLAGS $ac_option"
+	    CXXFLAGS="$CXXFLAGS $ac_option"
 	    cat >conftest.$ac_ext <<_ACEOF
 
 #ifndef _OPENMP
@@ -4179,6 +4180,8 @@ $as_echo "$ac_cv_prog_c_openmp" >&6; }
 
 
 
+LIBS="-lgmp $LIBS"
+
 #AC_DEFINE([_RAND],[],[RNG library to use])
 
 { $as_echo "$as_me:$LINENO: checking for log2 in -lm" >&5
@@ -4187,7 +4190,7 @@ if test "${ac_cv_lib_m_log2+set}" = set; then
   $as_echo_n "(cached) " >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lm  $LIBS"
+LIBS="-lm $LIBS"
 cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
@@ -5442,12 +5445,14 @@ fi
 if test "x$GCC" = "xyes"; then
   if test -z "`echo "$CFLAGS" | grep "\-Wall" 2> /dev/null`" ; then
     CFLAGS="$CFLAGS -Wall"
+    #CFLAGS="$CFLAGS -Wall -lgmp"
   fi
 fi
 
 if test "x$GXX" = "xyes"; then
   if test -z "`echo "$CXXFLAGS" | grep "\-Wall" 2> /dev/null`" ; then
     CXXFLAGS="$CXXFLAGS -Wall"
+    #CXXFLAGS="$CXXFLAGS -Wall -lgmp"
   fi
 fi
 

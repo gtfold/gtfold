@@ -216,6 +216,54 @@ void printBasePairProbabilities(int n, int *structure, double **P, const char* o
 	fclose(outp);
 }
 
+void printBasePairProbabilitiesDetail(int n, int *structure, double **P1, const char* outfile) {
+        FILE* outp = fopen(outfile,"w");
+        if (outp == NULL) {
+                fprintf(stderr, "printBasePairProbabilitiesDetail() : Cannot open %s",outfile);
+        }
+
+        int i,j;
+        for(i=1; i<=n; ++i) {
+                for(j=1; j<=n; ++j){
+                        //if(j == structure[i]){
+                        if(i<j)
+                                fprintf(outp, "%d-%d Pair\tPr: %f\n", i, j, P1[MIN(i,j)][MAX(i,j)]);
+                        //}
+                        /*else if(structure[i]==0)
+                                fprintf(outp, "%d,%d,BppUnpaired,BppPr=%f,BppPfPr=%f\n", i,j, probabilityUnpaired(n, i, P1),P2[MIN(i,j)][MAX(i,j)]);
+                        else{
+                                fprintf(outp, "%d,%d,PfPair,BppPr=0.0,BppPfPr=%f\n",i,j,P2[MIN(i,j)][MAX(i,j)]);
+                        }*/
+                }
+        }
+        fclose(outp);
+}
+
+
+void printBasePairProbabilitiesComparison(int n, int *structure, double **P1, double** P2, const char* outfile) {
+	FILE* outp = fopen(outfile,"w");
+	if (outp == NULL) {
+		fprintf(stderr, "printBasePairProbabilitiesComparison() : Cannot open %s",outfile);
+	}
+
+	int i,j;
+	for(i=1; i<=n; ++i) {
+		for(j=1; j<=n; ++j){
+			//if(j == structure[i]){
+			if(i<j)
+				fprintf(outp, "%d,%d,BppPair,BppPr=%f,BppPfPr=%f\n", i, j, P1[MIN(i,j)][MAX(i,j)],P2[MIN(i,j)][MAX(i,j)]);
+			//}
+			/*else if(structure[i]==0)
+				fprintf(outp, "%d,%d,BppUnpaired,BppPr=%f,BppPfPr=%f\n", i,j, probabilityUnpaired(n, i, P1),P2[MIN(i,j)][MAX(i,j)]);
+			else{
+				fprintf(outp, "%d,%d,PfPair,BppPr=0.0,BppPfPr=%f\n",i,j,P2[MIN(i,j)][MAX(i,j)]);
+			}*/
+		}
+	}
+	fclose(outp);
+}
+
+
 /**
  * @param length How long the strand is
  * @param i The nucleotide for which to calculate the probability that it is

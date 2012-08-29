@@ -1,0 +1,48 @@
+INCLUDE_PATH =
+LIBRARY_PATH =
+CFLAGS = $(INCLUDE_PATH) -g -Wall
+LDFLAGS =  -g -Wall
+CC = gcc
+CPP = g++
+OBJS = loader.o	LoopScoring.o EffConDist.o StructureReader.o
+LINKOBJ  = loader.o LoopScoring.o StructureReader.o 
+SRC = EffConDist.cc StructureReader.c LoopScoring.c loader.cc
+
+LIBS =
+
+#all: EffConDist
+#EffConDist.o: EffConDist.cc
+#	$(CPP) -c EffConDist.cc
+
+#%.o: %.c
+#	$(CC) -c $(CFLAGS) $< -o $@
+
+#%.o: %.cc
+#	$(CPP) -c $< -o $@
+
+#EffConDist: $(OBJS)
+#	$(CPP)  -o $@ $^ $(LIBRARY_PATH) $(LIBS)
+
+EffConDist: $(LINKOBJ) EffConDist.cc
+	$(CPP) EffConDist.cc $(LINKOBJ) -o EffConDist
+
+
+loader.o: loader.cc
+	$(CPP) -c loader.cc -o loader.o $
+
+LoopScoring.o: LoopScoring.c
+	$(CC) -c LoopScoring.c -o LoopScoring.o $(CFLAGS)
+
+StructureReader.o: StructureReader.c
+	$(CC) -c StructureReader.c -o StructureReader.o $(CFLAGS)
+
+clean:
+	rm -f $(OBJS)
+
+
+
+#depends:
+#	makedepend $(INCLUDE_PATH) $(SRC)
+
+# DO NOT DELETE
+

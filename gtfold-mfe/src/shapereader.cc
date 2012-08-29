@@ -14,6 +14,21 @@ using namespace std;
 double* SHAPEarray;
 int* SHAPEenergies;
 
+//static bool SHAPE_ENABLED = false;
+
+//extern int SHAPE_ENABLED;
+
+/*
+void enable_shape(bool b) {
+  SHAPE_ENABLED = b;
+}*/
+
+void enable_shape(int b) {
+  SHAPE_ENABLED = b;
+}
+
+
+
 void free_shapeArray(int len){
 	free(SHAPEarray);
 }

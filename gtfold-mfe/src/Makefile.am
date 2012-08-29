@@ -7,20 +7,27 @@ bin_PROGRAMS = gtfold
 
 gtfold_SOURCES = \
 	main.cc\
-	loader.cc\
+	mfe_main.cc\
+  loader.cc\
 	utils.cc\
 	options.cc\
 	constraints.cc\
-	global.c\
+	global.cc\
 	energy.c\
 	algorithms.c\
 	traceback.c\
+	subopt_main.cc\
 	subopt_traceback.cc\
-	algorithms-partition.c\
+	pf-shel-check.cc\
+	key.cc\
+	stochastic-sampling.cc\
+	stochastic-sampling-d2.cc\
+  algorithms-partition.c\
+  boltzmann_main.cc\
 	partition-dangle.c\
-	random-sample.cc\
-	shapereader.cc
-
+	partition-func.c\
+	partition-func-d2.cc\
+	shapereader.cc\
 gtfold_LDFLAGS = 
 
 gtfold_LDADD = -lm

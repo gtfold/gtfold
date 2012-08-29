@@ -1,6 +1,21 @@
 #include "utils.h"
-#include <string.h>
+#include <cstring>
 #include <string>
+#include <time.h>
+#include <sys/time.h>
+
+double get_seconds() {
+	struct timeval tv;
+	gettimeofday(&tv, NULL);
+	return (double) tv.tv_sec + (double) tv.tv_usec / 1000000.0;
+}
+
+int is_valid_base(char c) {	
+	return ( (c-'A' == 0) || (c-'a' == 0) || 
+			 (c-'C' == 0) || (c-'c' == 0) ||
+			 (c-'G' == 0) || (c-'g' == 0) ||
+			 (c-'U' == 0) || (c-'u' == 0));
+}
 
 char baseToDigit(const char* base) {
 	if (!strcmp(base, "A")) {
