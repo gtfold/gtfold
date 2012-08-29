@@ -76,29 +76,36 @@ static void print_usage() {
 
 	printf("OPTIONS\n");
 
-	printf("   -t|--threads INT	Limit number of threads used to INT.\n");
-	printf("   -v, --verbose	Run in verbose mode (includes partition function table printing.)\n");
-	printf("   -d, --dangle INT	Restricts treatment of dangling energies (INT=0,2),\n");
-        printf("   -dS                  Calculate the partition function using sfold reccurences and use them in traceback.\n");
-	printf("   -s|--sample   INT	Sample number of structures equal to INT.\n");
-	//printf("   --estimatebpp	While sampling structures, Calculate base pair probabilities.\n");
+	printf("   -d, --dangle INT	Restricts treatment of dangling energies (INT=0,2). See below for details.\n");
+	//printf("   --detailedhelp      Output help (this message) with detailed options and examples, and exit.\n");
+	printf("   --detailedhelp       Display detailed help message. Includes examples and additional options useful to developers.\n");
+	//printf("   -e, --energydetail         prints energy decomposition for sampled structures to file with extention '.energy' (should be used with '-t 1' option, as otherwise all threads in parallel, will write to file and output will be intermixed from all threads).\n");
+	printf("   -e, --energydetail   Writes loop-by-loop energy decomposition of structures to\n");
+	printf("			output-prefix.energy. When using this function in combination\n");
+	printf("			with --sample, number of threads must be limited to one (-t 1). .\n");
 	printf("   --estimatebpp	Writed a csv file containing, for each sampled base pair, that base pair and it's frequency\n");
-        //printf("   --groupbyfreq        While sampling structures, Collect frequency of all structures and calculate estimate probability and boltzmann probability for scatter plot.\n");
-        printf("   --groupbyfreq        Write a csv file (output-prefix.frequency) containing, for each sampled structure, a line with\n");
+        printf("			to output-prefix.sbpp. This option is ignored if not using --sample.\n");
+	printf("   --groupbyfreq        Write a csv file (output-prefix.frequency) containing, for each sampled structure, a line with\n");
 	printf("			the structure's probability under the Boltzmann Distribution followed by the normalized frequency\n");
 	printf("			of that structure, where (normalized frequency) = (structure frequency)/(number of structures sampled)\n");
 	printf("			Only valid in combination with --sample.\n");
-	printf("			to output-prefix.sbpp. This option is ignored if not using --sample.\n");
-	printf("   --pfcount		Calculate the structure count using partition function and zero energy value.\n");
-	printf("   --bpp		Calculate base pair probabilities.\n");
+	printf("   -h, --help           Output help (this message) and exit.\n");
 	printf("   -l|--limitcd  INT	Set a maximum base pair contact distance to INT. If no\n");
 	printf(" 		      	limit is given, base pairs can be over any distance.\n");
 	printf("   -o, --output NAME    Write output files with prefix given in NAME\n");
 	printf("   -p  --paramdir DIR   Path to directory from which parameters are to be read\n");
-	printf("   -h, --help           Output help (this message) and exit.\n");
-	printf("   --detailedhelp      Output help (this message) with detailed options and examples, and exit.\n");
-	printf("   -e, --energydetail         prints energy decomposition for sampled structures to file with extention '.energy' (should be used with '-t 1' option, as otherwise all threads in parallel, will write to file and output will be intermixed from all threads).\n");
+	//printf("   --pfcount		Calculate the structure count using partition function and zero energy value.\n");
+	printf("   --pfcount		Output the number of possible structures (using partition function).\n");
+	//printf("   -s|--sample   INT	Sample number of structures equal to INT.\n");
+	printf("   -s|--sample   INT	Sample INT structures from Boltzmann distribution. Writes structures to file output-prefix.samples.\n");
+	printf("   -t|--threads INT	Limit number of threads used to INT.\n");
+	printf("   -v, --verbose	Run in verbose mode (includes partition function table printing.)\n");
+	//printf("   --estimatebpp	While sampling structures, Calculate base pair probabilities.\n");
+        //printf("   --groupbyfreq        While sampling structures, Collect frequency of all structures and calculate estimate probability and boltzmann probability for scatter plot.\n");
 	printf("   -w, --workdir DIR    Path of directory where output files will be written.\n");
+	//printf("   --bpp		Calculate base pair probabilities.\n");
+	printf("   --bpp		Calculate base pair probabilities for the predicted structure\n");
+	printf("			and print to output-prefix.bpp. (Beta option)\n");
 }
 
 static void print_usage_developer_options() {
@@ -111,6 +118,7 @@ static void print_usage_developer_options() {
         printf("                        Note: using this option increases the running time by a factor of N,\n");
 	printf("                        where N is the sequence length.\n");
 	printf("   --checkfraction	While sampling structures, enable check for each structure, the probability used in stochastic\n");
+        printf("   -dS                  Calculate the partition function using sfold reccurences and use them in traceback.\n");
 	printf("			sampling matches the probability of that structure according to the Boltzmann Distribution.\n");
         //printf("   --sampleenergy DOUBLE      While sampling structures, Samples with Energy energy1 will only be sampled.\n");
         printf("   --sampleenergy DOUBLE      Writes only sampled structures with free energy equal to DOUBLE to file prefix.sample. Only valid in combination with --sample.\n");
