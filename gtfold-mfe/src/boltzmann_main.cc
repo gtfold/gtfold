@@ -408,6 +408,10 @@ static void parse_options(int argc, char** argv) {
 				else
 					help();
 			}
+			else{
+				printf("Error: Option %s is Undefined option\n", argv[i]);
+				help();
+			}
 		} else {
 			seqfile = argv[i];
 		}
