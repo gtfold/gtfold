@@ -228,7 +228,7 @@ void rnd_u(int i, int j, int* structure)
     {
       energy += ED5_new(h,j,h-1)+auPenalty_new(h,j);
       if (ss_verbose == 1) 
-        printf("(h=%d j=%d) (ED5_new(h,j,h-1)=%f auPenalty_new(h,j)=%f\n",h,j,(ED5_new(h,j,h-1)/100, auPenalty_new(h,j)/100.0));
+        printf("(h=%d j=%d) (ED5_new(h,j,h-1)=%f auPenalty_new(h,j)=%f\n",h,j,ED5_new(h,j,h-1)/100.0, auPenalty_new(h,j)/100.0);
       base_pair bp(h,j,UP);
       //set_single_stranded(i,h-1,structure);
       g_stack.push(bp);
@@ -753,7 +753,11 @@ void batch_sample_and_dump(int num_rnd, int length, double U, std::string ctFile
 	//data dump preparation code starts here
 	if(ctFileDumpDir.compare("")==0){
           char abspath[1000];
-          getcwd(abspath, 1000);
+          char* tmp = getcwd(abspath, 1000);
+	  if(tmp!=abspath){//TODO debug
+                        cout<<"Error in getcwd, exiting...\n";
+                        exit(-1);
+          }
           ctFileDumpDir = abspath;
         }
         cout<<"Using ctFileDumpDir = "<<ctFileDumpDir<<endl;

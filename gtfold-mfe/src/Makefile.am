@@ -24,6 +24,7 @@ gtfold_SOURCES = \
 	stochastic-sampling-d2.cc\
   algorithms-partition.c\
   boltzmann_main.cc\
+  AdvancedDouble.cc\
 	partition-dangle.c\
 	partition-func.c\
 	partition-func-d2.cc\

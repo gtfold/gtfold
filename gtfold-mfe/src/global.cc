@@ -22,6 +22,7 @@ int g_prefilter2;
 int SHAPE_ENABLED = 0;
 int g_LIMIT_DISTANCE;
 int g_contactDistance;
+int g_bignumprecision = 512;
 
 void init_global_params(int len) {
 	RNA = (unsigned char *) malloc((len+1)* sizeof(unsigned char));

@@ -236,6 +236,22 @@ int mfe_main(int argc, char** argv) {
   return EXIT_SUCCESS;
 }
 
+//double calculate_mfe(int argc, char** argv) {
+double calculate_mfe(std::string seq) {
+	int energy;
+	fflush(stdout);
+	double t1 = get_seconds();
+	energy = calculate(seq.length()) ; 
+	t1 = get_seconds() - t1;
+	/*if (energy >= MAXENG)	
+	  printf("- Minimum Free Energy: %12.4f kcal/mol\n", 0.00);
+	  else
+	  printf("- Minimum Free Energy: %12.4f kcal/mol\n", energy/100.00);
+	  printf("- MFE runtime: %9.6f seconds\n", t1);*/
+
+	//free_fold(seq.length());
+	return energy/100.0;
+}
 
 void parse_mfe_options(int argc, char** argv) {
   int i;
@@ -423,7 +439,7 @@ static void printRunConfiguration(string seq) {
 	if(!SILENT) printf("- thermodynamic parameters: %s\n", EN_DATADIR.c_str());
 	if(!SILENT) printf("- input file: %s\n", seqfile.c_str());
 	if(!SILENT) printf("- sequence length: %d\n", (int)seq.length());
-	printf("- output file: %s\n", outputFile.c_str());
+	if(!SILENT) printf("- output file: %s\n", outputFile.c_str());
 }
 
 static void print_usage_developer_options() {
