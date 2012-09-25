@@ -33,12 +33,12 @@ class AdvancedDouble_Native{
 		~AdvancedDouble_Native(){
 			//deallocate();
 		}
-		//bool isInitialized(){
-		//      return true;
-		//}
+		/*bool isInitialized(){
+		      return true;
+		}
 		void reset(){
 			value=0.0;
-		}
+		}*/
 		void print()const{
 			printf("%f", value);
 		}
@@ -72,7 +72,7 @@ class AdvancedDouble_Native{
 		AdvancedDouble_Native operator/(const double &obj1_double) const {
 			return (AdvancedDouble_Native)(value/obj1_double);
 		}
-		int compare(const AdvancedDouble_Native &obj1) const{
+		/*int compare(const AdvancedDouble_Native &obj1) const{
 			double cmp = value-obj1.value;
 			if(cmp>0) return 1;
 			else if(cmp<0) return -1;
@@ -120,7 +120,45 @@ class AdvancedDouble_Native{
                 }
                 bool operator>=(const double &obj1) const {
                         return compare(obj1)>=0;
+                }*/
+
+		bool operator==(const AdvancedDouble_Native &obj1) const {
+                        return value==obj1.value;
                 }
+                bool operator==(const double &obj1) const {
+                        return value==obj1;
+                }
+                bool operator!=(const AdvancedDouble_Native &obj1) const {
+                        return value!=obj1.value;
+                }
+                bool operator!=(const double &obj1) const {
+                        return value!=obj1;
+                }
+                bool operator<(const AdvancedDouble_Native &obj1) const {
+                        return value<obj1.value;
+                }
+                bool operator<(const double &obj1) const {
+                        return value<obj1;
+                }
+                bool operator>(const AdvancedDouble_Native &obj1) const {
+                        return value>obj1.value;
+                }
+                bool operator>(const double &obj1) const {
+                        return value>obj1;
+                }
+                bool operator<=(const AdvancedDouble_Native &obj1) const {
+                        return value<=obj1.value;
+                }
+                bool operator<=(const double &obj1) const {
+                        return value<=obj1;
+                }
+                bool operator>=(const AdvancedDouble_Native &obj1) const {
+                        return value>=obj1.value;
+                }
+                bool operator>=(const double &obj1) const {
+                        return value>=obj1;
+                }
+
 		AdvancedDouble_Native& operator=(const AdvancedDouble_Native &obj1) {
 			if(this==&obj1) return *this;
 			//if(isInitialized())this->deallocate();//TODO
@@ -134,7 +172,6 @@ class AdvancedDouble_Native{
 			value=obj1;
 			return *this;
 		}
-
 };
 
 class AdvancedDouble_BigNum{
@@ -306,6 +343,206 @@ class AdvancedDouble_BigNum{
 			return *this;
 		}
 };
+
+class AdvancedDouble_BigNumOptimized{
+	private:
+		mpf_t bigValue;
+	public:
+		AdvancedDouble_BigNumOptimized(){
+			mpf_init2(bigValue,g_bignumprecision);
+		}
+		AdvancedDouble_BigNumOptimized(mpf_t val2){
+			mpf_init_set(bigValue, val2);
+		}
+		AdvancedDouble_BigNumOptimized(double val){
+			mpf_init_set_d(bigValue, val);
+		}
+		AdvancedDouble_BigNumOptimized(const AdvancedDouble_BigNumOptimized &obj1) {
+			mpf_init_set(bigValue, obj1.bigValue);
+		}
+		void init(){
+			mpf_init2(bigValue,g_bignumprecision);
+		}
+		/*
+		void createBigNum(){
+			//if(bigValue==0){
+			//	bigValue = new mpf_t[1];
+				mpf_init2(bigValue,g_bignumprecision);
+			//}
+		}
+		void createBigNum(mpf_t val2){
+			createBigNum();
+			mpf_set(bigValue, val2);
+		}
+		void createBigNum(double val2){
+			mpf_init2(bigValue,g_bignumprecision); mpf_set_d(bigValue, val2);
+		}*/
+		void deallocate(){
+			mpf_clear(bigValue);
+		}
+		~AdvancedDouble_BigNumOptimized(){
+			//deallocate();
+			mpf_clear(bigValue);
+		}
+		/*
+		bool isInitialized(){
+			if(bigValue!=0) return true;
+			return false;
+		}
+		void reset(){
+			mpf_clear(bigValue);
+		}*/
+		void print()const{
+			//if(bigValue!=0) gmp_printf("mpf %.*Ff", PRINT_DIGITS_AFTER_DECIMAL, *bigValue);
+			gmp_printf("mpf %.*Ff", PRINT_DIGITS_AFTER_DECIMAL, bigValue);
+		}
+		void printInt()const{
+			//if(bigValue!=0) gmp_printf("mpf %.*Ff", 1, *bigValue);
+			gmp_printf("mpf %.*Ff", PRINT_DIGITS_AFTER_DECIMAL, bigValue);
+		}
+		void print(FILE* outFile)const{
+			//if(bigValue!=0) gmp_fprintf(outFile, "%.*Ff", PRINT_DIGITS_AFTER_DECIMAL, *bigValue);
+			gmp_fprintf(outFile, "%.*Ff", PRINT_DIGITS_AFTER_DECIMAL, bigValue);
+		}
+		AdvancedDouble_BigNumOptimized operator*(const AdvancedDouble_BigNumOptimized &obj1) const {
+			AdvancedDouble_BigNumOptimized res;
+			mpf_mul(res.bigValue,this->bigValue, obj1.bigValue);
+			return res;
+		}
+		AdvancedDouble_BigNumOptimized operator*(const double &obj1_double) const {
+			AdvancedDouble_BigNumOptimized res(obj1_double);
+			mpf_mul(res.bigValue,this->bigValue, res.bigValue);
+			return res;
+		}
+		AdvancedDouble_BigNumOptimized operator+(const AdvancedDouble_BigNumOptimized &obj1) const {
+			AdvancedDouble_BigNumOptimized res;
+			mpf_add(res.bigValue,this->bigValue, obj1.bigValue);
+			return res;
+		}
+		AdvancedDouble_BigNumOptimized operator+(const double &obj1_double) const {
+			AdvancedDouble_BigNumOptimized res(obj1_double);
+			mpf_add(res.bigValue,this->bigValue, res.bigValue);
+			return res;
+		}
+		AdvancedDouble_BigNumOptimized operator-(const AdvancedDouble_BigNumOptimized &obj1) const {
+			AdvancedDouble_BigNumOptimized res;
+			mpf_sub(res.bigValue,this->bigValue, obj1.bigValue);
+			return res;
+		}
+		AdvancedDouble_BigNumOptimized operator-(const double &obj1_double) const {
+			AdvancedDouble_BigNumOptimized res(obj1_double);
+			mpf_sub(res.bigValue,this->bigValue, res.bigValue);
+			return res;
+		}
+		AdvancedDouble_BigNumOptimized operator/(const AdvancedDouble_BigNumOptimized &obj1) const {
+			AdvancedDouble_BigNumOptimized res;
+			mpf_div(res.bigValue,this->bigValue, obj1.bigValue);
+			return res;
+		}
+		AdvancedDouble_BigNumOptimized operator/(const double &obj1_double) const {
+			AdvancedDouble_BigNumOptimized res(obj1_double);
+			mpf_div(res.bigValue,this->bigValue, res.bigValue);
+			return res;
+		}
+
+		/*int compare(const AdvancedDouble_BigNumOptimized &obj1) const{
+			return mpf_cmp(this->bigValue, obj1.bigValue);
+		}
+		int compare(const double &obj1) const{
+			return mpf_cmp_d(this->bigValue, obj1);
+		}
+		bool operator==(const AdvancedDouble_BigNumOptimized &obj1) const {
+                        return compare(obj1)==0;
+                }
+                bool operator==(const double &obj1) const {
+                        return compare(obj1)==0;
+                }
+                bool operator!=(const AdvancedDouble_BigNumOptimized &obj1) const {
+                        return compare(obj1)!=0;
+                }
+                bool operator!=(const double &obj1) const {
+                        return compare(obj1)!=0;
+                }
+                bool operator<(const AdvancedDouble_BigNumOptimized &obj1) const {
+                        return compare(obj1)<0;
+                }
+                bool operator<(const double &obj1) const {
+                        return compare(obj1)<0;
+                }
+                bool operator>(const AdvancedDouble_BigNumOptimized &obj1) const {
+                        return compare(obj1)>0;
+                }
+                bool operator>(const double &obj1) const {
+                        return compare(obj1)>0;
+                }
+                bool operator<=(const AdvancedDouble_BigNumOptimized &obj1) const {
+                        return compare(obj1)<=0;
+                }
+                bool operator<=(const double &obj1) const {
+                        return compare(obj1)<=0;
+                }
+                bool operator>=(const AdvancedDouble_BigNumOptimized &obj1) const {
+                        return compare(obj1)>=0;
+                }
+                bool operator>=(const double &obj1) const {
+                        return compare(obj1)>=0;
+                }*/
+
+		bool operator==(const AdvancedDouble_BigNumOptimized &obj1) const {
+                        return mpf_cmp(this->bigValue, obj1.bigValue)==0;
+                }
+                bool operator==(const double &obj1) const {
+                        return mpf_cmp_d(this->bigValue, obj1)==0;
+                }
+                bool operator!=(const AdvancedDouble_BigNumOptimized &obj1) const {
+                        return mpf_cmp(this->bigValue, obj1.bigValue)!=0;
+                }
+                bool operator!=(const double &obj1) const {
+                        return mpf_cmp_d(this->bigValue, obj1)!=0;
+                }
+                bool operator<(const AdvancedDouble_BigNumOptimized &obj1) const {
+                        return mpf_cmp(this->bigValue, obj1.bigValue)<0;
+                }
+                bool operator<(const double &obj1) const {
+                        return mpf_cmp_d(this->bigValue, obj1)<0;
+                }
+                bool operator>(const AdvancedDouble_BigNumOptimized &obj1) const {
+                        return mpf_cmp(this->bigValue, obj1.bigValue)>0;
+                }
+                bool operator>(const double &obj1) const {
+                        return mpf_cmp_d(this->bigValue, obj1)>0;
+                }
+                bool operator<=(const AdvancedDouble_BigNumOptimized &obj1) const {
+                        return mpf_cmp(this->bigValue, obj1.bigValue)<=0;
+                }
+                bool operator<=(const double &obj1) const {
+                        return mpf_cmp_d(this->bigValue, obj1)<=0;
+                }
+                bool operator>=(const AdvancedDouble_BigNumOptimized &obj1) const {
+                        return mpf_cmp(this->bigValue, obj1.bigValue)>=0;
+                }
+                bool operator>=(const double &obj1) const {
+                        return mpf_cmp_d(this->bigValue, obj1)>=0;
+                }
+
+		AdvancedDouble_BigNumOptimized& operator=(const AdvancedDouble_BigNumOptimized &obj1) {
+			if(this==&obj1) return *this;
+			//if(isInitialized())this->deallocate();//TODO
+			//else {bigValue=0;}
+			//deallocate();//TODO
+			//createBigNum(*(obj1.bigValue));
+			mpf_set(bigValue, obj1.bigValue);
+			return *this;
+		}
+		AdvancedDouble_BigNumOptimized& operator=(const double &obj1) {
+			//if(isInitialized())this->deallocate();//TODO
+			//else {bigValue=0; smallValue=0;}
+			//createBigNum(obj1);
+			mpf_set_d(bigValue, obj1);
+			return *this;
+		}
+};
+
 
 //static int BIGNUM_ONLY=0;
 //static int DOUBLE_ONLY=0;

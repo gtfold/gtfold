@@ -42,7 +42,7 @@ static bool ST_D2_ENABLE_ONE_SAMPLE_PARALLELIZATION = false;
 static bool ST_D2_ENABLE_SCATTER_PLOT = false;
 static bool ST_D2_ENABLE_UNIFORM_SAMPLE = false;
 static double ST_D2_UNIFORM_SAMPLE_ENERGY = 0.0;
-static int PF_ST_D2_ADVANCED_DOUBLE_SPECIFIER = 0;//0 (default value) means decide automatically, 1 means native double, 2 means BigNum, 3 means hybrid
+static int PF_ST_D2_ADVANCED_DOUBLE_SPECIFIER = 0;//0 (default value) means decide automatically, 1 means native double, 2 means BigNum, 3 means hybrid, 4 means bigNumOptimized
 static bool ST_D2_ENABLE_CHECK_FRACTION = false;
 static bool ST_D2_ENABLE_BPP_PROBABILITY = false;
 
@@ -146,7 +146,7 @@ static void print_usage_developer_options() {
 	printf("                        Default directory is the working directory specified with -w, and the default summary file\n");
 	printf("                       name is stochaSampleSumary.txt Only valid in combination with --sample. \n");
 	printf("   --advancedouble INT	Directs Partition Function and Sampling calculation to use advanced double with specifier INT,\n");
-	printf("			1 means native double, 2 means BigNum, 3 means hybrid.\n");
+	printf("			1 means native double, 2 means BigNum, 3 means hybrid, 4 means BigNumOptimized.\n");
 	printf("			If this option not used then program will decide intelligently for best one.\n");
 	printf("   --bignumprecision INT	Precision to be used in case bignum(or hybrid) is used (default value is 512).\n");
 	printf("			Min value required is 64 and ignored in case of --advancedouble option value is 1.\n");
@@ -240,8 +240,9 @@ static void printRunConfiguration(string seq) {
 		if(PF_ST_D2_ADVANCED_DOUBLE_SPECIFIER==1) printf("- Partition Function and Sampling calculation to use: native double\n");
 		else if(PF_ST_D2_ADVANCED_DOUBLE_SPECIFIER==2) printf("+ Partition Function and Sampling calculation to use: BigNum\n");
 		else if(PF_ST_D2_ADVANCED_DOUBLE_SPECIFIER==3) printf("+ Partition Function and Sampling calculation to use: hybrid of native double and bignum\n");
+		else if(PF_ST_D2_ADVANCED_DOUBLE_SPECIFIER==4) printf("+ Partition Function and Sampling calculation to use: BigNumOptimized\n");
 	}
-	if(!SILENT) if(PF_ST_D2_ADVANCED_DOUBLE_SPECIFIER==2 || PF_ST_D2_ADVANCED_DOUBLE_SPECIFIER==3) printf("- bignum precision: %d\n ", g_bignumprecision);
+	if(!SILENT) if(PF_ST_D2_ADVANCED_DOUBLE_SPECIFIER==2 || PF_ST_D2_ADVANCED_DOUBLE_SPECIFIER==3 || PF_ST_D2_ADVANCED_DOUBLE_SPECIFIER==4) printf("- bignum precision: %d\n ", g_bignumprecision);
 	printf("\n");
 }
 
@@ -411,7 +412,7 @@ static void parse_options(int argc, char** argv) {
 			} else if (strcmp(argv[i], "--advancedouble") == 0) {
 				if(i+1 < argc) {
 					PF_ST_D2_ADVANCED_DOUBLE_SPECIFIER = atoi(argv[++i]);
-					if (PF_ST_D2_ADVANCED_DOUBLE_SPECIFIER < 1 || PF_ST_D2_ADVANCED_DOUBLE_SPECIFIER > 3) {
+					if (PF_ST_D2_ADVANCED_DOUBLE_SPECIFIER < 1 || PF_ST_D2_ADVANCED_DOUBLE_SPECIFIER > 4) {
 						help();  
 					}
 				} else
@@ -554,6 +555,9 @@ int boltzmann_main(int argc, char** argv) {
 	if(PF_ST_D2_ADVANCED_DOUBLE_SPECIFIER==0){
 		decideAutomaticallyForAdvancedDoubleSpecifier();
 	}
+	if(PF_ST_D2_ADVANCED_DOUBLE_SPECIFIER==2 || PF_ST_D2_ADVANCED_DOUBLE_SPECIFIER==3 || PF_ST_D2_ADVANCED_DOUBLE_SPECIFIER==4){
+		mpf_set_default_prec(g_bignumprecision);
+	}
 	
 	printRunConfiguration(seq);
 
@@ -565,6 +569,7 @@ int boltzmann_main(int argc, char** argv) {
 	if(scaleFactor!=0.0){
 		//double mfe = calculate_mfe(argc, argv);
 		double mfe = calculate_mfe(seq);
+		cout<<"mfe "<<mfe<<endl;
 		scaleFactor = scaleFactor*mfe;
 	}
 	
@@ -622,6 +627,11 @@ static void handleD2PartitionFunction(){
 		PartitionFunctionD2<AdvancedDouble_Hybrid> pf_d2;
 		computeD2PartitionFunction< PartitionFunctionD2< AdvancedDouble_Hybrid > >(pf_d2);
 	}
+	else if( PF_ST_D2_ADVANCED_DOUBLE_SPECIFIER==4 ){
+		PartitionFunctionD2<AdvancedDouble_BigNumOptimized> pf_d2;
+		computeD2PartitionFunction< PartitionFunctionD2< AdvancedDouble_BigNumOptimized > >(pf_d2);
+	}
+
 }
 	
 template <class T>
@@ -655,6 +665,11 @@ static void handleD2Sample(){
 		StochasticTracebackD2<AdvancedDouble_Hybrid> st_d2;
         	computeD2Sample< StochasticTracebackD2< AdvancedDouble_Hybrid > >(st_d2);
         }
+	else if( PF_ST_D2_ADVANCED_DOUBLE_SPECIFIER==4 ){
+		StochasticTracebackD2<AdvancedDouble_BigNumOptimized> st_d2;
+        	computeD2Sample< StochasticTracebackD2< AdvancedDouble_BigNumOptimized > >(st_d2);
+        }
+
 }
 
 template <class T>

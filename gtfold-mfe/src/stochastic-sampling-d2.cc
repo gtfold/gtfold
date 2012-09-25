@@ -126,7 +126,8 @@ MyDouble StochasticTracebackD2<MyDouble>::S2_ihlj(int i, int h, int l, int j){
 template <class MyDouble>
 MyDouble StochasticTracebackD2<MyDouble>::U1_s3_ihj(int i, int h, int j){
 	//return (pf_d2.get_s3(h,j)) * (pf_d2.myExp((-1)*((pf_d2.EC_new())+(h-i)*(pf_d2.EB_new()))/RT)) / (pf_d2.get_u1(i,j));
-	return (pf_d2.get_s3(h,j)) * (pf_d2.myExp((-1)*((pf_d2.EC_new())+(h-i)*(pf_d2.EB_new())-pf_d2.get_M_RT()*(h-i))/RT)) / (pf_d2.get_u1(i,j));
+	//return (pf_d2.get_s3(h,j)) * (pf_d2.myExp((-1)*((pf_d2.EC_new())+(h-i)*(pf_d2.EB_new())-pf_d2.get_M_RT()*(h-i))/RT)) / (pf_d2.get_u1(i,j));
+	return (pf_d2.get_s3(h,j)) * (pf_d2.myExp((-1)*((pf_d2.EB_new())+(h-i)*(pf_d2.EC_new())-pf_d2.get_M_RT()*(h-i))/RT)) / (pf_d2.get_u1(i,j));//Manoj111
 }
 
 template <class MyDouble>
