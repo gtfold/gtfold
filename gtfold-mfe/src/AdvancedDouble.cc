@@ -682,53 +682,53 @@ class AdvancedDouble_Hybrid{
 			else fprintf(outFile, "Unknown isBig = %c\n", isBig);
 		}
 		AdvancedDouble_Hybrid operator*(const AdvancedDouble_Hybrid &obj1) const {
-			//case 1: this object is bigValue and obj1 is also bigValue -- result is bigValue
-			if(this->isBig=='y' && obj1.isBig=='y'){
-				AdvancedDouble_Hybrid res;
-				res.createBigNum();
-				mpf_mul(*(res.bigValue),*(this->bigValue), *(obj1.bigValue));
-				return res;
-			}
-			//case 2: this object is bigValue and obj1 is smallValue -- result is bigValue
-			else if(this->isBig=='y' && obj1.isBig=='n'){
-				AdvancedDouble_Hybrid res;
-				res.createBigNum();
-				mpf_t op2; mpf_init2(op2,g_bignumprecision); mpf_set_d(op2, *(obj1.smallValue));
-				mpf_mul(*(res.bigValue),*(this->bigValue), op2);
-				mpf_clear(op2);
-				return res;
-			}
-			//case 3: this object is smallValue and obj2 is bigValue -- result is bigValue
-			else if(this->isBig=='n' && obj1.isBig=='y'){
-				AdvancedDouble_Hybrid res;
-				res.createBigNum();
-				mpf_t op1; mpf_init2(op1,g_bignumprecision); mpf_set_d(op1, *(this->smallValue));
-				mpf_mul(*(res.bigValue),op1, *(obj1.bigValue));
-				mpf_clear(op1);
-				return res;
-			}
-			//case 4: this object is smallValue and obj2 is smallValue -- result can be smallValue or bigValue, we need to check
-			else if(this->isBig=='n' && obj1.isBig=='n'){
-				double a = (*(this->smallValue)) * (*(obj1.smallValue));
-				if(isfinite(a)){
+			if(this->isBig=='y'){
+				//case 1: this object is bigValue and obj1 is also bigValue -- result is bigValue
+				if(obj1.isBig=='y'){
 					AdvancedDouble_Hybrid res;
-					res.createDouble(a);
+					res.createBigNum();
+					mpf_mul(*(res.bigValue),*(this->bigValue), *(obj1.bigValue));
 					return res;
 				}
+				//case 2: this object is bigValue and obj1 is smallValue -- result is bigValue
 				else{
 					AdvancedDouble_Hybrid res;
 					res.createBigNum();
-					mpf_t op1; mpf_init2(op1,g_bignumprecision); mpf_set_d(op1, *(this->smallValue));
 					mpf_t op2; mpf_init2(op2,g_bignumprecision); mpf_set_d(op2, *(obj1.smallValue));
-					mpf_mul(*(res.bigValue),op1, op2);
-					mpf_clear(op1);
+					mpf_mul(*(res.bigValue),*(this->bigValue), op2);
 					mpf_clear(op2);
 					return res;
 				}
 			}
-			else{
-				printf("Unknown isBig = %c, obj1.isBig = %c\n", isBig, obj1.isBig);
-				exit(-1);	
+			else{	
+				//case 3: this object is smallValue and obj2 is bigValue -- result is bigValue
+				if(obj1.isBig=='y'){
+					AdvancedDouble_Hybrid res;
+					res.createBigNum();
+					mpf_t op1; mpf_init2(op1,g_bignumprecision); mpf_set_d(op1, *(this->smallValue));
+					mpf_mul(*(res.bigValue),op1, *(obj1.bigValue));
+					mpf_clear(op1);
+					return res;
+				}
+				//case 4: this object is smallValue and obj2 is smallValue -- result can be smallValue or bigValue, we need to check
+				else {
+					double a = (*(this->smallValue)) * (*(obj1.smallValue));
+					if(isfinite(a)){
+						AdvancedDouble_Hybrid res;
+						res.createDouble(a);
+						return res;
+					}
+					else{
+						AdvancedDouble_Hybrid res;
+						res.createBigNum();
+						mpf_t op1; mpf_init2(op1,g_bignumprecision); mpf_set_d(op1, *(this->smallValue));
+						mpf_t op2; mpf_init2(op2,g_bignumprecision); mpf_set_d(op2, *(obj1.smallValue));
+						mpf_mul(*(res.bigValue),op1, op2);
+						mpf_clear(op1);
+						mpf_clear(op2);
+						return res;
+					}
+				}
 			}
 		}
 		AdvancedDouble_Hybrid operator*(const double &obj1_double) const {
@@ -744,7 +744,7 @@ class AdvancedDouble_Hybrid{
 				return res;
 			}
 			//case 4: this object is smallValue and obj2 is smallValue -- result can be smallValue or bigValue, we need to check
-			else if(this->isBig=='n'){
+			else {
 				double a = (*(this->smallValue)) * (*(obj1.smallValue));
 				//check if a is finite
 				if(isfinite(a)){
@@ -765,62 +765,57 @@ class AdvancedDouble_Hybrid{
 					return res;
 				}
 			}
-			else{
-				printf("Unknown isBig = %c, obj1.isBig = %c\n", isBig, obj1.isBig);	
-				exit(-1);	
-			}
 		}
-
 		AdvancedDouble_Hybrid operator+(const AdvancedDouble_Hybrid &obj1) const {
 			//case 1: this object is bigValue and obj1 is also bigValue -- result is bigValue
-			if(this->isBig=='y' && obj1.isBig=='y'){
-				AdvancedDouble_Hybrid res;
-				res.createBigNum();
-				mpf_add(*(res.bigValue),*(this->bigValue), *(obj1.bigValue));
-				return res;
-			}
-			//case 2: this object is bigValue and obj1 is smallValue -- result is bigValue
-			else if(this->isBig=='y' && obj1.isBig=='n'){
-				AdvancedDouble_Hybrid res;
-				res.createBigNum();
-				mpf_t op2; mpf_init2(op2,g_bignumprecision); mpf_set_d(op2, *(obj1.smallValue));
-				mpf_add(*(res.bigValue),*(this->bigValue), op2);
-				mpf_clear(op2);
-				return res;
-			}
-			//case 3: this object is smallValue and obj2 is bigValue -- result is bigValue
-			else if(this->isBig=='n' && obj1.isBig=='y'){
-				AdvancedDouble_Hybrid res;
-				res.createBigNum();
-				mpf_t op1; mpf_init2(op1,g_bignumprecision); mpf_set_d(op1, *(this->smallValue));
-				mpf_add(*(res.bigValue),op1, *(obj1.bigValue));
-				mpf_clear(op1);
-				return res;
-			}
-			//case 4: this object is smallValue and obj2 is smallValue -- result can be smallValue or bigValue, we need to check
-			else if(this->isBig=='n' && obj1.isBig=='n'){//if(verbose==1)printf("operator+ AdvancedDouble_Hybrid obj1 this->isBig=='n' && obj1.isBig=='n'\n");
-				double a = (*(this->smallValue)) + (*(obj1.smallValue));
-				//check if a is finite
-				if(isfinite(a)){
+			if(this->isBig=='y'){
+				if(obj1.isBig=='y'){
 					AdvancedDouble_Hybrid res;
-					res.createDouble(a);
+					res.createBigNum();
+					mpf_add(*(res.bigValue),*(this->bigValue), *(obj1.bigValue));
 					return res;
 				}
+				//case 2: this object is bigValue and obj1 is smallValue -- result is bigValue
 				else{
 					AdvancedDouble_Hybrid res;
 					res.createBigNum();
-					mpf_t op1; mpf_init2(op1,g_bignumprecision); mpf_set_d(op1, *(this->smallValue));
 					mpf_t op2; mpf_init2(op2,g_bignumprecision); mpf_set_d(op2, *(obj1.smallValue));
-					mpf_add(*(res.bigValue),op1, op2);
-					//res.print();
-					mpf_clear(op1);mpf_clear(op2);
-					//if(verbose==1)printf("successful addition\n");
+					mpf_add(*(res.bigValue),*(this->bigValue), op2);
+					mpf_clear(op2);
 					return res;
 				}
 			}
+			//case 3: this object is smallValue and obj2 is bigValue -- result is bigValue
 			else{
-				printf("Unknown isBig = %c, obj1.isBig = %c\n", isBig, obj1.isBig);
-				exit(-1);	
+				if(obj1.isBig=='y'){
+					AdvancedDouble_Hybrid res;
+					res.createBigNum();
+					mpf_t op1; mpf_init2(op1,g_bignumprecision); mpf_set_d(op1, *(this->smallValue));
+					mpf_add(*(res.bigValue),op1, *(obj1.bigValue));
+					mpf_clear(op1);
+					return res;
+				}
+				//case 4: this object is smallValue and obj2 is smallValue -- result can be smallValue or bigValue, we need to check
+				else{//if(verbose==1)printf("operator+ AdvancedDouble_Hybrid obj1 this->isBig=='n' && obj1.isBig=='n'\n");
+					double a = (*(this->smallValue)) + (*(obj1.smallValue));
+					//check if a is finite
+					if(isfinite(a)){
+						AdvancedDouble_Hybrid res;
+						res.createDouble(a);
+						return res;
+					}
+					else{
+						AdvancedDouble_Hybrid res;
+						res.createBigNum();
+						mpf_t op1; mpf_init2(op1,g_bignumprecision); mpf_set_d(op1, *(this->smallValue));
+						mpf_t op2; mpf_init2(op2,g_bignumprecision); mpf_set_d(op2, *(obj1.smallValue));
+						mpf_add(*(res.bigValue),op1, op2);
+						//res.print();
+						mpf_clear(op1);mpf_clear(op2);
+						//if(verbose==1)printf("successful addition\n");
+						return res;
+					}
+				}
 			}
 		}
 
@@ -837,7 +832,7 @@ class AdvancedDouble_Hybrid{
 				return res;
 			}
 			//case 4: this object is smallValue and obj2 is smallValue -- result can be smallValue or bigValue, we need to check
-			else if(this->isBig=='n'){
+			else {
 				double a = (*(this->smallValue)) + (*(obj1.smallValue));
 				//check if a is finite
 				if(isfinite(a)){
@@ -858,61 +853,57 @@ class AdvancedDouble_Hybrid{
 					return res;
 				}
 			}
-			else{
-				printf("Unknown isBig = %c, obj1.isBig = %c\n", isBig, obj1.isBig);
-				exit(-1);	
-			}
 		}
 		AdvancedDouble_Hybrid operator-(const AdvancedDouble_Hybrid &obj1) const {
 			//case 1: this object is bigValue and obj1 is also bigValue -- result is bigValue
-			if(this->isBig=='y' && obj1.isBig=='y'){
-				AdvancedDouble_Hybrid res;
-				res.createBigNum();
-				mpf_sub(*(res.bigValue),*(this->bigValue), *(obj1.bigValue));
-				return res;
-			}
-			//case 2: this object is bigValue and obj1 is smallValue -- result is bigValue
-			else if(this->isBig=='y' && obj1.isBig=='n'){
-				AdvancedDouble_Hybrid res;
-				res.createBigNum();
-				mpf_t op2; mpf_init2(op2,g_bignumprecision); mpf_set_d(op2, *(obj1.smallValue));
-				mpf_sub(*(res.bigValue),*(this->bigValue), op2);
-				mpf_clear(op2);
-				return res;
-			}
-			//case 3: this object is smallValue and obj2 is bigValue -- result is bigValue
-			else if(this->isBig=='n' && obj1.isBig=='y'){
-				AdvancedDouble_Hybrid res;
-				res.createBigNum();
-				mpf_t op1; mpf_init2(op1,g_bignumprecision); mpf_set_d(op1, *(this->smallValue));
-				mpf_sub(*(res.bigValue),op1, *(obj1.bigValue));
-				mpf_clear(op1);
-				return res;
-			}
-			//case 4: this object is smallValue and obj2 is smallValue -- result can be smallValue or bigValue, we need to check
-			else if(this->isBig=='n' && obj1.isBig=='n'){
-				double a = (*(this->smallValue)) - (*(obj1.smallValue));
-				//check if a is finite
-				if(isfinite(a)){
+			if(this->isBig=='y'){
+				if(obj1.isBig=='y'){
 					AdvancedDouble_Hybrid res;
-					res.createDouble(a);
+					res.createBigNum();
+					mpf_sub(*(res.bigValue),*(this->bigValue), *(obj1.bigValue));
 					return res;
 				}
+				//case 2: this object is bigValue and obj1 is smallValue -- result is bigValue
 				else{
 					AdvancedDouble_Hybrid res;
 					res.createBigNum();
-					mpf_t op1; mpf_init2(op1,g_bignumprecision); mpf_set_d(op1, *(this->smallValue));
 					mpf_t op2; mpf_init2(op2,g_bignumprecision); mpf_set_d(op2, *(obj1.smallValue));
-					mpf_sub(*(res.bigValue),op1, op2);
-					//res.print();
-					mpf_clear(op1);mpf_clear(op2);
-					//if(verbose==1)printf("successful subtraction\n");
+					mpf_sub(*(res.bigValue),*(this->bigValue), op2);
+					mpf_clear(op2);
 					return res;
 				}
 			}
+			//case 3: this object is smallValue and obj2 is bigValue -- result is bigValue
 			else{
-				printf("Unknown isBig = %c, obj1.isBig = %c\n", isBig, obj1.isBig);	
-				exit(-1);
+				if(obj1.isBig=='y'){
+					AdvancedDouble_Hybrid res;
+					res.createBigNum();
+					mpf_t op1; mpf_init2(op1,g_bignumprecision); mpf_set_d(op1, *(this->smallValue));
+					mpf_sub(*(res.bigValue),op1, *(obj1.bigValue));
+					mpf_clear(op1);
+					return res;
+				}
+				//case 4: this object is smallValue and obj2 is smallValue -- result can be smallValue or bigValue, we need to check
+				else{
+					double a = (*(this->smallValue)) - (*(obj1.smallValue));
+					//check if a is finite
+					if(isfinite(a)){
+						AdvancedDouble_Hybrid res;
+						res.createDouble(a);
+						return res;
+					}
+					else{
+						AdvancedDouble_Hybrid res;
+						res.createBigNum();
+						mpf_t op1; mpf_init2(op1,g_bignumprecision); mpf_set_d(op1, *(this->smallValue));
+						mpf_t op2; mpf_init2(op2,g_bignumprecision); mpf_set_d(op2, *(obj1.smallValue));
+						mpf_sub(*(res.bigValue),op1, op2);
+						//res.print();
+						mpf_clear(op1);mpf_clear(op2);
+						//if(verbose==1)printf("successful subtraction\n");
+						return res;
+					}
+				}
 			}
 		}
 		AdvancedDouble_Hybrid operator-(const double &obj1_double) const {
@@ -928,7 +919,7 @@ class AdvancedDouble_Hybrid{
 				return res;
 			}
 			//case 4: this object is smallValue and obj2 is smallValue -- result can be smallValue or bigValue, we need to check
-			else if(this->isBig=='n'){
+			else{
 				double a = (*(this->smallValue)) - (*(obj1.smallValue));
 				//check if a is finite
 				if(isfinite(a)){
@@ -948,61 +939,57 @@ class AdvancedDouble_Hybrid{
 					return res;
 				}
 			}
-			else{
-				printf("Unknown isBig = %c, obj1.isBig = %c\n", isBig, obj1.isBig);
-				exit(-1);	
-			}
 		}
 		AdvancedDouble_Hybrid operator/(const AdvancedDouble_Hybrid &obj1) const {
 			//case 1: this object is bigValue and obj1 is also bigValue -- result is bigValue
-			if(this->isBig=='y' && obj1.isBig=='y'){
-				AdvancedDouble_Hybrid res;
-				res.createBigNum();
-				mpf_div(*(res.bigValue),*(this->bigValue), *(obj1.bigValue));
-				return res;
-			}
-			//case 2: this object is bigValue and obj1 is smallValue -- result is bigValue
-			else if(this->isBig=='y' && obj1.isBig=='n'){
-				AdvancedDouble_Hybrid res;
-				res.createBigNum();
-				mpf_t op2; mpf_init2(op2,g_bignumprecision); mpf_set_d(op2, *(obj1.smallValue));
-				mpf_div(*(res.bigValue),*(this->bigValue), op2);
-				mpf_clear(op2);
-				return res;
-			}
-			//case 3: this object is smallValue and obj2 is bigValue -- result is bigValue
-			else if(this->isBig=='n' && obj1.isBig=='y'){
-				AdvancedDouble_Hybrid res;
-				res.createBigNum();
-				mpf_t op1; mpf_init2(op1,g_bignumprecision); mpf_set_d(op1, *(this->smallValue));
-				mpf_div(*(res.bigValue),op1, *(obj1.bigValue));
-				mpf_clear(op1);
-				return res;
-			}
-			//case 4: this object is smallValue and obj2 is smallValue -- result can be smallValue or bigValue, we need to check
-			else if(this->isBig=='n' && obj1.isBig=='n'){
-				double a = (*(this->smallValue)) / (*(obj1.smallValue));
-				//check if a is finite
-				if(isfinite(a)){
+			if(this->isBig=='y'){
+				if(obj1.isBig=='y'){
 					AdvancedDouble_Hybrid res;
-					res.createDouble(a);
+					res.createBigNum();
+					mpf_div(*(res.bigValue),*(this->bigValue), *(obj1.bigValue));
 					return res;
 				}
+				//case 2: this object is bigValue and obj1 is smallValue -- result is bigValue
 				else{
 					AdvancedDouble_Hybrid res;
 					res.createBigNum();
-					mpf_t op1; mpf_init2(op1,g_bignumprecision); mpf_set_d(op1, *(this->smallValue));
 					mpf_t op2; mpf_init2(op2,g_bignumprecision); mpf_set_d(op2, *(obj1.smallValue));
-					mpf_div(*(res.bigValue),op1, op2);
-					//res.print();
-					mpf_clear(op1);mpf_clear(op2);
-					//if(verbose==1)printf("successful division\n");
+					mpf_div(*(res.bigValue),*(this->bigValue), op2);
+					mpf_clear(op2);
 					return res;
 				}
 			}
+			//case 3: this object is smallValue and obj2 is bigValue -- result is bigValue
 			else{
-				printf("Unknown isBig = %c, obj1.isBig = %c\n", isBig, obj1.isBig);	
-				exit(-1);	
+				if(obj1.isBig=='y'){
+					AdvancedDouble_Hybrid res;
+					res.createBigNum();
+					mpf_t op1; mpf_init2(op1,g_bignumprecision); mpf_set_d(op1, *(this->smallValue));
+					mpf_div(*(res.bigValue),op1, *(obj1.bigValue));
+					mpf_clear(op1);
+					return res;
+				}
+				//case 4: this object is smallValue and obj2 is smallValue -- result can be smallValue or bigValue, we need to check
+				else{
+					double a = (*(this->smallValue)) / (*(obj1.smallValue));
+					//check if a is finite
+					if(isfinite(a)){
+						AdvancedDouble_Hybrid res;
+						res.createDouble(a);
+						return res;
+					}
+					else{
+						AdvancedDouble_Hybrid res;
+						res.createBigNum();
+						mpf_t op1; mpf_init2(op1,g_bignumprecision); mpf_set_d(op1, *(this->smallValue));
+						mpf_t op2; mpf_init2(op2,g_bignumprecision); mpf_set_d(op2, *(obj1.smallValue));
+						mpf_div(*(res.bigValue),op1, op2);
+						//res.print();
+						mpf_clear(op1);mpf_clear(op2);
+						//if(verbose==1)printf("successful division\n");
+						return res;
+					}
+				}
 			}
 		}
 		AdvancedDouble_Hybrid operator/(const double &obj1_double) const {
@@ -1018,7 +1005,7 @@ class AdvancedDouble_Hybrid{
 				return res;
 			}
 			//case 4: this object is smallValue and obj2 is smallValue -- result can be smallValue or bigValue, we need to check
-			else if(this->isBig=='n'){
+			else{
 				double a = (*(this->smallValue)) / (*(obj1.smallValue));
 				//check if a is finite
 				if(isfinite(a)){
@@ -1038,43 +1025,39 @@ class AdvancedDouble_Hybrid{
 					return res;
 				}
 			}
-			else{
-				printf("Unknown isBig = %c, obj1.isBig = %c\n", isBig, obj1.isBig);	
-				exit(-1);	
-			}
 		}
 		int compare(const AdvancedDouble_Hybrid &obj1) const{
 			//Function: int mpf_cmp (mpf_t op1, mpf_t op2)
 			//Function: int mpf_cmp_d (mpf_t op1, double op2)
 			//case 1: this object is bigValue and obj1 is also bigValue 
 			int result=100;
-			if(this->isBig=='y' && obj1.isBig=='y'){
-				//return mpf_cmp(*(this->bigValue), *(obj1.bigValue));
-				result = mpf_cmp(*(this->bigValue), *(obj1.bigValue));
-			}
-			//case 2: this object is bigValue and obj1 is smallValue
-			else if(this->isBig=='y' && obj1.isBig=='n'){
-				//return mpf_cmp_d(*(this->bigValue), *(obj1.smallValue));
-				result =  mpf_cmp_d(*(this->bigValue), *(obj1.smallValue));
+			if(this->isBig=='y'){
+				if(obj1.isBig=='y'){
+					//return mpf_cmp(*(this->bigValue), *(obj1.bigValue));
+					result = mpf_cmp(*(this->bigValue), *(obj1.bigValue));
+				}
+				//case 2: this object is bigValue and obj1 is smallValue
+				else{
+					//return mpf_cmp_d(*(this->bigValue), *(obj1.smallValue));
+					result =  mpf_cmp_d(*(this->bigValue), *(obj1.smallValue));
+				}
 			}
 			//case 3: this object is smallValue and obj2 is bigValue
-			else if(this->isBig=='n' && obj1.isBig=='y'){
-				//mpf_t minusOne; mpf_init2(minusOne,g_bignumprecision); mpf_set_d(minusOne, -1.0);
-				//return mpf_mul(mpf_cmp_d(*(obj1.bigValue), *(this->smallValue)), minusOne);
-				//return -1*(mpf_cmp_d(*(obj1.bigValue), *(this->smallValue)));
-				result = -1*(mpf_cmp_d(*(obj1.bigValue), *(this->smallValue)));
-			}
-			//case 4: this object is smallValue and obj2 is smallValue
-			else if(this->isBig=='n' && obj1.isBig=='n'){
-				//return (*(this->smallValue)) - (*(obj1.smallValue));
-				double result1 = (*(this->smallValue)) - (*(obj1.smallValue));
-				if(result1==0) result=0;
-				else if(result1<0) result=-1;
-				else result=+1;
-			}
 			else{
-				printf("Unknown isBig = %c, obj1.isBig = %c\n", isBig, obj1.isBig);
-				exit(-1);	
+				if(obj1.isBig=='y'){
+					//mpf_t minusOne; mpf_init2(minusOne,g_bignumprecision); mpf_set_d(minusOne, -1.0);
+					//return mpf_mul(mpf_cmp_d(*(obj1.bigValue), *(this->smallValue)), minusOne);
+					//return -1*(mpf_cmp_d(*(obj1.bigValue), *(this->smallValue)));
+					result = -1*(mpf_cmp_d(*(obj1.bigValue), *(this->smallValue)));
+				}
+				//case 4: this object is smallValue and obj2 is smallValue
+				else{
+					//return (*(this->smallValue)) - (*(obj1.smallValue));
+					double result1 = (*(this->smallValue)) - (*(obj1.smallValue));
+					if(result1==0) result=0;
+					else if(result1<0) result=-1;
+					else result=+1;
+				}
 			}
 			//printf("comparing: ");print();printf(" and ");obj1.print();printf(" and result is %d\n",result);
 			return result;
@@ -1089,17 +1072,13 @@ class AdvancedDouble_Hybrid{
 				result = mpf_cmp_d(*(this->bigValue), obj1);
 			}
 			//case 4: this object is smallValue
-			else if(this->isBig=='n'){
+			else{
 				//return (*(this->smallValue)) - obj1;
 				double result1 = (*(this->smallValue)) - obj1;
 				if(result1==0.0) result=0;
 				else if(result1<0.0) result=-1;
 				else result=+1;
 
-			}
-			else{
-				printf("Unknown isBig = %c\n", isBig);
-				exit(-1);	
 			}
 			//printf("comparing: ");print();printf(" and %f and result is %d\n",obj1,result);
 			return result;

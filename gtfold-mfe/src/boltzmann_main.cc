@@ -64,7 +64,7 @@ static int num_rnd = 0;
 //static int ss_verbose_global = 0;
 static int print_energy_decompose = 0;
 static int dangles=2;//making dangle default value as 2
-static double scaleFactor=1.07;//default value is 1.07
+static double scaleFactor=-1.0;//default value will be 1.07 in case of seq len is more than 100 else zero
 
 static bool LIMIT_DISTANCE = false;
 static int contactDistance = -1;
@@ -137,7 +137,7 @@ static void print_usage_developer_options() {
 	printf("   --sampleenergy DOUBLE      Writes only sampled structures with free energy equal to DOUBLE to file prefix.sample. Only valid in combination with --sample. Number of threads must be limited to one (-t 1).\n");
 	//printf("   --counts-parallel  While sampling structures, parallelize INT sample counts among available threads (this is also a default behaviour of sampling).\n");
 	//printf("   --parallelsample        While sampling structures, parallelize the processing of one sample (useful when sampling large sequence with number of samples being less than available threads).\n");
-	printf("   --scale DOUBLE	Use scaling facotr as DOUBLE to approximate partition function, default value is 1.07.\n");
+	printf("   --scale DOUBLE	Use scaling facotr as DOUBLE to approximate partition function, default value will be 1.07 in case seq len is more than 100 else it will be zero by default.\n");
 	printf("   --parallelsample     Paralellizes the sampling of each individual structure.\n");
 	printf("			Only valid in combination with --sample.\n");
 	//printf("   -s|--sample   INT  --separatectfiles [--ctfilesdir dump_dir_path] [--summaryfile dump_summery_file_name] Sample number of structures equal to INT and dump each structure to a ct file in dump_dir_path directory (if no value provided then use current directory value for this purpose) and also create a summary file with name stochastic_summery_file_name in dump_dir_path directory (if no value provided, use stochaSampleSummary.txt value for this purpose).\n");
@@ -179,7 +179,7 @@ static void print_examples_developer_options(){
 	printf("1. Calculate Partition function:\n\n");
 	printf("gtboltzmann [--partition] [[-d 0|2]|[-dS]] [-t n] [-o outputPrefix] [--exactintloop] [-v] [-p DIR] [-w DIR] [-l] [--scale DOUBLE] [--advancedouble INT] [--bignumprecision INT] <seq_file>\n\n");
 	printf("2. Sample structures stochastically:\n\n");
-	printf("gtboltzmann -s INT [[-d 0|2]|[-dS]] [-t n] [-o outputPrefix] [--exactintloop] [-v] [--groupbyfreq] [--sampleenergy DOUBLE] [--estimatebpp] [--parallelsample] [-p DIR] [-w DIR] [-l] [--scale DOUBLE] [--advancedouble INT] [--bignumprecision INT] <seq_file>\n\n");
+	printf("gtboltzmann -s INT [[-d 0|2]|[-dS]] [-t n] [-o outputPrefix] [--exactintloop] [-v] [--groupbyfreq] [--estimatebpp] [--parallelsample] [-p DIR] [-w DIR] [-l] [--scale DOUBLE] [--advancedouble INT] [--bignumprecision INT] <seq_file>\n\n");
 	printf("gtboltzmann -s INT [[-d 0|2]|[-dS]] -t 1 [-o outputPrefix] [--exactintloop] [-v] [--groupbyfreq] [--sampleenergy DOUBLE] [-e] [--checkfraction] [--estimatebpp] [--parallelsample] [-p DIR] [-w DIR] [-l] [--scale DOUBLE] [--advancedouble INT] [--bignumprecision INT] <seq_file>\n\n");
 	printf("gtboltzmann -s INT --separatectfiles [--ctfilesdir dump_dir_path] [--summaryfile dump_summery_file_name] [-d 2] [--exactintloop] [-v] [-p DIR] [-w DIR] [-l] [--scale DOUBLE] [--advancedouble INT] [--bignumprecision INT] <seq_file>\n\n");
 	printf("\n\n");
@@ -552,6 +552,14 @@ int boltzmann_main(int argc, char** argv) {
 
 	readThermodynamicParameters(paramDir.c_str(), PARAM_DIR, 0, 0, 0);
 
+	if(scaleFactor==-1){//that is if scaleFactor is not input by the user, and we only need to decide for its default value
+		if(strlen(seq.c_str())<=100){
+			scaleFactor=0.0;
+		}
+		else{
+			scaleFactor=1.07;
+		}
+	}
 	if(PF_ST_D2_ADVANCED_DOUBLE_SPECIFIER==0){
 		decideAutomaticallyForAdvancedDoubleSpecifier();
 	}
@@ -646,7 +654,8 @@ static void computeD2PartitionFunction(T pf_d2){
 	//PartitionFunctionD2<AdvancedDouble> pf_d2;
 	pf_d2.calculate_partition(seq.length(),pf_count_mode,no_dangle_mode,PF_D2_UP_APPROX_ENABLED,scaleFactor);
 	t1 = get_seconds() - t1;
-	printf("partition function computation running time: %9.6f seconds\n", t1);
+	//printf("partition function computation running time: %9.6f seconds\n", t1);
+	printf("partition function computation running time: %f seconds\n", t1);
 	//calculate_partition(seq.length(),0,0);
 	if(PF_PRINT_ARRAYS_ENABLED) pf_d2.printAllMatrixesToFile(pfArraysOutFile);
 	pf_d2.free_partition();
@@ -682,7 +691,8 @@ static void computeD2Sample(T st_d2){
 	t1 = get_seconds();
 	st_d2.initialize(seq.length(), pf_count_mode, no_dangle_mode, print_energy_decompose, PF_D2_UP_APPROX_ENABLED,ST_D2_ENABLE_CHECK_FRACTION, energyDecomposeOutFile,scaleFactor);
 	t1 = get_seconds() - t1;
-	printf("D2 Traceback initialization (partition function computation) running time: %9.6f seconds\n", t1);
+	//printf("D2 Traceback initialization (partition function computation) running time: %9.6f seconds\n", t1);
+	printf("D2 Traceback initialization (partition function computation) running time: %f seconds\n", t1);
 	t1 = get_seconds();
 	if(DUMP_CT_FILE==false){
 		if(ST_D2_ENABLE_COUNTS_PARALLELIZATION && g_nthreads!=1)
@@ -691,7 +701,8 @@ static void computeD2Sample(T st_d2){
 	}
 	else  st_d2.batch_sample_and_dump(num_rnd, ctFileDumpDir, stochastic_summery_file_name, seq, seqfile);
 	t1 = get_seconds() - t1;
-	printf("D2 Traceback computation running time: %9.6f seconds\n", t1);
+	//printf("D2 Traceback computation running time: %9.6f seconds\n", t1);
+	printf("D2 Traceback computation running time: %f seconds\n", t1);
 	if(PF_PRINT_ARRAYS_ENABLED) st_d2.printPfMatrixesToFile(pfArraysOutFile);
 	st_d2.free_traceback();
 }

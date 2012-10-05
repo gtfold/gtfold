@@ -226,14 +226,16 @@ inline double PartitionFunctionD2<MyDouble>::EA_new(){
 template<class MyDouble>
 inline double PartitionFunctionD2<MyDouble>::EB_new(){
 	if(PF_COUNT_MODE_) return 0;
-	return Ec;
+	return Eb;
+	//return Ec;
 	//return Ec/100;
 }
 
 template<class MyDouble>
 inline double PartitionFunctionD2<MyDouble>::EC_new(){
 	if(PF_COUNT_MODE_) return 0;
-	return Eb;
+	return Ec;
+	//return Eb;
 	//return Eb/100;
 }
 
@@ -655,7 +657,7 @@ void PartitionFunctionD2<MyDouble>::calc_s3(int h, int j)
 	//for (l = h+1; l <= j && l+2<=part_len; ++l){//TODO: old
 	for (l = h+1; l <= j && l+1<=part_len; ++l){//TODO: new, comment it
 		MyDouble v1 = (get_up(h,l)*(myExp(-(auPenalty_new(h,l)+ED5_new(h,l,h-1)+ED3_new(h,l,l+1))/RT)));
-		MyDouble v2 = (f(j+1,h,l)*myExp(-((j-l)*(EB_new()-M_RT))/RT));
+		MyDouble v2 = (f(j+1,h,l)*myExp(-((j-l)*(EC_new()-M_RT))/RT));
 		MyDouble val = v1*(v2 + get_u1(l+1,j));//TODO verify it as it is different from dS, in dS it is get_u1(l+2,j) and when we use it, we get error of re-using entry without initialization
 		s3_val = s3_val + val;
 	}
@@ -664,19 +666,19 @@ void PartitionFunctionD2<MyDouble>::calc_s3(int h, int j)
 
 template<class MyDouble>
 void PartitionFunctionD2<MyDouble>::calc_upm(int i, int j){
-	double a = EA_new();
-	double b = EB_new();
-	double c = EC_new();
+	//double a = EA_new();
+	//double b = EB_new();
+	//double c = EC_new();
 	int h;//l
 	MyDouble quadraticSum(0.0);//Default constructor of MyDouble will be called, which creates a double with value zero.
 	if (canPair(RNA[i],RNA[j]))
 	{
 		//for(h=i+3; h<j-1; ++h){//TODO According to Shel's document
 		for(h=i+1; h<j-1; ++h){//Manoj has changed it
-			quadraticSum = quadraticSum + (get_s2(h,j) * myExp(((-1)*((h-i-1)*b) + M_RT*(h-i))/RT));
+			quadraticSum = quadraticSum + (get_s2(h,j) * myExp(((-1)*((h-i-1)*EC_new()) + M_RT*(h-i))/RT));
 		}
 		//quadraticSum = quadraticSum * (myExp((-1)*(a+ auPenalty_new(i,j) + ED5_new(j,i,j-1)/RT + ED3_new(j,i,i+1)/RT)));//TODO: make sure which one out of ed3(i,j,j-1) or ed3(i,j,j-1) is correct, similarly for ed5
-		quadraticSum = quadraticSum * (myExp((-1)*(a+auPenalty_new(i,j) + ED5_new(j,i,j-1) + ED3_new(j,i,i+1) +2*c)/RT));//TODO Old impl using ed3(j,i) instead of ed3(i,j)
+		quadraticSum = quadraticSum * (myExp((-1)*(EA_new()+auPenalty_new(i,j) + ED5_new(j,i,j-1) + ED3_new(j,i,i+1) +2*EB_new())/RT));//TODO Old impl using ed3(j,i) instead of ed3(i,j)
 		//quadraticSum = quadraticSum * (myExp((-1)*(a+auPenalty_new(i,j) + ED5_new(i,j,j-1) + ED3_new(i,j,i+1) +2*c)/RT));//TODO New impl using ed5(i,j) instead of ed3(j,i)
 		
 		set_upm(i, j, quadraticSum);  
@@ -688,14 +690,14 @@ void PartitionFunctionD2<MyDouble>::calc_upm(int i, int j){
 
 template<class MyDouble>
 void PartitionFunctionD2<MyDouble>::calc_u1(int i, int j){
-	double b = EB_new();
-	double c = EC_new();
+	//double b = EB_new();
+	//double c = EC_new();
 	int h;
 	MyDouble quadraticSum(0.0);
 	//for(h=i+1; h<j; ++h){//OLD
 	for(h=i; h<j; ++h){//NEW, suggested by Shel
 		//quadraticSum = quadraticSum + (get_s3(h,j) * myExp(((-1)*(c+(h-i)*(b-M_RT)))/RT));
-		quadraticSum = quadraticSum + (get_s3(h,j) * myExp(((-1)*(b+(h-i)*(c-M_RT)))/RT));//Manoj111
+		quadraticSum = quadraticSum + (get_s3(h,j) * myExp(((-1)*(EB_new()+(h-i)*(EC_new()-M_RT)))/RT));//Manoj111
 	}
 	set_u1(i, j, quadraticSum);
 }
