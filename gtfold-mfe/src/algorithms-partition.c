@@ -43,9 +43,9 @@ void fill_partition_fn_arrays(int len, double** Q, double** QB, double** QM) {
 
     // multiConst[3] is a global variable with 3 values: a, b, c for the
     // experimental constants
-    int a = multConst[0]; // a is an offset penalty for multiloops
-    int b = multConst[2]; // b is penalty for multiloop branches, one per branchesch
-    int c = multConst[1]; // Penalty for single stranded nucleotides in thee multiloops
+    //int a = multConst[0]; // a is an offset penalty for multiloops
+    //int b = multConst[2]; // b is penalty for multiloop branches, one per branchesch
+    //int c = multConst[1]; // Penalty for single stranded nucleotides in thee multiloops
 
     // loop iterators
     int i,j,d,e,l;
@@ -102,7 +102,7 @@ void fill_partition_fn_arrays(int len, double** Q, double** QB, double** QM) {
 							}
 
 							QB[i][j] += QM[i+1][d-1]*QB[d][e] *
-										exp(-(a + b + c*(j-e-1))/RT);
+										exp(-(Ea + Eb + Ec*(j-e-1))/RT);
 						}
                     }
                 }
@@ -113,8 +113,8 @@ void fill_partition_fn_arrays(int len, double** Q, double** QB, double** QM) {
             for(d=i; d<=j-4; ++d) {
                 for(e=d+4; e<=j; ++e) {
                     Q[i][j] += Q[i][d-1]*QB[d][e];
-                    QM[i][j] += exp(-(b+c*(d-i)+c*(j-e))/RT) * QB[d][e];
-                    QM[i][j] += QM[i][d-1] * QB[d][e] * exp(-(b+c*(j-e))/RT);
+                    QM[i][j] += exp(-(Eb+Ec*(d-i)+Ec*(j-e))/RT) * QB[d][e];
+                    QM[i][j] += QM[i][d-1] * QB[d][e] * exp(-(Eb+Ec*(j-e))/RT);
                 }
             }
         }
@@ -135,9 +135,9 @@ void fillBasePairProbabilities(int length, double **Q, double **QB, double **QM,
 	double tempBuffer;
     	// multiConst[3] is a global variable with 3 values: a, b, c for the
 	// experimental constants
- 	int a = multConst[0]; // a is an offset penalty for multiloops
-	int b = multConst[2]; // b is penalty for multiloop branches, one per branchesch
-	int c = multConst[1]; // Penalty for single stranded nucleotides in thee multiloops
+ 	//int a = multConst[0]; // a is an offset penalty for multiloops
+	//int b = multConst[2]; // b is penalty for multiloop branches, one per branchesch
+	//int c = multConst[1]; // Penalty for single stranded nucleotides in thee multiloops
 
 	for(d = length; d>3; d--){
 		for(h = 1; h + d <= length; h++){
@@ -172,13 +172,13 @@ void fillBasePairProbabilities(int length, double **Q, double **QB, double **QM,
                     // third term
                     tempBuffer = 0; // Start over for multiloops
                     if(j - l > 3)
-                        tempBuffer += exp(-((h-i-1)*c/RT)) * QM[l+1][j-1];
+                        tempBuffer += exp(-((h-i-1)*Ec/RT)) * QM[l+1][j-1];
                     if(h - i > 3)
-                        tempBuffer += exp(-((j-l-1)*c/RT)) * QM[i+1][h-1];
+                        tempBuffer += exp(-((j-l-1)*Ec/RT)) * QM[i+1][h-1];
                     if(j - l > 3 && h - i > 3)
                         tempBuffer += QM[i+1][h-1] * QM[l+1][j-1];
 
-                    tempBuffer *= P[i][j] * QB[h][l] / QB[i][j] * exp(-(a+b)/RT);
+                    tempBuffer *= P[i][j] * QB[h][l] / QB[i][j] * exp(-(Ea+Eb)/RT);
 
                     P[h][l] += tempBuffer;
                 }
