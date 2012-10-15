@@ -613,11 +613,12 @@ int boltzmann_main(int argc, char** argv) {
 }
 
 static void decideAutomaticallyForAdvancedDoubleSpecifier(){
-	if( seq.length()<1000 || (seq.length()>1000 && scaleFactor>=1.0) || (seq.length()>3000 && scaleFactor>=1.25)){
+	//if( seq.length()<1000 || (seq.length()>1000 && scaleFactor>=1.0) || (seq.length()>3000 && scaleFactor>=1.25)){
+	if( seq.length()<=1000 || scaleFactor>=1.07 ){
 		PF_ST_D2_ADVANCED_DOUBLE_SPECIFIER=1;
 	}
 	else {
-		PF_ST_D2_ADVANCED_DOUBLE_SPECIFIER=2;
+		PF_ST_D2_ADVANCED_DOUBLE_SPECIFIER=4;
 	}
 	//else PF_ST_D2_ADVANCED_DOUBLE_SPECIFIER=1;
 }

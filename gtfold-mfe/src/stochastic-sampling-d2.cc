@@ -49,13 +49,13 @@ void StochasticTracebackD2<MyDouble>::free_traceback(){
 }
 
 template <class MyDouble>
-MyDouble StochasticTracebackD2<MyDouble>::randdouble()
+inline MyDouble StochasticTracebackD2<MyDouble>::randdouble()
 {
 	return MyDouble( rand()/(double(RAND_MAX)+1) );
 }
 
 template <class MyDouble>
-bool StochasticTracebackD2<MyDouble>::feasible(int i, int j)
+inline bool StochasticTracebackD2<MyDouble>::feasible(int i, int j)
 {
 	return j-i > TURN && canPair(RNA[i],RNA[j]);
 }

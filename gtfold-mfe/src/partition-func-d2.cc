@@ -5,7 +5,7 @@
 #include "utils.h"
 #include<omp.h>
 #include <assert.h>
-
+#define MEMORY_OPTIMIZATION_ENABLED true
 #define PAIRABLE_POINTS_GATHER_OPTIMIZATION_DISABLED true
 
 template<class MyDouble>
@@ -60,43 +60,71 @@ void PartitionFunctionD2<MyDouble>::printMatrix(MyDouble** u, int part_len, FILE
 template<class MyDouble>
 inline MyDouble PartitionFunctionD2<MyDouble>::get_u(int i, int j) {
 	//if(u[i][j]==-1.0) errorAndExit("get_u entry is -1.",i,j,MyDouble(-1.0),MyDouble(0.0)); 
+	#if MEMORY_OPTIMIZATION_ENABLED
+	return u[i][j-i];
+	#else
 	return u[i][j];
+	#endif
 }
 
 template<class MyDouble>
 inline MyDouble PartitionFunctionD2<MyDouble>::get_up(int i, int j) {
 	//if(up[i][j]==-1.0) errorAndExit("get_up entry is -1.\n",i,j,MyDouble(-1.0),MyDouble(0.0)); 
+	#if MEMORY_OPTIMIZATION_ENABLED
+	return up[i][j-i];
+	#else
 	return up[i][j];
+	#endif
 }
 
 template<class MyDouble>
 inline MyDouble PartitionFunctionD2<MyDouble>::get_upm(int i, int j) {
 	//if(upm[i][j]==-1.0) errorAndExit("get_upm entry is -1.\n",i,j,MyDouble(-1.0),MyDouble(0.0));
+	#if MEMORY_OPTIMIZATION_ENABLED
+	return upm[i][j-i];
+	#else
 	return upm[i][j];
+	#endif
 }
 
 template<class MyDouble>
 inline MyDouble PartitionFunctionD2<MyDouble>::get_u1(int i, int j) {
 	//if(u1[i][j]==-1.0) errorAndExit("get_u1 entry is -1.\n",i,j,MyDouble(-1.0),MyDouble(0.0));
+	#if MEMORY_OPTIMIZATION_ENABLED
+	return u1[i][j-i];
+	#else
 	return u1[i][j];
+	#endif
 }
 
 template<class MyDouble>
 inline MyDouble PartitionFunctionD2<MyDouble>::get_s1(int i, int j) {
 	//if(s1[i][j]==-1.0) errorAndExit("get_s1 entry is -1.\n",i,j,MyDouble(-1.0),MyDouble(0.0)); 
+	#if MEMORY_OPTIMIZATION_ENABLED
+	return s1[i][j-i];
+	#else
 	return s1[i][j];
+	#endif
 }
 
 template<class MyDouble>
 inline MyDouble PartitionFunctionD2<MyDouble>::get_s2(int i, int j) {
 	//if(s2[i][j]==-1.0) errorAndExit("get_s2 entry is -1.\n",i,j,MyDouble(-1.0),MyDouble(0.0));
+	#if MEMORY_OPTIMIZATION_ENABLED
+	return s2[i][j-i];
+	#else
 	return s2[i][j];
+	#endif
 }
 
 template<class MyDouble>
 inline MyDouble PartitionFunctionD2<MyDouble>::get_s3(int i, int j) {
 	//if(s3[i][j]==-1.0) errorAndExit("get_s3 entry is -1.\n",i,j,MyDouble(-1.0),MyDouble(0.0)); 
+	#if MEMORY_OPTIMIZATION_ENABLED
+	return s3[i][j-i];
+	#else
 	return s3[i][j];
+	#endif
 }
 
 //Functions to set partition function array entries
@@ -104,43 +132,71 @@ inline MyDouble PartitionFunctionD2<MyDouble>::get_s3(int i, int j) {
 template<class MyDouble>
 inline void PartitionFunctionD2<MyDouble>::set_u(int i, int j, MyDouble val) {
 	//if(u[i][j]!=-1 && u[i][j]!=val) errorAndExit("set_u entry is not -1.\n",i,j,u[i][j],val);
+	#if MEMORY_OPTIMIZATION_ENABLED
+	u[i][j-i]=val;
+	#else
 	u[i][j]=val;
+	#endif
 }
 
 template<class MyDouble>
 inline void PartitionFunctionD2<MyDouble>::set_up(int i, int j, MyDouble val) {
 	//if(up[i][j]!=-1 && up[i][j]!=val) errorAndExit("set_up entry is not -1.\n",i,j,up[i][j],val);
+	#if MEMORY_OPTIMIZATION_ENABLED
+	up[i][j-i]=val;
+	#else
 	up[i][j]=val;
+	#endif
 }
 
 template<class MyDouble>
 inline void PartitionFunctionD2<MyDouble>::set_upm(int i, int j, MyDouble val) {
 	//if(upm[i][j]!=-1 && upm[i][j]!=val) errorAndExit("set_upm entry is not -1.\n",i,j,upm[i][j],val);
+	#if MEMORY_OPTIMIZATION_ENABLED
+	upm[i][j-i]=val;
+	#else
 	upm[i][j]=val;
+	#endif
 }
 
 template<class MyDouble>
 inline void PartitionFunctionD2<MyDouble>::set_u1(int i, int j, MyDouble val) {
 	//if(u1[i][j]!=-1 && u1[i][j]!=val) errorAndExit("set_u1 entry is not -1.\n",i,j,u1[i][j],val);
+	#if MEMORY_OPTIMIZATION_ENABLED
+	u1[i][j-i]=val;
+	#else
 	u1[i][j]=val;
+	#endif
 }
 
 template<class MyDouble>
 inline void PartitionFunctionD2<MyDouble>::set_s1(int i, int j, MyDouble val) {
 	//if(s1[i][j]!=-1 && s1[i][j]!=val) errorAndExit("set_s1 entry is not -1.\n",i,j,s1[i][j],val);
+	#if MEMORY_OPTIMIZATION_ENABLED
+	s1[i][j-i]=val;
+	#else
 	s1[i][j]=val;
+	#endif
 }
 
 template<class MyDouble>
 inline void PartitionFunctionD2<MyDouble>::set_s2(int i, int j, MyDouble val) {
 	//if(s2[i][j]!=-1 && s2[i][j]!=val) errorAndExit("set_s2 entry is not -1.\n",i,j,s2[i][j],val); 
+	#if MEMORY_OPTIMIZATION_ENABLED
+	s2[i][j-i]=val;
+	#else
 	s2[i][j]=val;
+	#endif
 }
 
 template<class MyDouble>
 inline void PartitionFunctionD2<MyDouble>::set_s3(int i, int j, MyDouble val) {
 	//if(s3[i][j]!=-1 && s3[i][j]!=val) errorAndExit("set_s3 entry is not -1.\n",i,j,s3[i][j],val); 
+	#if MEMORY_OPTIMIZATION_ENABLED
+	s3[i][j-i]=val;
+	#else
 	s3[i][j]=val;
+	#endif
 }
 
 /*//Following functions are to be used once testing completes as they are quicker then their test counterparts
@@ -359,8 +415,8 @@ MyDouble PartitionFunctionD2<MyDouble>::calculate_partition(int len, int pf_coun
 	}*/
 	//printf("%4.4f\n",u[1][part_len]);
 	//if(pf_count_mode==1){ printf("Possible structure count: ");(u[1][part_len]).print();}
-	if(pf_count_mode==1){ printf("Possible structure count: ");(u[1][part_len]).printInt();}
-	else{ printf("Partition Function Value: ");(u[1][part_len]).print();}
+	if(pf_count_mode==1){ printf("Possible structure count: ");get_u(1,part_len).printInt();}
+	else{ printf("Partition Function Value: ");get_u(1,part_len).print();}
 
 	printf("\n");
 	return u[1][part_len];
@@ -384,7 +440,20 @@ void PartitionFunctionD2<MyDouble>::init_part_arrays_negatives(){
 	#endif
 	//OPTIMIZED CODE ENDS
 	for(i=0; i<=n; ++i){
+		#if MEMORY_OPTIMIZATION_ENABLED
+		for(j=i; j<=n; ++j){
+		#else
 		for(j=0; j<=n; ++j){
+		#endif
+			#if MEMORY_OPTIMIZATION_ENABLED
+			u[i][j-i]=minusOne;
+			up[i][j-i]=minusOne;
+			upm[i][j-i]=minusOne;
+			s1[i][j-i]=minusOne;
+			s2[i][j-i]=minusOne;
+			s3[i][j-i]=minusOne;
+			u1[i][j-i]=minusOne;
+			#else
 			u[i][j]=minusOne;
 			up[i][j]=minusOne;
 			upm[i][j]=minusOne;
@@ -392,6 +461,7 @@ void PartitionFunctionD2<MyDouble>::init_part_arrays_negatives(){
 			s2[i][j]=minusOne;
 			s3[i][j]=minusOne;
 			u1[i][j]=minusOne;
+			#endif
 		}
 	}
 	
@@ -402,8 +472,16 @@ void PartitionFunctionD2<MyDouble>::init_part_arrays_negatives(){
 	//OPTIMIZED CODE ENDS
 	
 	for(i=0; i<=n+1; ++i){
+		#if MEMORY_OPTIMIZATION_ENABLED
+		for(j=i; j<=n+1; ++j){
+		#else
 		for(j=0; j<=n+1; ++j){
+		#endif
+			#if MEMORY_OPTIMIZATION_ENABLED
+			u1[i][j-i]=minusOne;
+			#else
 			u1[i][j]=minusOne;
+			#endif
 		}
 	}
 }
@@ -423,17 +501,31 @@ void PartitionFunctionD2<MyDouble>::init_partition_arrays()
 	
 	for(i=1; i<=n; ++i){
 		for(j=i; j<=i+TURN && j<=n; ++j){
+			#if MEMORY_OPTIMIZATION_ENABLED
+			u[i][j-i] = one;
+			up[i][j-i] = zero;
+			u1[i][j-i] = zero;
+			s1[i][j-i] = zero;
+			s2[i][j-i] = zero;
+			s3[i][j-i] = zero;
+			#else
 			u[i][j] = one;
 			up[i][j] = zero;
 			u1[i][j] = zero;
 			s1[i][j] = zero;
 			s2[i][j] = zero;
-			s3[i][j] = zero;
+			s3[i][j] = zero;	
+			#endif
 		}
 	}
 	for(i=1; i<=n-4; ++i){
+		#if MEMORY_OPTIMIZATION_ENABLED
+                s1[i][4] = zero;
+                s2[i][4] = zero;
+		#else
                 s1[i][i+4] = zero;
                 s2[i][i+4] = zero;
+		#endif
         }
 
 	
@@ -444,8 +536,13 @@ void PartitionFunctionD2<MyDouble>::init_partition_arrays()
 	//OPTIMIZED CODE ENDS
 	
 	for(i=1; i<=n; ++i){
+		#if MEMORY_OPTIMIZATION_ENABLED
+		//u[i+1][i] = one;//TODO what to do here
+		//u1[i+1][i] = zero;//TODO what to do here
+		#else
 		u[i+1][i] = one;
 		u1[i+1][i] = zero;
+		#endif
 	}
 	
 	//OPTIMIZED CODE STARTS
@@ -455,7 +552,11 @@ void PartitionFunctionD2<MyDouble>::init_partition_arrays()
 	//OPTIMIZED CODE ENDS
 	//for(i=1; i<=n; i++){//OLD
 	for(i=1; i<=n-1; i++){//NEW
+		#if MEMORY_OPTIMIZATION_ENABLED
+		//u1[i+2][i] = zero;//TODO what to do here
+		#else
 		u1[i+2][i] = zero;//TODO Uncomment it, as of now i have tested it that commenting it does not impact correctness
+		#endif
 	}
 }
 
@@ -491,7 +592,11 @@ MyDouble** PartitionFunctionD2<MyDouble>::mallocTwoD(int r, int c) {
     MyDouble** arr = (MyDouble **)malloc(r*sizeof(MyDouble));
     int i,j;
     for(i=0; i<r; i++) {
-        arr[i] = (MyDouble *)malloc(c*sizeof(MyDouble));
+	#if MEMORY_OPTIMIZATION_ENABLED
+        arr[i] = (MyDouble *)malloc((c-i)*sizeof(MyDouble));
+        #else
+	arr[i] = (MyDouble *)malloc(c*sizeof(MyDouble));
+	#endif
 
         // failed allocating a row, so free all previous rows, free the main
         // array, and return NULL
@@ -504,8 +609,16 @@ MyDouble** PartitionFunctionD2<MyDouble>::mallocTwoD(int r, int c) {
     }
 
     for(i=0; i<r; ++i){
+	#if MEMORY_OPTIMIZATION_ENABLED
+	for(j=i; j<c; ++j){
+	#else
 	for(j=0; j<c; ++j){
-	  arr[i][j].init();
+	#endif
+		#if MEMORY_OPTIMIZATION_ENABLED
+		arr[i][j-i].init();
+		#else
+		arr[i][j].init();
+		#endif
 	}
     }
 
@@ -516,8 +629,16 @@ template<class MyDouble>
 void PartitionFunctionD2<MyDouble>::freeTwoD(MyDouble** arr, int r, int c) {
     int i,j;
      for(i=0; i<r; ++i){
+	#if MEMORY_OPTIMIZATION_ENABLED
+        for(j=i; j<c; ++j){
+	#else
         for(j=0; j<c; ++j){
-          arr[i][j].deallocate();
+	#endif
+		#if MEMORY_OPTIMIZATION_ENABLED
+        	arr[i][j-i].deallocate();
+		#else
+        	arr[i][j].deallocate();
+		#endif
         }
     }
 
