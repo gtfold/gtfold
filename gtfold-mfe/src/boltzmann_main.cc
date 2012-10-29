@@ -21,7 +21,8 @@
 #include "algorithms.h"
 #include "traceback.h"
 #include "utils.h"
-#include "AdvancedDouble.cc"
+//#include "AdvancedDouble.cc"
+#include "AdvancedDouble.h"
 
 using namespace std;
 
