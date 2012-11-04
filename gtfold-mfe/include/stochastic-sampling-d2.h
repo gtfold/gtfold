@@ -1045,7 +1045,8 @@ void StochasticTracebackD2<MyDouble>::batch_sample(int num_rnd, bool ST_D2_ENABL
 				//MyDouble actual_p(-(energy)/(RT_));///U;
 				//fprintf(scatterPlotoutfile, "%s,%f,",ss.c_str(),energy);actual_p.print(scatterPlotoutfile);
 				fprintf(scatterPlotoutfile, "S%d,%f,",index,energy);actual_p.print(scatterPlotoutfile);
-				fprintf(scatterPlotoutfile, ",%f,%d,\t",estimated_p,pp.first);
+				//fprintf(scatterPlotoutfile, ",%f,%d,\t",estimated_p,pp.first);
+				fprintf(scatterPlotoutfile, ",%.20f,%d,\t",estimated_p,pp.first);
 				std::string tripletNotationStructureString = getStructureStringInTripletNotation(ss.c_str(), length);
                                 fprintf(scatterPlotoutfile, "%s\n", tripletNotationStructureString.c_str());
 
@@ -1404,7 +1405,8 @@ void StochasticTracebackD2<MyDouble>::batch_sample_parallel(int num_rnd, bool ST
 				//MyDouble actual_p(-(energy)/(RT_));///U;
 				//fprintf(scatterPlotoutfile, "%s,%f,",ss.c_str(),energy);actual_p.print(scatterPlotoutfile);
 				fprintf(scatterPlotoutfile, "S%d,%f,",index,energy);actual_p.print(scatterPlotoutfile);
-				fprintf(scatterPlotoutfile, ",%f,%d,\t",estimated_p,pp.first);
+				//fprintf(scatterPlotoutfile, ",%f,%d,\t",estimated_p,pp.first);
+				fprintf(scatterPlotoutfile, ",%.20f,%d,\t",estimated_p,pp.first);
 				std::string tripletNotationStructureString = getStructureStringInTripletNotation(ss.c_str(), length);
 				fprintf(scatterPlotoutfile, "%s\n", tripletNotationStructureString.c_str());
 				//printf("%s %lf\n",ss.c_str(),energy);actual_p.print();

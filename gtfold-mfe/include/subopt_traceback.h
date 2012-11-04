@@ -29,6 +29,11 @@
 #include <stack>
 #include <map>
 #include <vector>
+#include <string>
+#include <cstring>
+#include <cstdio>
+#include <cstdlib>
+#include <fstream>
 
 #define UNIQUE_MULTILOOP_DECOMPOSITION
 
@@ -217,7 +222,8 @@ typedef std::map<std::string, int> ss_map_t;
 
 void push_to_gstack(ps_stack_t & gs, const ps_t& v);
 
-ss_map_t subopt_traceback(int len, int gap);
+//ss_map_t subopt_traceback(int len, int gap);
+ss_map_t subopt_traceback(int len, int gap, std::string suboptFile, int is_check_for_duplicates_enabled, int max_structure_count);
 
 void traceV(int i, int j, ps_t & ps, ps_stack_t & gs); 
 void traceVBI(int i, int j, ps_t & ps, ps_stack_t & gs);

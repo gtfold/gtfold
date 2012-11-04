@@ -103,7 +103,7 @@ class PartitionFunctionD2{
 #include "utils.h"
 #include<omp.h>
 #include <assert.h>
-#define MEMORY_OPTIMIZATION_ENABLED true
+#define MEMORY_OPTIMIZATION_ENABLED false
 #define PAIRABLE_POINTS_GATHER_OPTIMIZATION_DISABLED true
 
 template<class MyDouble>
