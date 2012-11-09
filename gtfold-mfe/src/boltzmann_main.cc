@@ -25,6 +25,7 @@
 #include "utils.h"
 //#include "AdvancedDouble.cc"
 #include "AdvancedDouble.h"
+#include "shapereader.h"
 
 using namespace std;
 
@@ -62,6 +63,7 @@ static string scatterPlotOutputFile = "";
 static string pfArraysOutFile = "";
 static string ctFileDumpDir = "";
 static string stochastic_summery_file_name = "stochaSampleSummary.txt";
+static string shapeFile = "";
 
 static int num_rnd = 0;
 //static int ss_verbose_global = 0;
@@ -115,6 +117,7 @@ static void print_usage() {
 	//printf("   -s|--sample   INT	Sample number of structures equal to INT.\n");
 	printf("   -s|--sample   INT	Sample INT structures from Boltzmann distribution. Writes structures to file output-prefix.samples.\n");
 	printf("   -t|--threads INT	Limit number of threads used to INT.\n");
+	printf("   --useSHAPE FILE  Use SHAPE constraints from FILE.\n");
 	printf("   -v, --verbose	Run in verbose mode (includes partition function table printing.)\n");
 	//printf("   --estimatebpp	While sampling structures, Calculate base pair probabilities.\n");
 	//printf("   --groupbyfreq        While sampling structures, Collect frequency of all structures and calculate estimate probability and boltzmann probability for scatter plot.\n");
@@ -171,20 +174,20 @@ static void print_usage_developer_options() {
 static void print_examples(){
 	printf("\n\nEXAMPLES:\n\n");
 	printf("1. Sample structures stochastically:\n\n");
-	printf("gtboltzmann [-s INT] [[-d 0|2]|[-dS]] [-t n] [-o outputPrefix] [-v] [--estimatebpp] [-p DIR] [-w DIR] [-l] <seq_file>\n\n");
+	printf("gtboltzmann [-s INT] [[-d 0|2]|[-dS]] [-t n] [-o outputPrefix] [-v] [--estimatebpp] [-p DIR] [-w DIR] [-l] [--useSHAPE FILE] <seq_file>\n\n");
 	printf("2. Calculate base pair probabilities:\n\n");
-	printf("gtboltzmann --bpp [-d 2] [-o outputPrefix] [-v] [-p DIR] [-w DIR] [-l] <seq_file>\n\n");
+	printf("gtboltzmann --bpp [-d 2] [-o outputPrefix] [-v] [-p DIR] [-w DIR] [-l] [--useSHAPE FILE] <seq_file>\n\n");
 	printf("\n\n");
 }
 
 static void print_examples_developer_options(){
 	printf("\n\nDeveloper Options EXAMPLES:\n\n");
 	printf("1. Calculate Partition function:\n\n");
-	printf("gtboltzmann [--partition] [[-d 0|2]|[-dS]] [-t n] [-o outputPrefix] [--exactintloop] [-v] [-p DIR] [-w DIR] [-l] [--scale DOUBLE] [--advancedouble INT] [--bignumprecision INT] <seq_file>\n\n");
+	printf("gtboltzmann [--partition] [[-d 0|2]|[-dS]] [-t n] [-o outputPrefix] [--exactintloop] [-v] [-p DIR] [-w DIR] [-l] [--scale DOUBLE] [--advancedouble INT] [--bignumprecision INT] [--useSHAPE FILE] <seq_file>\n\n");
 	printf("2. Sample structures stochastically:\n\n");
-	printf("gtboltzmann -s INT [[-d 0|2]|[-dS]] [-t n] [-o outputPrefix] [--exactintloop] [-v] [--groupbyfreq] [--estimatebpp] [--parallelsample] [-p DIR] [-w DIR] [-l] [--scale DOUBLE] [--advancedouble INT] [--bignumprecision INT] <seq_file>\n\n");
-	printf("gtboltzmann -s INT [[-d 0|2]|[-dS]] -t 1 [-o outputPrefix] [--exactintloop] [-v] [--groupbyfreq] [--sampleenergy DOUBLE] [-e] [--checkfraction] [--estimatebpp] [--parallelsample] [-p DIR] [-w DIR] [-l] [--scale DOUBLE] [--advancedouble INT] [--bignumprecision INT] <seq_file>\n\n");
-	printf("gtboltzmann -s INT --separatectfiles [--ctfilesdir dump_dir_path] [--summaryfile dump_summery_file_name] [-d 2] [--exactintloop] [-v] [-p DIR] [-w DIR] [-l] [--scale DOUBLE] [--advancedouble INT] [--bignumprecision INT] <seq_file>\n\n");
+	printf("gtboltzmann -s INT [[-d 0|2]|[-dS]] [-t n] [-o outputPrefix] [--exactintloop] [-v] [--groupbyfreq] [--estimatebpp] [--parallelsample] [-p DIR] [-w DIR] [-l] [--scale DOUBLE] [--advancedouble INT] [--bignumprecision INT] [--useSHAPE FILE] <seq_file>\n\n");
+	printf("gtboltzmann -s INT [[-d 0|2]|[-dS]] -t 1 [-o outputPrefix] [--exactintloop] [-v] [--groupbyfreq] [--sampleenergy DOUBLE] [-e] [--checkfraction] [--estimatebpp] [--parallelsample] [-p DIR] [-w DIR] [-l] [--scale DOUBLE] [--advancedouble INT] [--bignumprecision INT] [--useSHAPE FILE] <seq_file>\n\n");
+	printf("gtboltzmann -s INT --separatectfiles [--ctfilesdir dump_dir_path] [--summaryfile dump_summery_file_name] [-d 2] [--exactintloop] [-v] [-p DIR] [-w DIR] [-l] [--scale DOUBLE] [--advancedouble INT] [--bignumprecision INT] [--useSHAPE FILE] <seq_file>\n\n");
 	printf("\n\n");
 }
 
@@ -230,6 +233,10 @@ static void printRunConfiguration(string seq) {
 	if (contactDistance != -1) {
 		if(!SILENT) printf("- maximum contact distance: %d\n", contactDistance);
 	}
+	if(!shapeFile.empty()){
+                if(!SILENT) printf("- using SHAPE data file: %s\n", shapeFile.c_str());
+        }
+
 	if(!SILENT) printf("- thermodynamic parameters: %s\n", EN_DATADIR.c_str());
 	if(!SILENT) printf("- input sequence file: %s\n", seqfile.c_str());
 	if(!SILENT) printf("- sequence length: %d\n", (int)seq.length());
@@ -462,7 +469,15 @@ static void parse_options(int argc, char** argv) {
 				}
 				else
 					help();
-			}
+			} else if (strcmp(argv[i], "--useSHAPE") == 0){
+        			if( i < argc){
+          				shapeFile = argv[++i];
+          				//SHAPE_ENABLED = true;
+          				SHAPE_ENABLED = 1;
+        			}
+        			else
+          				help();
+      			}
 			else{
 				printf("Error: Option %s is Undefined option\n", argv[i]);
 				help();
