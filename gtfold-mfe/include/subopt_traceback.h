@@ -35,7 +35,7 @@
 #include <cstdlib>
 #include <fstream>
 
-#define UNIQUE_MULTILOOP_DECOMPOSITION
+//#define UNIQUE_MULTILOOP_DECOMPOSITION
 
 enum label {lW=0, lV, lVBI, lVM, lWM, lWMPrime, lM, lM1};
 extern const char* lstr[]; 
