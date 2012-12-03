@@ -36,6 +36,7 @@
 #include <fstream>
 
 //#define UNIQUE_MULTILOOP_DECOMPOSITION
+extern int UNIQUE_MULTILOOP_DECOMPOSITION;
 
 enum label {lW=0, lV, lVBI, lVM, lWM, lWMPrime, lM, lM1};
 extern const char* lstr[]; 
@@ -233,9 +234,9 @@ void traceWM(int i, int j, ps_t &  ps, ps_stack_t & gs);
 void traceWMPrime(int i, int j, ps_t &  ps, ps_stack_t & gs);
 //void traceWM(ps_t& ps, ps_map_t& filter);
 
-#ifdef UNIQUE_MULTILOOP_DECOMPOSITION
+//#ifdef UNIQUE_MULTILOOP_DECOMPOSITION
 void traceM(int i, int j, ps_t & ps, ps_stack_t & gs);
 void traceM1(int i, int j, ps_t & ps, ps_stack_t & gs);
-#endif
+//#endif
 
 #endif

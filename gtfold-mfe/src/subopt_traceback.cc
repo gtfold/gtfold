@@ -46,7 +46,7 @@ static int mfe = INFINITY_;
 static int length = -1;
 static int gflag = 0;
 
-#ifdef UNIQUE_MULTILOOP_DECOMPOSITION
+//#ifdef UNIQUE_MULTILOOP_DECOMPOSITION
 
 static int FM1[1500][1500] = {{0}};
 static int FM[1500][1500] = {{0}};
@@ -97,7 +97,7 @@ void calculate_fm() {
   }
 }
 
-#endif
+//#endif
 
 void process(ss_map_t& subopt_data, int len, string suboptFile, int is_check_for_duplicates_enabled, int max_structure_count) {
 	ofstream outfile;
@@ -108,10 +108,10 @@ void process(ss_map_t& subopt_data, int len, string suboptFile, int is_check_for
         int count = 0;
         length = len;
 
-#ifdef UNIQUE_MULTILOOP_DECOMPOSITION
-        calculate_fm1();
-        calculate_fm();
-#endif
+	if( UNIQUE_MULTILOOP_DECOMPOSITION == 1){
+	        calculate_fm1();
+        	calculate_fm();
+	}
 
         ps_stack_t gstack;
 
@@ -173,10 +173,10 @@ ss_map_t subopt_traceback(int len, int _delta, string suboptFile, int is_check_f
         trace_func[3] = traceVM;
         trace_func[4] = traceWM;
         trace_func[5] = traceWMPrime;
-#ifdef UNIQUE_MULTILOOP_DECOMPOSITION
-        trace_func[6] = traceM;
-        trace_func[7] = traceM1;
-#endif
+	if( UNIQUE_MULTILOOP_DECOMPOSITION == 1){
+	        trace_func[6] = traceM;
+        	trace_func[7] = traceM1;
+	}
 
         mfe = W[len];
         delta = _delta;
@@ -212,37 +212,37 @@ void traceV(int i, int j, ps_t& ps, ps_stack_t& gstack) {
                 traceVBI(i,j,ps,gstack);
         }
 
-#ifdef UNIQUE_MULTILOOP_DECOMPOSITION
-        int k;
+	if( UNIQUE_MULTILOOP_DECOMPOSITION == 1){
+		int k;
 
-        for (k = i+2; k <= j-TURN-1; ++k) {
+		for (k = i+2; k <= j-TURN-1; ++k) {
 
-          int kenergy1 = FM[i+1][k] + FM1[k+1][j-1];
-          int d5 = Ed5(i, j, i+1);
-          int d3 = Ed3(i, j, j-1);
-          int aup = auPenalty(i,j);
-          int kenergy2 = d5 + d3 + aup + Ea + Eb;
-          int kenergy_total = kenergy1 + kenergy2;
-          if (kenergy_total + ps.total() <= mfe + delta) {
-            ps_t ps1(ps);
-            ps1.push(segment(i+1,k, lM, FM[i+1][k]));
-            ps1.push(segment(k+1,j-1, lM1, FM1[k+1][j-1]));
-            ps1.accumulate(kenergy2);
-            ps1.update(i,j,'(',')');
-            push_to_gstack(gstack, ps1);
-          }
-        }
-#else
+			int kenergy1 = FM[i+1][k] + FM1[k+1][j-1];
+			int d5 = Ed5(i, j, i+1);
+			int d3 = Ed3(i, j, j-1);
+			int aup = auPenalty(i,j);
+			int kenergy2 = d5 + d3 + aup + Ea + Eb;
+			int kenergy_total = kenergy1 + kenergy2;
+			if (kenergy_total + ps.total() <= mfe + delta) {
+				ps_t ps1(ps);
+				ps1.push(segment(i+1,k, lM, FM[i+1][k]));
+				ps1.push(segment(k+1,j-1, lM1, FM1[k+1][j-1]));
+				ps1.accumulate(kenergy2);
+				ps1.update(i,j,'(',')');
+				push_to_gstack(gstack, ps1);
+			}
+		}
+	}
+	else{
+		// Multiloop
+		if (VM(i,j) + ps.total() <= mfe + delta) {
+			ps_t ps1(ps);
+			ps1.push(segment(i, j, lVM, VM(i,j)));
+			ps1.update(i, j, '(', ')');
+			push_to_gstack(gstack, ps1);
+		}
 
-        // Multiloop
-        if (VM(i,j) + ps.total() <= mfe + delta) {
-                ps_t ps1(ps);
-                ps1.push(segment(i, j, lVM, VM(i,j)));
-                ps1.update(i, j, '(', ')');
-                push_to_gstack(gstack, ps1);
-        }
-
-#endif
+	}
 
 }
 
@@ -289,7 +289,7 @@ void traceW(int i, int j, ps_t& ps, ps_stack_t& gstack) {
         }
 }
 
-#ifdef UNIQUE_MULTILOOP_DECOMPOSITION
+//#ifdef UNIQUE_MULTILOOP_DECOMPOSITION
 void traceM1(int i, int j, ps_t& ps, ps_stack_t& gstack) {
 
   if (FM1[i][j-1] + Ec + ps.total() <= mfe + delta) {
@@ -377,7 +377,7 @@ void traceM(int i, int j, ps_t& ps, ps_stack_t& gstack) {
   }
 }
 
-#endif
+//#endif
 
 void traceWM(int i, int j, ps_t& ps, ps_stack_t& gstack) {
         int d3 = (i==1)?Ed3(j,i,length):Ed3(j,i,i-1);

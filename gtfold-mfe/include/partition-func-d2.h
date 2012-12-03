@@ -11,7 +11,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
- */
+*/
 template<class MyDouble>
 class PartitionFunctionD2{
 	public:
@@ -93,6 +93,7 @@ class PartitionFunctionD2{
 		void printAllMatrixes();
 		void printAllMatrixesToFile(std::string pfArraysOutputFile);
 };
+
 
 //Now the definitions of all these method starts, earlier they were in separate C++ source file and then I needed to move them to header file only because of this
 //http://www.parashift.com/c%2B%2B-faq-lite/templates-defn-vs-decl.html
@@ -364,8 +365,8 @@ template<class MyDouble>
 inline double PartitionFunctionD2<MyDouble>::ED3_new(int i, int j, int k){
 	if(NO_DANGLE_MODE_) return 0;
 	if(PF_COUNT_MODE_) return 0;
-	//if(k > part_len) return 0;//This is to take care of round robin way of d2, this is shel's suggestion and rnafold also seems to follow this
-	if(k > part_len) k=1;//This is to take care of round robin way of d2, rnascoring code follows this means, you need to do this in case you want to pass scoring test
+	if(k > part_len) return 0;//This is to take care of round robin way of d2, this is shel's suggestion and rnafold also seems to follow this
+	//if(k > part_len) k=1;//This is to take care of round robin way of d2, rnascoring code follows this means, you need to do this in case you want to pass scoring test
 	return Ed5(j,i,k);
 	//return Ed5(j,i,k)/100;
 }
@@ -374,8 +375,8 @@ template<class MyDouble>
 inline double PartitionFunctionD2<MyDouble>::ED5_new(int i, int j, int k){
 	if(NO_DANGLE_MODE_) return 0;
 	if(PF_COUNT_MODE_) return 0;
-	//if (k<1) return 0;//This is to take care of round robin way of d2, this is shel's suggestion and rnafold also seems to follow this
-	if (k<1) k=part_len;//This is to take care of round robin way of d2, rnascoring code follows this means, you need to do this in case you want to pass scoring test
+	if (k<1) return 0;//This is to take care of round robin way of d2, this is shel's suggestion and rnafold also seems to follow this
+	//if (k<1) k=part_len;//This is to take care of round robin way of d2, rnascoring code follows this means, you need to do this in case you want to pass scoring test
 	return Ed3(j,i,k);
 	//return Ed3(j,i,k)/100;
 }
@@ -1144,5 +1145,5 @@ void printUPprobabilities(int i, int j){
 #ifdef __cplusplus
 }
 #endif
- */
+*/
 #endif
