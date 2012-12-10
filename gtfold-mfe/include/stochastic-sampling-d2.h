@@ -1612,9 +1612,12 @@ void StochasticTracebackD2<MyDouble>::printEnergyAndStructureInDotBracketAndTrip
 	stringstream printline;
 	//outfile << ensemble.substr(1) << "\t" << energy << "\t" << tripletNotationStructureString<<endl;
 	printline << ensemble.substr(1) << "\t" << energy << "\t" << tripletNotationStructureString<<endl;
+	#pragma omp critical
+	{
 	outfile << printline.str();
 	if(print_energy_decompose==1){
 		fprintf(energy_decompose_outfile, "%s\t%f\t%s\n\n\n", ensemble.substr(1).c_str(), energy, tripletNotationStructureString.c_str());
+	}
 	}
 }
 
