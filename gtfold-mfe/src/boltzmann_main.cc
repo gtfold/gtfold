@@ -329,7 +329,7 @@ static void parse_options(int argc, char** argv) {
 			} else if(strcmp(argv[i], "--detailedhelp") == 0 ) {
 				detailed_help();
 			} else if (strcmp(argv[i], "--paramdir") == 0 || strcmp(argv[i], "-p") == 0) {
-				if(i < argc) {
+				if(i+1 < argc) {
 					paramDir = argv[++i];
 					PARAM_DIR = true;
 				}
@@ -351,7 +351,7 @@ static void parse_options(int argc, char** argv) {
                                 }
                                 else help();
                         } else if(strcmp(argv[i], "--output") == 0 || strcmp(argv[i], "-o") == 0) {
-				if(i < argc)
+				if(i+1 < argc)
 					outputPrefix = argv[++i];
 				else
 					help();
@@ -470,7 +470,7 @@ static void parse_options(int argc, char** argv) {
 				else
 					help();
 			} else if (strcmp(argv[i], "--useSHAPE") == 0){
-        			if( i < argc){
+        			if( i+1 < argc){
           				shapeFile = argv[++i];
           				//SHAPE_ENABLED = true;
           				SHAPE_ENABLED = 1;
