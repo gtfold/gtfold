@@ -790,7 +790,7 @@ double StochasticTracebackD2<MyDouble>::rnd_structure_parallel(int* structure, i
 	std::stack<base_pair> g_stack;
 	g_stack.push(first);
 	double energy = 0.0;
-	std::stack<base_pair> g_stack_threads[threads_for_one_sample];
+	std::stack<base_pair> *g_stack_threads = new std::stack<base_pair> [threads_for_one_sample];
 	double* energy_threads = new double[threads_for_one_sample];
 	for(int index=0; index<threads_for_one_sample; ++index)energy_threads[index]=0.0;
 
