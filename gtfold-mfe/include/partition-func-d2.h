@@ -102,7 +102,9 @@ class PartitionFunctionD2{
 #include "algorithms-partition.h"
 #include "global.h"
 #include "utils.h"
+#ifdef _OPENMP
 #include<omp.h>
+#endif
 #include <assert.h>
 #define MEMORY_OPTIMIZATION_ENABLED false
 #define PAIRABLE_POINTS_GATHER_OPTIMIZATION_DISABLED true

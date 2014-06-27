@@ -135,7 +135,9 @@ public:
 #include<sstream>
 #include<fstream>
 #include "utils.h"
+#ifdef _OPENMP
 #include<omp.h>
+#endif
 #include<time.h>
 #include<unistd.h>
 
