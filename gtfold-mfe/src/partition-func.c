@@ -6,7 +6,10 @@
 #include "algorithms-partition.h"
 #include "global.h"
 #include "utils.h"
+
+#ifdef _OPENMP
 #include<omp.h>
+#endif
 
 double ** u;
 double ** up;
@@ -357,7 +360,11 @@ void fill_partition_arrays()
 {
 	int b,i,j;
 	int n=part_len;
-	int numThds = omp_get_num_threads();
+        #ifdef _OPENMP
+        int numThds = omp_get_num_threads();
+        #else
+        int numThds = 1;
+        #endif
 	int* i_canPair = (int*)malloc((n+1)*sizeof(int));
 	int* i_cannotPair = (int*)malloc((n+1)*sizeof(int));
 	int len_i_canPair=0, len_i_cannotPair=0;

@@ -135,7 +135,9 @@ public:
 #include<sstream>
 #include<fstream>
 #include "utils.h"
+#ifdef _OPENMP
 #include<omp.h>
+#endif
 #include<time.h>
 #include<unistd.h>
 
@@ -825,7 +827,11 @@ double StochasticTracebackD2<MyDouble>::rnd_structure_parallel(int* structure, i
 			//#pragma omp parallel for private(index) shared(energy_threads, g_stack_threads, structure) schedule(guided)
 			#endif
 			for (index = 0; index < (int)g_deque.size(); ++index) {
-				int thdId = omp_get_thread_num();
+                                #ifdef _OPENMP
+                                int thdId = omp_get_thread_num();
+                                #else
+                                int thdId = 0;
+                                #endif
 				base_pair bp = g_deque[index];
 				if (bp.type() == U)
 					rnd_u(bp.i,bp.j, structure, energy_threads[thdId], g_stack_threads[thdId]);
@@ -1241,7 +1247,11 @@ void StochasticTracebackD2<MyDouble>::batch_sample_parallel(int num_rnd, bool ST
 		for (count = 1; count <= num_rnd; ++count) 
 		{
 			//nsamples++;
+                        #ifdef _OPENMP
 			int thdId = omp_get_thread_num();
+                        #else
+                        int thdId = 0;
+                        #endif
 			countArr[thdId]++;
 			//cout<<"thdId="<<thdId<<endl;
 			int* structure = structures_thread + thdId*(length+1);
