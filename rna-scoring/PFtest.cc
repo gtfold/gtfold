@@ -58,16 +58,11 @@ double getScore(string seqfilepath, int pfmode, int nodanglemode, int d2mode, in
 	char seqfileTmp[1000];strcpy(seqfileTmp, seqfilepath.c_str());
     strcpy(seqfile,seqfileTmp);
 	printf("Inside getScore() function: seqfile=%s\n",seqfile);
-	char bases[16] = {0, 'A', 'C', 'M', 'G', 'R', 'S', 'V', 'U',
-                      'W', 'Y', 'H', 'K', 'D', 'B', 'N'};
     ResultBundle* resultBundle = CreateFromFile(seqfile);
     int length = resultBundle->length;
     TreeNode* tree = resultBundle->treenode;
-    int* RNA = resultBundle->RNA_seq;
 
          nndb_constants* param = populate("data/Turner99", 1);
-
-        int one; int two; int three; int four; int score;
 
         int tree_score = ScoreNode(tree, resultBundle->RNA_seq, param, length);
 	return (double)tree_score/100;
