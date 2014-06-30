@@ -12,7 +12,7 @@ int eMUnpairedRegion(int i1, int j1, int i2, int j2, int* RNA, nndb_constants* p
 	//(based on Andronescu masters thesis,
 	// M.Sc., Academy of Economic Studies, Bucharest, Romania, 2000, 
 	// pg 32.)
-	int energy;
+	int energy = 0;
 	/*
 	int PFMODE=0;//boltzman sampling or stochastic sampling and  partition function mode or dS mode, it is mode as defined and used for partition function of sfold
 	int NODANGLEMODE=0;//no dangling at all means d0
@@ -338,7 +338,7 @@ int eM(TreeNode* node, int* pairedChildren, int numPairedChildren, int* RNA, nnd
      //so we just call it 
      energy += param->auend*auPen(RNA[node->children[pairedChildren[i]]->lowBase.index], RNA[node->children[pairedChildren[i]]->highBase.index]);
      if(auPen(RNA[node->children[pairedChildren[i]]->lowBase.index], RNA[node->children[pairedChildren[i]]->highBase.index]) != 0){
-				 if(printOn1)printf("AU penalty awarded for branch nr. %i (%i, %i%): %i  \n", i, 
+				 if(printOn1)printf("AU penalty awarded for branch nr. %i (%i, %i%%): %i  \n", i, 
 				 RNA[node->children[pairedChildren[i]]->lowBase.index], 
 				 RNA[node->children[pairedChildren[i]]->highBase.index], 
 				 param->auend*auPen(RNA[node->children[pairedChildren[i]]->lowBase.index], 
@@ -349,7 +349,7 @@ int eM(TreeNode* node, int* pairedChildren, int numPairedChildren, int* RNA, nnd
    //Check the same node for dangling
     energy += param->auend*auPen(RNA[node->lowBase.index], RNA[node->highBase.index]);
 	 if(auPen(RNA[node->lowBase.index],RNA[node->highBase.index])>0){
-        if(printOn1)printf("AU penalty awarded for root branch with bases (%i, %i%): %i  \n", 
+        if(printOn1)printf("AU penalty awarded for root branch with bases (%i, %i%%): %i  \n", 
 				 RNA[node->lowBase.index], 
 				 RNA[node->highBase.index],
 				 param->auend*auPen(RNA[node->lowBase.index], RNA[node->highBase.index]));
@@ -369,7 +369,7 @@ int eE(TreeNode* node, int* pairedChildren, int numPairedChildren, int* RNA, nnd
 		//so we just call it 
 		energy += param->auend*auPen(RNA[node->children[pairedChildren[i]]->lowBase.index], RNA[node->children[pairedChildren[i]]->highBase.index]);
 		if(auPen(RNA[node->children[pairedChildren[i]]->lowBase.index], RNA[node->children[pairedChildren[i]]->highBase.index]) != 0){
-			if(printOn1)printf("AU penalty awarded for exterior branch nr. %i (%i, %i%): %i  \n", i, 
+			if(printOn1)printf("AU penalty awarded for exterior branch nr. %i (%i, %i%%): %i  \n", i, 
 				   RNA[node->children[pairedChildren[i]]->lowBase.index], 
 				   RNA[node->children[pairedChildren[i]]->highBase.index], 
 				   param->auend*auPen(RNA[node->children[pairedChildren[i]]->lowBase.index], 

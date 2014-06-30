@@ -2,7 +2,7 @@
 #define _OPTIONS_H_
 
 #include <stdlib.h>
-//#include <string>
+#include <string.h>
 //#include <cstring>
 #include <stdio.h>
 
