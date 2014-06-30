@@ -338,7 +338,7 @@ int eM(TreeNode* node, int* pairedChildren, int numPairedChildren, int* RNA, nnd
      //so we just call it 
      energy += param->auend*auPen(RNA[node->children[pairedChildren[i]]->lowBase.index], RNA[node->children[pairedChildren[i]]->highBase.index]);
      if(auPen(RNA[node->children[pairedChildren[i]]->lowBase.index], RNA[node->children[pairedChildren[i]]->highBase.index]) != 0){
-				 if(printOn1)printf("AU penalty awarded for branch nr. %i (%i, %i%): %i  \n", i, 
+				 if(printOn1)printf("AU penalty awarded for branch nr. %i (%i, %i%%): %i  \n", i, 
 				 RNA[node->children[pairedChildren[i]]->lowBase.index], 
 				 RNA[node->children[pairedChildren[i]]->highBase.index], 
 				 param->auend*auPen(RNA[node->children[pairedChildren[i]]->lowBase.index], 
@@ -349,7 +349,7 @@ int eM(TreeNode* node, int* pairedChildren, int numPairedChildren, int* RNA, nnd
    //Check the same node for dangling
     energy += param->auend*auPen(RNA[node->lowBase.index], RNA[node->highBase.index]);
 	 if(auPen(RNA[node->lowBase.index],RNA[node->highBase.index])>0){
-        if(printOn1)printf("AU penalty awarded for root branch with bases (%i, %i%): %i  \n", 
+        if(printOn1)printf("AU penalty awarded for root branch with bases (%i, %i%%): %i  \n", 
 				 RNA[node->lowBase.index], 
 				 RNA[node->highBase.index],
 				 param->auend*auPen(RNA[node->lowBase.index], RNA[node->highBase.index]));
@@ -369,7 +369,7 @@ int eE(TreeNode* node, int* pairedChildren, int numPairedChildren, int* RNA, nnd
 		//so we just call it 
 		energy += param->auend*auPen(RNA[node->children[pairedChildren[i]]->lowBase.index], RNA[node->children[pairedChildren[i]]->highBase.index]);
 		if(auPen(RNA[node->children[pairedChildren[i]]->lowBase.index], RNA[node->children[pairedChildren[i]]->highBase.index]) != 0){
-			if(printOn1)printf("AU penalty awarded for exterior branch nr. %i (%i, %i%): %i  \n", i, 
+			if(printOn1)printf("AU penalty awarded for exterior branch nr. %i (%i, %i%%): %i  \n", i, 
 				   RNA[node->children[pairedChildren[i]]->lowBase.index], 
 				   RNA[node->children[pairedChildren[i]]->highBase.index], 
 				   param->auend*auPen(RNA[node->children[pairedChildren[i]]->lowBase.index], 
