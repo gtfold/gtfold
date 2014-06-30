@@ -65,7 +65,7 @@ int readLength(FILE* filePtr){
 	char* junktext; 
 	
 	/* Read the first number. */
-	int numRead = fscanf(filePtr, "%d%s\n", &junk, &junktext);
+	fscanf(filePtr, "%d%s\n", &junk, &junktext);
 	/* Close file and Return the number */
 	printf("The number read was %i \n", junk);
 	fclose(filePtr);
