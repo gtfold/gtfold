@@ -32,10 +32,10 @@ int ScoreNode(TreeNode* node, int* RNA, nndb_constants* param, int length){
 			if(!canPair((node->children[i])->lowBase.base, (node->children[i])->highBase.base)){
 				Base lb = (node->children[i])->lowBase.base;
 				char lbChar;
-				if(lb==1)lbChar='A';else if(lb==2)lbChar='C';else if(lb==4)lbChar='G';else if(lb==8)lbChar='U';else lbChar="X";
+				if(lb==1)lbChar='A';else if(lb==2)lbChar='C';else if(lb==4)lbChar='G';else if(lb==8)lbChar='U';else lbChar='X';
 	                        Base hb = (node->children[i])->highBase.base;
 				char hbChar;
-                                if(hb==1)hbChar='A';else if(hb==2)hbChar='C';else if(hb==4)hbChar='G';else if(hb==8)hbChar='U';else hbChar="X";
+                                if(hb==1)hbChar='A';else if(hb==2)hbChar='C';else if(hb==4)hbChar='G';else if(hb==8)hbChar='U';else hbChar='X';
 				printf("WARNING: bases %d and %d (%c%c) can't pair; structure cannot be scored. Exiting.\n",(node->children[i])->lowBase.index, (node->children[i])->highBase.index,lbChar, hbChar);
 				exit(-1);
 				//continue;
