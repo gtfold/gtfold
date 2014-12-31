@@ -189,7 +189,7 @@ int calculate(int len) {
 
       // Added auxillary storage WMPrime to speedup multiloop calculations
       int h;
-      for (h = i+TURN+1 ; h <= j-TURN-2; h++) {
+      for (h = i+TURN+1 ; h <= j-TURN; h++) {
         WMPrime[i][j] = MIN(WMPrime[i][j], WMU(i,h-1) + WML(h,j)); 
       }
 
